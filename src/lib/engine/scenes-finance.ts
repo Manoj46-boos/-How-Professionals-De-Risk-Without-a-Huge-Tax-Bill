@@ -1,0 +1,1433 @@
+/**
+ * GILDED LEDGER scene drawers — the Concentrated-Stock film's own visual
+ * language, built on the engine's primitives (charts, cards, chips, the
+ * ingot brand glyph, the one-light shadow system).
+ *
+ * Every drawer is a pure function of (W, H, t, props) — scrub-safe like
+ * the rest of the engine. Every data scene carries the lower-third
+ * SOURCE chip (`s.src`) — the visual signature of a researched channel.
+ * The palette does the differentiating: champagne paper, emerald/oxblood
+ * data ink, gold-leaf accents, serif display numerals.
+ */
+
+import { clamp01, easeInOutCubic, easeOutBack, easeOutCubic, easeOutQuad, hashStr, lerp, springTo } from './easing';
+import { PALETTE, TONE, card, chip, rgba, roundRect, setFont, fitText, FONT_DISPLAY, FONT_UI, CAPTION_ZONE_TOP, scenePlate, paintBg, chapterFamily } from './theme';
+import { impactRing, microShake, sparkles, drawK, depthShift } from './effects';
+import { SceneCtx } from './scene-context';
+import { lineChart, lineChartYBounds, wrapText, SeriesSpec } from './charts';
+import { drawStickmanV2, talkAt } from './stickman-v2';
+import { POSES, blendPose } from './stickman';
+import { registerRect, registerText } from './collision';
+import { sourceTag, sceneTitle } from './charts';
+
+// ── shared furniture ─────────────────────────────────────────────────────────
+
+/** The room: bg + chapter plate. Every finance scene sits in a room. */
+function room(g: SceneCtx, tone: 'up' | 'down' | 'gold' | 'neutral' | undefined = undefined): void {
+  paintBg(g.ctx, g.W, g.H, g.t, g.chapterTone);
+  scenePlate(g.ctx, g.W, g.H, tone ?? g.chapterTone ?? 'up', 0.95, null, { furniture: false });
+}
+
+/** The lower-third SOURCE chip — the researched-channel signature. */
+function srcChip(g: SceneCtx, alpha = 1): void {
+  const src = g.s.src as string | undefined;
+  if (!src) return;
+  sourceTag(g.ctx, g.W, src, g.H * 0.925, alpha);
+}
+
+/** Title + gold hairline in the scene's top band. */
+function title(g: SceneCtx, text: string, y = 220): void {
+  sceneTitle(g.ctx, text, 180, y, clamp01(g.t / 600));
+}
+
+/** A serif display numeral — the gilded register. */
+function goldNumeral(ctx: CanvasRenderingContext2D, text: string, x: number, y: number, size: number, alpha = 1, align: CanvasTextAlign = 'left'): void {
+  ctx.save();
+  ctx.globalAlpha = alpha;
+  setFont(ctx, size, 700, FONT_DISPLAY);
+  ctx.fillStyle = PALETTE.goldDisplay;
+  ctx.textAlign = align;
+  ctx.fillText(text, x, y);
+  ctx.restore();
+}
+
+/** Progressive reveal: truncate a point list at `frac` (interpolated tip). */
+function partialPoints(pts: [number, number][], frac: number): [number, number][] {
+  if (frac >= 1) return pts;
+  if (frac <= 0) return [];
+  const out: [number, number][] = [];
+  for (let i = 0; i < pts.length - 1; i++) {
+    const [x0, y0] = pts[i], [x1, y1] = pts[i + 1];
+    if (x1 <= frac) out.push([x0, y0]);
+    else {
+      const f = (frac - x0) / (x1 - x0);
+      out.push([x0, y0], [frac, y0 + (y1 - y0) * f]);
+      return out;
+    }
+  }
+  return pts;
+}
+
+/** The one-light gilded card — warm vellum with a gold hairline top edge. */
+function gildedCard(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, glow?: string): void {
+  card(ctx, x, y, w, h, { r: 28, glow });
+  ctx.save();
+  ctx.strokeStyle = rgba(PALETTE.gold, 0.55);
+  ctx.lineWidth = 2.5;
+  ctx.beginPath();
+  ctx.moveTo(x + 24, y + 2);
+  ctx.lineTo(x + w - 24, y + 2);
+  ctx.stroke();
+  ctx.restore();
+}
+
+// ── crossChart — the Ballmer/Gates crossing, XCLR cycles ─────────────────────
+// Two wealth lines that cross; the crossing IS the story. Modes carry the
+// progressive build the cold open reads over.
+
+const CROSS_A: [number, number][] = [[0, 68], [0.25, 74], [0.5, 82], [0.75, 96], [1, 124]]; // Gates (sold, diversified)
+const CROSS_B: [number, number][] = [[0, 18], [0.25, 34], [0.5, 58], [0.75, 92], [1, 139]]; // Ballmer (held)
+const XCLR_SPY: [number, number][] = [[0, 100], [0.18, 82], [0.45, 104], [0.72, 122], [1, 152]];
+const XCLR_FUND: [number, number][] = [[0, 100], [0.18, 87], [0.45, 103], [0.72, 116], [1, 134]];
+
+export function crossChartScene(g: SceneCtx): void {
+  const { ctx, W, H, t, s } = g;
+  room(g);
+  title(g, (s.title as string) || 'Two decisions, one company');
+  srcChip(g);
+
+  const mode = (s.mode as string) || 'build-a';
+  const isXclr = mode.startsWith('xclr');
+  const series: SeriesSpec[] = [];
+  const aPts = isXclr ? XCLR_SPY : CROSS_A;
+  const bPts = isXclr ? XCLR_FUND : CROSS_B;
+  const aName = isXclr ? 'S&P 500' : 'Gates — sold for 30 years';
+  const bName = isXclr ? 'XCLR (collar 95-110)' : 'Ballmer — held';
+  const aTone = isXclr ? 'muted' : 'muted';
+  const bTone = isXclr ? 'up' : 'up';
+
+  // progressive build — the line grows as the VO reads
+  let pa = mode === 'build-a' || mode === 'hold-chip' ? clamp01(t / 2400) : 1;
+  let pb = mode === 'build-a' || mode === 'hold-chip' || mode === 'build-b' || mode === 'xclr-2022'
+    ? (mode === 'build-a' || mode === 'hold-chip' ? 0 : clamp01((t - 400) / 2400))
+    : 1;
+  if (mode === 'build-a') pb = 0;
+
+  const cx = 310, cy = 300, cw = W - 900, ch = H * 0.44;
+  series.push({ name: aName, tone: aTone, points: partialPoints(aPts, pa) });
+  if (pb > 0) series.push({ name: bName, tone: bTone, points: partialPoints(bPts, pb) });
+  lineChart(ctx, {
+    x: cx, y: cy, w: cw, h: ch, series, p: 1, t,
+    gridLines: 4, showYAxis: true, lineWidth: isXclr ? 6 : 7,
+    annotations: [],
+  });
+
+  // the HOLD chip — the thesis in one word
+  if (mode === 'hold-chip' || mode === 'build-b' || mode === 'cross-marked' || mode === 'delta') {
+    const cp = clamp01((t - 200) / 500);
+    if (cp > 0) {
+      ctx.save();
+      ctx.globalAlpha = cp;
+      const bx = cx + cw * 0.72, by = cy - 64;
+      chip(ctx, 'HELD', bx, by, { size: 34, bg: rgba(PALETTE.up, 0.14), fg: PALETTE.up, border: rgba(PALETTE.up, 0.5) });
+      ctx.restore();
+    }
+  }
+  // the cross marker + delta chip
+  if (mode === 'cross-marked' || mode === 'delta') {
+    const mp = clamp01((t - 300) / 600);
+    if (mp > 0) {
+      ctx.save();
+      ctx.globalAlpha = mp;
+      const xPx = cx + cw * 0.88;
+      const yPx = cy + ch * 0.36;
+      ctx.strokeStyle = PALETTE.gold;
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.arc(xPx, yPx, 26 + Math.sin(t / 300) * 3, 0, Math.PI * 2);
+      ctx.stroke();
+      chip(ctx, 'JULY 2024 — THE CROSSING', xPx - 210, yPx + 44, { size: 30, bg: PALETTE.goldWash, fg: PALETTE.goldDeep, border: rgba(PALETTE.gold, 0.6) });
+      ctx.restore();
+    }
+  }
+  if (mode === 'delta') {
+    const dp = clamp01((t - 900) / 700);
+    if (dp > 0) {
+      ctx.save();
+      ctx.globalAlpha = dp;
+      const sx = microShake(t, 1000, 7);
+      ctx.translate(sx.dx, sx.dy);
+      gildedCard(ctx, W * 0.66, H * 0.555, 470, 210, rgba(PALETTE.gold, 0.35));
+      goldNumeral(ctx, '$100B', W * 0.66 + 235, H * 0.60 + 118, 120, 1, 'center');
+      setFont(ctx, 34, 600);
+      ctx.fillStyle = PALETTE.inkSoft;
+      ctx.textAlign = 'center';
+      ctx.fillText('the cost of one decision', W * 0.615 + 235, H * 0.60 + 172);
+      ctx.restore();
+      impactRing(ctx, W * 0.66 + 235, H * 0.60 + 105, t, 1000);
+    }
+  }
+  // xclr cycle verdict chips
+  if (mode === 'xclr-cycle') {
+    const dp = clamp01((t - 600) / 700);
+    if (dp > 0) {
+      ctx.save();
+      ctx.globalAlpha = dp;
+      goldNumeral(ctx, '+34%', cx + cw * 0.9, cy + ch * 0.42, 92, 1, 'right');
+      setFont(ctx, 40, 600);
+      ctx.fillStyle = PALETTE.inkSoft;
+      ctx.textAlign = 'right';
+      ctx.fillText('vs  +52%  the index', cx + cw * 0.9, cy + ch * 0.42 + 60);
+      ctx.restore();
+    }
+  }
+}
+
+// ── drawdownChart — Enron to zero, UNH −50% ──────────────────────────────────
+// The catastrophic-loss shape, shaded. The downside is not −2%.
+
+const UNH_PATH: [number, number][] = [
+  [0, 100], [0.12, 116], [0.22, 108], [0.32, 124], [0.45, 118], [0.56, 96],
+  [0.68, 78], [0.8, 62], [0.9, 52], [1, 47],
+];
+const ENRON_PATH: [number, number][] = [[0, 100], [0.2, 88], [0.4, 62], [0.55, 34], [0.7, 12], [0.85, 3], [1, 0]];
+
+export function drawdownChartScene(g: SceneCtx): void {
+  const { ctx, W, H, t, s } = g;
+  room(g, 'down');
+  title(g, (s.title as string) || 'The catastrophic shape');
+  srcChip(g);
+  const mode = (s.mode as string) || 'unh-path';
+  const isEnron = mode === 'enron' || mode === 'to-zero';
+  const pts = isEnron ? ENRON_PATH : UNH_PATH;
+  const drawP = mode === 'unh-path' || mode === 'enron' ? clamp01(t / 2600) : 1;
+
+  const cx = 190, cy = 300, cw = W - 700, ch = H * 0.44;
+  // the shaded loss region after the peak
+  if (!isEnron && drawP >= 1 && (mode === 'shade-loss' || mode === 'vs-math' || mode === 'punch')) {
+    const bp = clamp01((t - 300) / 700);
+    if (bp > 0) {
+      ctx.save();
+      ctx.globalAlpha = bp * 0.16;
+      ctx.fillStyle = PALETTE.down;
+      const px = cx + cw * 0.44;
+      ctx.beginPath();
+      ctx.rect(px, cy, cw * 0.56, ch);
+      ctx.fill();
+      ctx.restore();
+    }
+  }
+  lineChart(ctx, {
+    x: cx, y: cy, w: cw, h: ch,
+    series: [{ name: isEnron ? 'Enron' : 'UNH', tone: 'down', points: partialPoints(pts, drawP) }],
+    p: 1, t, gridLines: 4, showYAxis: true, lineWidth: 7,
+  });
+
+  // peak chip + loss chip
+  if (!isEnron && (mode === 'shade-loss' || mode === 'vs-math' || mode === 'punch')) {
+    const cp = clamp01((t - 700) / 600);
+    if (cp > 0) {
+      ctx.save();
+      ctx.globalAlpha = cp;
+      chip(ctx, 'PEAK', cx + cw * 0.44 - 60, cy + ch * 0.16, { size: 30, bg: PALETTE.white, fg: PALETTE.inkSoft });
+      chip(ctx, '−50%+', cx + cw * 0.94 - 90, cy + ch * 0.86, { size: 34, bg: rgba(PALETTE.down, 0.14), fg: PALETTE.down, border: rgba(PALETTE.down, 0.5) });
+      ctx.restore();
+    }
+  }
+  if (mode === 'vs-math' || mode === 'punch') {
+    const vp = clamp01((t - 900) / 700);
+    if (vp > 0) {
+      ctx.save();
+      ctx.globalAlpha = vp;
+      gildedCard(ctx, W * 0.615, H * 0.60, 470, 220, rgba(PALETTE.down, 0.3));
+      setFont(ctx, 44, 700, FONT_DISPLAY);
+      ctx.fillStyle = PALETTE.ink;
+      ctx.textAlign = 'left';
+      ctx.fillText('tax "saved":  24%', W * 0.615 + 36, H * 0.60 + 76);
+      ctx.fillText('drawdown:  −50%+', W * 0.615 + 36, H * 0.60 + 150);
+      setFont(ctx, 30, 600);
+      ctx.fillStyle = PALETTE.down;
+      ctx.fillText('a rounding error against the risk', W * 0.615 + 36, H * 0.60 + 200);
+      ctx.restore();
+    }
+  }
+  if (mode === 'to-zero') {
+    const zp = clamp01((t - 500) / 600);
+    if (zp > 0) {
+      ctx.save();
+      ctx.globalAlpha = zp;
+      chip(ctx, '$0 — locked out of the plan', cx + cw * 0.72, cy + ch * 0.92 - 20, { size: 32, bg: rgba(PALETTE.down, 0.15), fg: PALETTE.down, border: rgba(PALETTE.down, 0.55) });
+      ctx.restore();
+    }
+  }
+  if (mode === 'punch') {
+    const pp = clamp01((t - 300) / 600);
+    if (pp > 0) {
+      ctx.save();
+      ctx.globalAlpha = pp;
+      goldNumeral(ctx, '−50%+', cx + cw, cy + 60, 110, 1, 'right');
+      ctx.restore();
+    }
+  }
+}
+
+// ── exitTiles — the six gold tiles ───────────────────────────────────────────
+// The cold open's promise and every chapter hand-off: six numbered ingot
+// tiles, one per exit; each mode SPOTlights one tile and dims the rest.
+
+const EXITS = [
+  ['1', 'The 10b5-1 plan', 'the conveyor belt'],
+  ['2', 'Exchange funds', 'the seven-year marriage'],
+  ['3', 'Direct indexing', 'tax alpha'],
+  ['4', 'Protective collars', 'the Cuban trade'],
+  ['5', 'Charitable vehicles', 'the irreversible math'],
+  ['6', 'Levered long/short', 'the family-office tool'],
+];
+
+export function exitTilesScene(g: SceneCtx): void {
+  const { ctx, W, H, t, s } = g;
+  room(g, 'gold');
+  const mode = (s.mode as string) || 'all';
+  const headP = clamp01(t / 500);
+  if (headP > 0) {
+    ctx.save();
+    ctx.globalAlpha = headP;
+    setFont(ctx, 44, 700, FONT_DISPLAY);
+    ctx.fillStyle = PALETTE.ink;
+    ctx.textAlign = 'left';
+    ctx.fillText('THE SIX EXITS', 180, 190);
+    ctx.restore();
+  }
+
+  const spot = mode.startsWith('spot-') ? Number(mode.slice(5)) : 0;
+  const cols = 3, rows = 2;
+  const tw = 480, th = 210, gapX = 60, gapY = 66;
+  const x0 = (W - (cols * tw + (cols - 1) * gapX)) / 2;
+  const y0 = H * 0.30;
+  for (let i = 0; i < 6; i++) {
+    const col = i % cols, row = Math.floor(i / cols);
+    const x = x0 + col * (tw + gapX);
+    const y = y0 + row * (th + gapY);
+    const ap = clamp01((t - 150 - i * 130) / 550);
+    if (ap <= 0) continue;
+    const dim = spot > 0 && spot !== i + 1 ? 0.35 : 1;
+    const lit = (spot === i + 1 || mode === 'all' || mode === 'save-prompt');
+    ctx.save();
+    ctx.globalAlpha = ap * dim;
+    // the tile: lift on spot
+    const lift = lit ? -6 : 0;
+    gildedCard(ctx, x, y + lift, tw, th, lit ? rgba(PALETTE.gold, 0.4) : undefined);
+    // the numeral — serif gold
+    goldNumeral(ctx, EXITS[i][0], x + 46, y + lift + 108, 108);
+    setFont(ctx, 40, 700);
+    ctx.fillStyle = PALETTE.ink;
+    ctx.textAlign = 'left';
+    ctx.fillText(EXITS[i][1], x + 140, y + lift + 92);
+    setFont(ctx, 30, 400);
+    ctx.fillStyle = PALETTE.inkSoft;
+    ctx.fillText(EXITS[i][2], x + 140, y + lift + 142);
+    // the ingot mark — bottom-right corner, clear of the titles
+    drawK(ctx, x + tw - 46, y + lift + th - 42, 18, 2.5, PALETTE.gold);
+    ctx.restore();
+  }
+  if (mode === 'save-prompt') {
+    const sp = clamp01((t - 400) / 600);
+    if (sp > 0) {
+      ctx.save();
+      ctx.globalAlpha = sp;
+      chip(ctx, 'BOOKMARK — THE FRAMEWORK LANDS AT THE END', W / 2 - 430, H * 0.845, { size: 34, bg: PALETTE.goldWash, fg: PALETTE.goldDeep, border: rgba(PALETTE.gold, 0.6) });
+      ctx.restore();
+    }
+  }
+}
+
+// ── srcCite — the standalone source / disclaimer beat ────────────────────────
+export function srcCiteScene(g: SceneCtx): void {
+  const { ctx, W, H, t, s } = g;
+  room(g, 'neutral');
+  const ap = clamp01(t / 600);
+  const source = (s.source as string) || 'SOURCES LINKED BELOW';
+  const detail = (s.detail as string) || '';
+  ctx.save();
+  ctx.globalAlpha = ap;
+  // the gilded citation bar
+  const bw = Math.min(W * 0.78, 1420);
+  const bx = (W - bw) / 2;
+  const by = H * 0.36;
+  gildedCard(ctx, bx, by, bw, 300, rgba(PALETTE.gold, 0.28));
+  // the ingot seal
+  drawK(ctx, bx + 110, by + 150, 44, 4, PALETTE.gold);
+  setFont(ctx, 52, 700, FONT_DISPLAY);
+  ctx.fillStyle = PALETTE.ink;
+  ctx.textAlign = 'left';
+  fitText(ctx, source, bx + 220, by + 128, bw - 320, 52, 700);
+  setFont(ctx, 36, 400);
+  ctx.fillStyle = PALETTE.inkSoft;
+  ctx.fillText(detail, bx + 220, by + 200);
+  setFont(ctx, 30, 600);
+  ctx.fillStyle = PALETTE.goldDeep;
+  ctx.fillText('EVERY NUMBER CARRIES ITS SOURCE ON SCREEN', bx + 220, by + 254);
+  ctx.restore();
+}
+
+// ── distBars — the J.P. Morgan outcome distribution ──────────────────────────
+export function distBarsScene(g: SceneCtx): void {
+  const { ctx, W, H, t, s } = g;
+  room(g, 'down');
+  title(g, (s.title as string) || 'The base rates');
+  srcChip(g);
+  const mode = (s.mode as string) || 'intro';
+  const rows = [
+    { label: 'underperformed the index', value: 66, tone: 'muted', big: '2/3' },
+    { label: 'catastrophic loss — −70%+, never recovered', value: 40, tone: 'down', big: '40%' },
+    { label: 'the 2024 update, through 2020', value: 44, tone: 'down', big: '44%' },
+  ];
+  const idx = mode === 'bar-1' ? 0 : mode === 'bar-2' ? 1 : mode === 'bar-3' ? 2 : -1;
+  const showCount = idx < 0 ? 0 : idx + 1;
+  const bx = 190, bw = W - 700;
+  for (let i = 0; i < showCount; i++) {
+    const r = rows[i];
+    const bp = clamp01((t - 300 - i * 350) / 800);
+    if (bp <= 0) continue;
+    const y = H * 0.30 + i * 170;
+    const tone = TONE(r.tone);
+    ctx.save();
+    ctx.globalAlpha = bp;
+    // the label sits ABOVE its bar — no label/numeral collisions
+    setFont(ctx, 34, 600);
+    ctx.fillStyle = PALETTE.inkSoft;
+    ctx.textAlign = 'left';
+    ctx.fillText(r.label, bx + 330, y - 18);
+    // track
+    ctx.fillStyle = PALETTE.track;
+    roundRect(ctx, bx + 330, y, bw - 330, 104, 24);
+    ctx.fill();
+    // fill
+    ctx.fillStyle = tone.main;
+    roundRect(ctx, bx + 330, y, (bw - 330) * (r.value / 100), 104, 24);
+    ctx.fill();
+    // serif numeral right of the fill
+    setFont(ctx, 84, 700, FONT_DISPLAY);
+    ctx.fillStyle = PALETTE.ink;
+    ctx.textAlign = 'left';
+    ctx.fillText(r.big, bx + 330 + (bw - 330) * (r.value / 100) + 30, y + 74);
+    ctx.restore();
+    if (bp >= 1 && i === showCount - 1) impactRing(ctx, bx + 330 + (bw - 330) * (r.value / 100), y + 52, t, 300 + i * 350 + 800);
+  }
+  if (mode === 'intro') {
+    const ip = clamp01((t - 300) / 600);
+    if (ip > 0) {
+      ctx.save();
+      ctx.globalAlpha = ip;
+      setFont(ctx, 44, 600);
+      ctx.fillStyle = PALETTE.inkSoft;
+      ctx.textAlign = 'left';
+      ctx.fillText('Two findings, forty years of data, every Russell 3000 entrant.', 190, H * 0.32);
+      ctx.restore();
+    }
+  }
+}
+
+// ── taxStack — the $3.7M bill, line by line ──────────────────────────────────
+export function taxStackScene(g: SceneCtx): void {
+  const { ctx, W, H, t, s } = g;
+  room(g, 'gold');
+  title(g, (s.title as string) || 'The bill, line by line');
+  srcChip(g);
+  const mode = (s.mode as string) || 'row-1';
+  const rows = [
+    { label: 'Federal long-term capital gains', pct: 20, tone: 'down' },
+    { label: 'Net investment income tax', pct: 3.8, tone: 'down' },
+    { label: 'California state', pct: 13.3, tone: 'down' },
+  ];
+  const show = mode === 'row-1' ? 1 : mode === 'row-2' ? 2 : 3;
+  const totalMode = mode === 'total';
+  const bx = 190, bw = W - 760;
+  // in total mode the stack compacts upward so the $3.7M card owns the
+  // lower band clear of the caption zone
+  const y0 = totalMode ? H * 0.235 : H * 0.30;
+  const span = totalMode ? H * 0.22 : H * 0.30;
+  let acc = 0;
+  for (let i = 0; i < show; i++) {
+    const r = rows[i];
+    const bp = clamp01((t - 350 - i * 400) / 750);
+    if (bp <= 0) continue;
+    const y = y0 + acc;
+    const hgt = (r.pct / 40) * span;
+    ctx.save();
+    ctx.globalAlpha = bp;
+    ctx.fillStyle = rgba(TONE(r.tone).main, 0.85 - i * 0.12);
+    roundRect(ctx, bx, y, bw, hgt, 18);
+    ctx.fill();
+    // the % numeral rides INSIDE when the bar is tall enough, otherwise
+    // just right of it; the label sits above-right in the quiet zone
+    setFont(ctx, 40, 700);
+    ctx.fillStyle = PALETTE.white;
+    ctx.textAlign = 'left';
+    if (hgt >= 64) {
+      ctx.fillText(`${r.label}  ·  ${r.pct}%`, bx + 34, y + hgt / 2 + 14);
+    } else {
+      ctx.fillStyle = PALETTE.inkSoft;
+      setFont(ctx, 30, 600);
+      ctx.textAlign = 'right';
+      ctx.fillText(`${r.label}  ·  ${r.pct}%`, bx + bw, y - 12);
+      ctx.textAlign = 'left';
+    }
+    ctx.restore();
+    acc += hgt + 16;
+  }
+  if (mode === 'row-2') {
+    const cp = clamp01((t - 1200) / 600);
+    if (cp > 0) {
+      ctx.save();
+      ctx.globalAlpha = cp;
+      chip(ctx, '23.8% before the state', bx + bw, H * 0.30 + (20 / 40) * H * 0.30 + 40, { size: 34, bg: PALETTE.white, fg: PALETTE.inkSoft });
+      ctx.restore();
+    }
+  }
+  if (mode === 'total') {
+    const tp = clamp01(t / 700);
+    const sx = microShake(t, 700, 8);
+    ctx.save();
+    ctx.globalAlpha = tp;
+    ctx.translate(sx.dx, sx.dy);
+    const cwid = 760;
+    gildedCard(ctx, W / 2 - cwid / 2, H * 0.515, cwid, 200, rgba(PALETTE.gold, 0.45));
+    goldNumeral(ctx, '$3,700,000', W / 2, H * 0.515 + 104, 96, 1, 'center');
+    setFont(ctx, 34, 600);
+    ctx.fillStyle = PALETTE.inkSoft;
+    ctx.textAlign = 'center';
+    ctx.fillText('out the door — on $10M, near-zero basis, California', W / 2, H * 0.515 + 164);
+    ctx.restore();
+    impactRing(ctx, W / 2, H * 0.515 + 100, t, 700);
+    if (tp >= 1) sparkles(ctx, W / 2 + 290, H * 0.515 + 50, t, 700, { count: 8, radius: 100 });
+  }
+}
+
+// ── napkin — the break-even test, written on a gilded card ───────────────────
+export function napkinScene(g: SceneCtx): void {
+  const { ctx, W, H, t, s } = g;
+  room(g, 'neutral');
+  title(g, (s.title as string) || 'The napkin test');
+  srcChip(g);
+  const formula = (s.formula as string[]) || [];
+  const note = s.note as string | undefined;
+  const ap = clamp01(t / 600);
+  const bw = 1240, bh = 380;
+  const bx = (W - bw) / 2, by = H * 0.28;
+  ctx.save();
+  ctx.globalAlpha = ap;
+  gildedCard(ctx, bx, by, bw, bh, rgba(PALETTE.gold, 0.3));
+  // the formula line builds word by word
+  let fx = bx + 90;
+  const fy = by + 170;
+  for (let i = 0; i < formula.length; i++) {
+    const wp = clamp01((t - 300 - i * 330) / 400);
+    if (wp <= 0) break;
+    ctx.save();
+    ctx.globalAlpha = wp;
+    const word = formula[i];
+    const isOp = word.length <= 2 && /[÷=×+\u2192]/.test(word);
+    setFont(ctx, isOp ? 96 : 74, isOp ? 400 : 700, FONT_DISPLAY);
+    ctx.fillStyle = isOp ? PALETTE.goldDeep : PALETTE.ink;
+    ctx.textAlign = 'left';
+    ctx.fillText(word, fx, fy);
+    fx += ctx.measureText(word).width + (isOp ? 44 : 30);
+    ctx.restore();
+  }
+  if (note) {
+    const np = clamp01((t - 300 + formula.length * 330) / 500);
+    if (np > 0) {
+      ctx.save();
+      ctx.globalAlpha = np;
+      setFont(ctx, 34, 600);
+      ctx.fillStyle = PALETTE.inkSoft;
+      ctx.textAlign = 'left';
+      ctx.fillText(note, bx + 90, by + bh - 74);
+      ctx.restore();
+    }
+  }
+  ctx.restore();
+}
+
+// ── lockup — the seven-year marriage bar ─────────────────────────────────────
+export function lockupScene(g: SceneCtx): void {
+  const { ctx, W, H, t, s } = g;
+  room(g, 'gold');
+  title(g, (s.title as string) || 'The seven-year lock');
+  const mode = (s.mode as string) || 'intro';
+  const ap = clamp01(t / 500);
+  const bx = 190, bw = W - 620, by = H * 0.36, bh = 120;
+  ctx.save();
+  ctx.globalAlpha = ap;
+  // the 7-year track with year ticks
+  ctx.fillStyle = PALETTE.track;
+  roundRect(ctx, bx, by, bw, bh, 24);
+  ctx.fill();
+  // the gold fill creeping to year 7
+  const fp = clamp01((t - 400) / 1800);
+  ctx.fillStyle = rgba(PALETTE.gold, 0.75);
+  roundRect(ctx, bx, by, bw * fp, bh, 24);
+  ctx.fill();
+  for (let yr = 1; yr <= 7; yr++) {
+    const x = bx + (bw * yr) / 7;
+    ctx.strokeStyle = rgba(PALETTE.shadow, 0.35);
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(x, by + 12);
+    ctx.lineTo(x, by + bh - 12);
+    ctx.stroke();
+    setFont(ctx, 30, 600);
+    ctx.fillStyle = PALETTE.inkSoft;
+    ctx.textAlign = 'center';
+    ctx.fillText(`YR ${yr}`, x, by + bh + 44);
+  }
+  // the seal at year 7
+  const sp = clamp01((t - 1900) / 600);
+  if (sp > 0) {
+    ctx.save();
+    ctx.globalAlpha = sp;
+    drawK(ctx, bx + bw - 60, by + bh / 2, 34, 3.5, PALETTE.gold);
+    ctx.restore();
+  }
+  ctx.restore();
+  if (mode === 'early') {
+    const ep = clamp01((t - 700) / 600);
+    if (ep > 0) {
+      ctx.save();
+      ctx.globalAlpha = ep;
+      chip(ctx, 'LEAVE EARLY → your stock comes back + 1\u20132% exit fees', bx + 40, by - 70, { size: 32, bg: rgba(PALETTE.down, 0.14), fg: PALETTE.down, border: rgba(PALETTE.down, 0.5) });
+      ctx.restore();
+    }
+  }
+  if (mode === 'marriage') {
+    const mp = clamp01((t - 300) / 600);
+    if (mp > 0) {
+      ctx.save();
+      ctx.globalAlpha = mp;
+      setFont(ctx, 64, 700, FONT_DISPLAY);
+      ctx.fillStyle = PALETTE.ink;
+      ctx.textAlign = 'left';
+      ctx.fillText('Not a parking spot. A marriage.', bx, H * 0.66);
+      ctx.restore();
+    }
+  }
+}
+
+// ── planConveyor — the 10b5-1 conveyor belt ──────────────────────────────────
+export function planConveyorScene(g: SceneCtx): void {
+  const { ctx, W, H, t, s } = g;
+  room(g, 'up');
+  title(g, (s.title as string) || 'The 10b5-1 plan');
+  srcChip(g);
+  const mode = (s.mode as string) || 'intro';
+
+  // the conveyor: 4 scheduled sale slots riding a belt
+  const beltY = H * 0.44;
+  const beltX = 190, beltW = W - 900;
+  const bp = clamp01(t / 700);
+  ctx.save();
+  ctx.globalAlpha = bp;
+  // the belt
+  ctx.fillStyle = PALETTE.track;
+  roundRect(ctx, beltX, beltY, beltW, 96, 24);
+  ctx.fill();
+  ctx.strokeStyle = rgba(PALETTE.gold, 0.5);
+  ctx.lineWidth = 2.5;
+  ctx.beginPath();
+  ctx.moveTo(beltX, beltY - 8);
+  ctx.lineTo(beltX + beltW, beltY - 8);
+  ctx.stroke();
+  // the slots — scheduled sales drift along
+  const drift = (t / 2400) % 1;
+  for (let i = 0; i < 4; i++) {
+    const slotP = ((i + drift) / 4) % 1;
+    const x = beltX + slotP * beltW;
+    const ap = clamp01((t - 400 - i * 180) / 400) * clamp01(slotP * 8) * clamp01((1 - slotP) * 8);
+    if (ap <= 0) continue;
+    ctx.save();
+    ctx.globalAlpha = ap;
+    card(ctx, x - 70, beltY + 10, 140, 76, { r: 16 });
+    setFont(ctx, 30, 700);
+    ctx.fillStyle = PALETTE.up;
+    ctx.textAlign = 'center';
+    ctx.fillText('SELL', x, beltY + 44);
+    setFont(ctx, 22, 400);
+    ctx.fillStyle = PALETTE.inkSoft;
+    ctx.fillText('scheduled', x, beltY + 72);
+    ctx.restore();
+  }
+  ctx.restore();
+
+  const chipY = beltY + 160;
+  const chipLine = (label: string, x: number, tone: string) => {
+    const cp = clamp01((t - 500) / 500);
+    if (cp > 0) {
+      ctx.save();
+      ctx.globalAlpha = cp;
+      chip(ctx, label, x, chipY, { size: 30, bg: tone === 'up' ? rgba(PALETTE.up, 0.13) : PALETTE.white, fg: tone === 'up' ? PALETTE.up : PALETTE.inkSoft, border: tone === 'up' ? rgba(PALETTE.up, 0.45) : PALETTE.cardBorder });
+      ctx.restore();
+    }
+  };
+
+  if (mode === 'no-discretion') chipLine('DISCRETION REMOVED — that is the point', 190, 'up');
+  if (mode === 'full-tax') {
+    const fp = clamp01((t - 300) / 500);
+    if (fp > 0) {
+      ctx.save();
+      ctx.globalAlpha = fp;
+      chip(ctx, 'FULL CAPITAL GAINS ON EVERY SHARE — not a tax strategy', 190, chipY, { size: 32, bg: rgba(PALETTE.down, 0.14), fg: PALETTE.down, border: rgba(PALETTE.down, 0.5) });
+      ctx.restore();
+    }
+  }
+  if (mode === 'bezos' || mode === 'plan-timed' || mode === 'commit') {
+    const dp = clamp01((t - 300) / 600);
+    if (dp > 0) {
+      ctx.save();
+      ctx.globalAlpha = dp;
+      gildedCard(ctx, W * 0.60, H * 0.26, 520, 240, rgba(PALETTE.gold, 0.3));
+      goldNumeral(ctx, '$4B', W * 0.60 + 60, H * 0.26 + 100, 104);
+      setFont(ctx, 32, 600);
+      ctx.fillStyle = PALETTE.inkSoft;
+      ctx.textAlign = 'left';
+      ctx.fillText('sold August 2026 —', W * 0.60 + 60, H * 0.26 + 160);
+      ctx.fillText('plan adopted Nov 14, 2025', W * 0.60 + 60, H * 0.26 + 204);
+      ctx.restore();
+    }
+  }
+  if (mode === 'plan-timed') chipLine('HE DID NOT TIME IT. THE PLAN TIMED IT.', 190, 'up');
+  if (mode === 'commit') chipLine('COMMIT IN ADVANCE — LET THE SCHEDULE EXECUTE', 190, 'up');
+  if (mode === 'sec-tighten' || mode === 'cooling' || mode === 'certify' || mode === 'screened' || mode === 'architecture') {
+    // the amendment rail
+    const rp = clamp01((t - 300) / 600);
+    if (rp > 0) {
+      ctx.save();
+      ctx.globalAlpha = rp;
+      const items = mode === 'cooling' ? ['90\u2013120 day cooling-off', 'no overlapping plans']
+        : mode === 'certify' ? ['written good-faith certification', '10-Q/10-K disclosure · Form 4 box']
+        : mode === 'screened' ? ['data-driven regulator screens', 'the autopilot is public']
+        : mode === 'architecture' ? ['the amendments all stood', 'the pardon changed nothing']
+        : ['DEC 2022 — THE SEC AMENDMENTS'];
+      let x = 190;
+      for (const it of items) {
+        chip(ctx, it.toUpperCase(), x, H * 0.68, { size: 30, bg: PALETTE.white, fg: PALETTE.inkSoft, border: rgba(PALETTE.down, 0.4) });
+        x += 620;
+      }
+      ctx.restore();
+    }
+  }
+  if (mode === 'conveyor-punch') {
+    const pp = clamp01((t - 300) / 600);
+    if (pp > 0) {
+      ctx.save();
+      ctx.globalAlpha = pp;
+      setFont(ctx, 62, 700, FONT_DISPLAY);
+      ctx.fillStyle = PALETTE.ink;
+      ctx.textAlign = 'left';
+      ctx.fillText('The conveyor belt.', 190, H * 0.66);
+      setFont(ctx, 38, 600);
+      ctx.fillStyle = PALETTE.inkSoft;
+      ctx.fillText('The next five strategies are what you do with the warehouse.', 190, H * 0.66 + 64);
+      ctx.restore();
+    }
+  }
+}
+
+// ── killCard — the wrong-answer card, in the film's dark emerald glass ───────
+// The one deliberately dark register in the film (a deep emerald panel, not
+// black): the kill conditions land with weight.
+export function killCardScene(g: SceneCtx): void {
+  const { ctx, W, H, t, s } = g;
+  paintBg(ctx, W, H, t, g.chapterTone);
+  const mode = (s.mode as string) || 'item-1';
+  const title = (s.title as string) || 'The kill conditions';
+  const ap = clamp01(t / 450);
+  // the obsidian-emerald panel — the film's one dramatic register
+  ctx.save();
+  ctx.globalAlpha = ap;
+  ctx.fillStyle = '#0E1F19';
+  roundRect(ctx, 150, 190, W - 300, H * 0.60, 34);
+  ctx.fill();
+  ctx.strokeStyle = rgba(PALETTE.gold, 0.65);
+  ctx.lineWidth = 2.5;
+  roundRect(ctx, 150, 190, W - 300, H * 0.60, 34);
+  ctx.stroke();
+  // the seal
+  drawK(ctx, 260, 320, 40, 4, PALETTE.gold);
+  setFont(ctx, 54, 700, FONT_DISPLAY);
+  ctx.fillStyle = '#F1E7CF';
+  ctx.textAlign = 'left';
+  ctx.fillText(title.toUpperCase(), 340, 338);
+  // the hairline
+  ctx.strokeStyle = rgba(PALETTE.gold, 0.4);
+  ctx.beginPath();
+  ctx.moveTo(340, 380);
+  ctx.lineTo(W - 340, 380);
+  ctx.stroke();
+  const items = [
+    'WRONG ANSWER IF — you think it shelters the tax',
+    'WRONG ANSWER IF — you need money back early / the principal',
+    'WRONG ANSWER IF — the fee or the leverage eats the benefit',
+    'WRONG ANSWER IF — you cannot live with the schedule',
+  ];
+  const n = mode === 'item-1' ? 2 : items.length;
+  for (let i = 0; i < n; i++) {
+    const ip = clamp01((t - 550 - i * 380) / 500);
+    if (ip <= 0) continue;
+    ctx.save();
+    ctx.globalAlpha = ip;
+    setFont(ctx, 42, 600);
+    ctx.fillStyle = i % 2 === 0 ? '#E8D9B0' : 'rgba(241,231,207,0.75)';
+    ctx.fillText(items[i], 340, 470 + i * 86);
+    // the gold tick
+    ctx.strokeStyle = PALETTE.gold;
+    ctx.lineWidth = 3.5;
+    ctx.beginPath();
+    ctx.moveTo(300, 458 + i * 86);
+    ctx.lineTo(322, 470 + i * 86);
+    ctx.stroke();
+    ctx.restore();
+  }
+  ctx.restore();
+}
+
+// ── poolFund — the exchange fund pool ────────────────────────────────────────
+export function poolFundScene(g: SceneCtx): void {
+  const { ctx, W, H, t, s } = g;
+  room(g, 'up');
+  title(g, (s.title as string) || 'The exchange fund');
+  srcChip(g);
+  const mode = (s.mode as string) || 'contribute';
+  const poolX = W * 0.40, poolY = H * 0.52, poolR = 190;
+  const ap = clamp01(t / 500);
+
+  // the pool — a gilded ring
+  ctx.save();
+  ctx.globalAlpha = ap;
+  ctx.strokeStyle = rgba(PALETTE.gold, 0.7);
+  ctx.lineWidth = 5;
+  ctx.beginPath();
+  ctx.arc(poolX, poolY, poolR * clamp01(t / 900), 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.fillStyle = rgba(PALETTE.goldWash, 0.5);
+  ctx.beginPath();
+  ctx.arc(poolX, poolY, poolR * clamp01(t / 900), 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+  // the pool's ingot heart
+  const iP = clamp01((t - 600) / 600);
+  if (iP > 0) drawK(ctx, poolX, poolY, 56, 5, PALETTE.gold, iP);
+
+  // the contributors — 10 single-stock dots flying in, then slices out
+  const contribP = clamp01((t - 300) / 1600);
+  for (let i = 0; i < 10; i++) {
+    const ang = (i / 10) * Math.PI * 2 + 0.35;
+    const ox = poolX + Math.cos(ang) * 560;
+    const oy = poolY + Math.sin(ang) * 330;
+    const p = easeInOutCubic(contribP);
+    const x = lerp(ox, poolX + Math.cos(ang) * poolR * 0.7, p);
+    const y = lerp(oy, poolY + Math.sin(ang) * poolR * 0.7, p);
+    const dP = clamp01((t - 300 - i * 120) / 500);
+    if (dP <= 0) continue;
+    ctx.save();
+    ctx.globalAlpha = dP;
+    ctx.fillStyle = i === 0 ? PALETTE.up : PALETTE.inkSoft;
+    ctx.beginPath();
+    ctx.arc(x, y, 16, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+  // the out-slices
+  if (mode === 'redeem' || mode === 'step-up' || mode === 'illiquid' || mode === 'not-chosen') {
+    const op = clamp01((t - 400) / 1200);
+    for (let i = 0; i < 10; i++) {
+      const ang = (i / 10) * Math.PI * 2 + 0.35;
+      const p = easeInOutCubic(op);
+      const x = lerp(poolX + Math.cos(ang) * poolR * 0.5, poolX + Math.cos(ang) * 520, p);
+      const y = lerp(poolY + Math.sin(ang) * poolR * 0.5, poolY + Math.sin(ang) * 300, p);
+      ctx.save();
+      ctx.globalAlpha = op * 0.9;
+      ctx.fillStyle = PALETTE.up;
+      ctx.beginPath();
+      ctx.arc(x, y, 14, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+  }
+  const label = (txt: string, y: number, tone: 'gold' | 'ink' | 'down' = 'ink', delay = 400) => {
+    const lp = clamp01((t - delay) / 500);
+    if (lp > 0) {
+      ctx.save();
+      ctx.globalAlpha = lp;
+      setFont(ctx, 40, 600);
+      ctx.fillStyle = tone === 'gold' ? PALETTE.goldDeep : tone === 'down' ? PALETTE.down : PALETTE.ink;
+      ctx.textAlign = 'center';
+      ctx.fillText(txt, poolX, y);
+      ctx.restore();
+    }
+  };
+  if (mode === 's721') label('§721 — A CONTRIBUTION IS NOT A SALE', poolY - poolR - 60, 'gold');
+  if (mode === 'swapped') label('SINGLE-STOCK RISK → BROAD-MARKET RISK, ONE TRANSACTION', poolY - poolR - 60, 'ink', 300);
+  if (mode === 'redeem') label('REDEEM → A DIVERSIFIED BASKET, YOUR ORIGINAL LOW BASIS', poolY - poolR - 60, 'ink');
+  if (mode === 'step-up') label('HOLD TO DEATH → STEPPED-UP BASIS — THE GAIN VANISHES', poolY - poolR - 60, 'gold');
+  if (mode === 'illiquid' || mode === 'not-chosen') {
+    label('20% OF THE POOL IS ILLIQUID — BY RULE', poolY - poolR - 60, 'down');
+    const ip = clamp01((t - 700) / 600);
+    if (ip > 0) {
+      ctx.save();
+      ctx.globalAlpha = ip;
+      ctx.fillStyle = rgba(PALETTE.down, 0.22);
+      ctx.beginPath();
+      ctx.moveTo(poolX, poolY);
+      ctx.arc(poolX, poolY, poolR * 0.86, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * 0.2);
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+    }
+    if (mode === 'not-chosen') label('assets you did not choose, to satisfy a tax definition', poolY + poolR + 80, 'down', 900);
+  }
+  if (mode === 'contribute') label('100 investors · 100 single stocks · one pool', poolY - poolR - 60, 'ink');
+}
+
+// ── driftChart — tracking error drift ────────────────────────────────────────
+export function driftChartScene(g: SceneCtx): void {
+  const { ctx, W, H, t, s } = g;
+  room(g, 'down');
+  title(g, (s.title as string) || 'Tracking error');
+  srcChip(g);
+  const mode = (s.mode as string) || 'drift';
+  const ptsIdx: [number, number][] = [[0, 100], [0.3, 101.2], [0.6, 102.1], [1, 103.4]];
+  const ptsFund: [number, number][] = [[0, 100], [0.3, 99.1], [0.6, 97.8], [1, 96.1]];
+  lineChart(ctx, {
+    x: 190, y: 300, w: W - 700, h: H * 0.42,
+    series: [
+      { name: 'the index', tone: 'muted', points: ptsIdx },
+      { name: 'the basket — cannot sell', tone: 'down', points: partialPoints(ptsFund, clamp01(t / 2200)) },
+    ],
+    p: 1, t, gridLines: 4, showYAxis: true, lineWidth: 6,
+  });
+  if (mode === 'compounds' || mode === 'punch') {
+    const dp = clamp01((t - 500) / 600);
+    if (dp > 0) {
+      ctx.save();
+      ctx.globalAlpha = dp;
+      chip(ctx, '1.6% TRACKING ERROR — AND IT COMPOUNDS FOR SEVEN YEARS', 190, H * 0.79, { size: 32, bg: rgba(PALETTE.down, 0.13), fg: PALETTE.down, border: rgba(PALETTE.down, 0.5) });
+      ctx.restore();
+    }
+  }
+  if (mode === 'punch') {
+    const pp = clamp01((t - 300) / 600);
+    if (pp > 0) {
+      ctx.save();
+      ctx.globalAlpha = pp;
+      setFont(ctx, 54, 700, FONT_DISPLAY);
+      ctx.fillStyle = PALETTE.ink;
+      ctx.textAlign = 'left';
+      ctx.fillText('Not quite the index. Not customizable. Cannot be left.', 190, H * 0.87);
+      ctx.restore();
+    }
+  }
+}
+
+// ── explodeGrid — direct indexing ────────────────────────────────────────────
+export function explodeGridScene(g: SceneCtx): void {
+  const { ctx, W, H, t, s } = g;
+  room(g, 'up');
+  title(g, (s.title as string) || 'Direct indexing');
+  srcChip(g);
+  const mode = (s.mode as string) || 'intro';
+  const gx = 190, gy = H * 0.28, gw = W - 700, gh = H * 0.46;
+  const cols = 20, rows = 10;
+  const cwTile = gw / cols, chTile = gh / rows;
+  // one fund tile that explodes into the grid
+  const ex = clamp01((t - 300) / 700);
+  if (ex < 1) {
+    ctx.save();
+    ctx.globalAlpha = 1 - ex;
+    gildedCard(ctx, gx + gw / 2 - 130, gy + gh / 2 - 80, 260, 160, rgba(PALETTE.gold, 0.3));
+    setFont(ctx, 40, 700);
+    ctx.fillStyle = PALETTE.ink;
+    ctx.textAlign = 'center';
+    ctx.fillText('1 ETF', gx + gw / 2, gy + gh / 2 + 4);
+    ctx.restore();
+  }
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      const i = r * cols + c;
+      const tp = clamp01((t - 350 - (i % 30) * 22) / 400);
+      if (tp <= 0) continue;
+      const h = hashStr(`tile-${i}`);
+      const loser = h < 0.38;
+      const harvested = (mode === 'harvest' || mode === 'offset' || mode === 'wash' || mode === 'alpha') && loser && h < 0.38;
+      const x = gx + c * cwTile + 3, y = gy + r * chTile + 3;
+      ctx.save();
+      ctx.globalAlpha = tp;
+      if (harvested && mode !== 'wash') {
+        ctx.fillStyle = rgba(PALETTE.down, 0.78);
+      } else if (loser) {
+        ctx.fillStyle = rgba(PALETTE.down, 0.4);
+      } else {
+        ctx.fillStyle = rgba(PALETTE.up, 0.34);
+      }
+      roundRect(ctx, x, y, cwTile - 6, chTile - 6, 8);
+      ctx.fill();
+      if (harvested && (mode === 'harvest' || mode === 'offset' || mode === 'alpha')) {
+        // the harvest tick
+        ctx.strokeStyle = PALETTE.white;
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(x + 8, y + chTile / 2);
+        ctx.lineTo(x + cwTile / 2 - 4, y + chTile - 10);
+        ctx.lineTo(x + cwTile - 10, y + 8);
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+  }
+  const chipLine = (txt: string, tone: 'down' | 'up', delay = 500) => {
+    const cp = clamp01((t - delay) / 500);
+    if (cp > 0) {
+      ctx.save();
+      ctx.globalAlpha = cp;
+      chip(ctx, txt, 190, H * 0.79, { size: 32, bg: tone === 'down' ? rgba(PALETTE.down, 0.13) : rgba(PALETTE.up, 0.13), fg: tone === 'down' ? PALETTE.down : PALETTE.up, border: rgba(tone === 'down' ? PALETTE.down : PALETTE.up, 0.5) });
+      ctx.restore();
+    }
+  };
+  if (mode === 'losers') chipLine('EVEN IN AN UP YEAR — SOME CONSTITUENTS ARE DOWN', 'down');
+  if (mode === 'harvest') chipLine('SELL THE LOSERS · BOOK THE LOSS · STAY INVESTED', 'up');
+  if (mode === 'offset') chipLine('THE LOSSES OFFSET THE GAINS FROM SELLING YOUR POSITION', 'up');
+  if (mode === 'wash') chipLine('31 DAYS — OR THE LOSS IS DISALLOWED', 'down');
+  if (mode === 'alpha') chipLine('HUNDREDS OF NAMES · YEAR-ROUND · "TAX ALPHA"', 'up');
+}
+
+// ── payoffDiagram — the Cuban collar ─────────────────────────────────────────
+export function payoffDiagramScene(g: SceneCtx): void {
+  const { ctx, W, H, t, s } = g;
+  room(g, 'gold');
+  title(g, (s.title as string) || 'The collar');
+  srcChip(g);
+  const mode = (s.mode as string) || 'floor';
+  const cx = 190, cy = 300, cw = W - 700, ch = H * 0.44;
+  // the band — floor at 85, ceiling at 205 on a 0..260 range
+  const yOf = (v: number) => cy + ch - (v / 260) * ch;
+  const bandP = mode === 'floor' ? clamp01((t - 400) / 800) : clamp01(t / 600);
+  if (bandP > 0) {
+    ctx.save();
+    ctx.globalAlpha = bandP * 0.18;
+    ctx.fillStyle = PALETTE.up;
+    ctx.fillRect(cx, yOf(85), cw, yOf(0) - yOf(85));
+    ctx.restore();
+  }
+  if ((mode === 'ceiling' || mode === 'path' || mode === 'cost')) {
+    const cp = clamp01((t - 500) / 800);
+    if (cp > 0) {
+      ctx.save();
+      ctx.globalAlpha = cp * 0.15;
+      ctx.fillStyle = PALETTE.gold;
+      ctx.fillRect(cx, yOf(260), cw, yOf(205) - yOf(260));
+      ctx.restore();
+    }
+  }
+  const draw = (mode === 'path' || mode === 'cost') ? 1 : clamp01(t / 1600);
+  const FLOOR: [number, number][] = [[0, 85], [1, 85]];
+  const CEIL: [number, number][] = [[0, 205], [1, 205]];
+  const PATH: [number, number][] = [[0, 95], [0.3, 160], [0.55, 232], [0.75, 180], [1, 26]];
+  const series: SeriesSpec[] = [];
+  if (mode === 'path' || mode === 'cost') {
+    series.push({ name: 'Yahoo', tone: 'down', points: partialPoints(PATH, clamp01(t / 2600)) });
+  }
+  series.push({ name: 'floor $85', tone: 'up', points: partialPoints(FLOOR, draw) });
+  if (mode === 'ceiling' || mode === 'path' || mode === 'cost') series.push({ name: 'ceiling $205', tone: 'gold', points: partialPoints(CEIL, draw) });
+  lineChart(ctx, { x: cx, y: cy, w: cw, h: ch, series, p: 1, t, gridLines: 4, showYAxis: true, lineWidth: 6 });
+  const markChip = (txt: string, x: number, y: number, tone: string, delay: number) => {
+    const cp = clamp01((t - delay) / 500);
+    if (cp > 0) {
+      ctx.save();
+      ctx.globalAlpha = cp;
+      const main = tone === 'up' ? PALETTE.up : tone === 'gold' ? PALETTE.goldDeep : PALETTE.down;
+      chip(ctx, txt, x, y, { size: 30, bg: rgba(main, 0.13), fg: main, border: rgba(main, 0.5) });
+      ctx.restore();
+    }
+  };
+  if (mode === 'floor') markChip('THE FLOOR — SELL AT $85 NO MATTER WHAT', cx + 40, cy + 16, 'up', 400);
+  if (mode === 'ceiling') markChip('THE CEILING — YOU MUST SELL AT $205', cx + cw * 0.55, cy - 40, 'gold', 400);
+  if (mode === 'path') markChip('CAPPED ABOVE 205 · HELD AT 85', cx + 40, cy + 16, 'up', 500);
+  if (mode === 'cost') {
+    const vp = clamp01((t - 600) / 600);
+    if (vp > 0) {
+      ctx.save();
+      ctx.globalAlpha = vp;
+      setFont(ctx, 44, 700, FONT_DISPLAY);
+      ctx.fillStyle = PALETTE.ink;
+      ctx.textAlign = 'left';
+      ctx.fillText('The cost: the upside you surrender.', cx, cy - 48);
+      ctx.restore();
+    }
+  }
+}
+
+// ── taxMine — the collar tax minefield ───────────────────────────────────────
+export function taxMineScene(g: SceneCtx): void {
+  const { ctx, W, H, t, s } = g;
+  room(g, 'down');
+  title(g, (s.title as string) || 'The tax minefield');
+  srcChip(g);
+  const mode = (s.mode as string) || 's1259';
+  const mineCard = (head: string, sub: string, delay: number, tone = 'down') => {
+    const cp = clamp01((t - delay) / 550);
+    if (cp > 0) {
+      ctx.save();
+      ctx.globalAlpha = cp;
+      gildedCard(ctx, 190, H * 0.30, W - 660, 190, rgba(PALETTE.down, 0.25));
+      setFont(ctx, 50, 700, FONT_DISPLAY);
+      ctx.fillStyle = PALETTE.ink;
+      ctx.textAlign = 'left';
+      ctx.fillText(head, 240, H * 0.30 + 84);
+      setFont(ctx, 34, 400);
+      ctx.fillStyle = PALETTE.inkSoft;
+      ctx.fillText(sub, 240, H * 0.30 + 146);
+      ctx.restore();
+    }
+  };
+  if (mode === 's1259') mineCard('§1259 — CONSTRUCTIVE SALE', 'hedge away substantially all risk = treated as sold. Tax now, on the entire gain.', 300);
+  if (mode === 'band') mineCard('NO OFFICIAL SAFE HARBOR', 'practitioners want a 15%+ band between floor and ceiling — a rule of thumb, not law. Facts-and-circumstances; audit risk.', 300);
+  if (mode === 's1092' || mode === 'whipsaw') mineCard('§1092 — THE WHIPSAW', 'the call premium is taxable now; the put loss is deferred — you can owe tax and be barred from the matching deduction.', 300);
+  if (mode === 'whipsaw') {
+    const wp = clamp01((t - 900) / 550);
+    if (wp > 0) {
+      ctx.save();
+      ctx.globalAlpha = wp;
+      chip(ctx, 'PRACTITIONERS CALL IT THE WHIPSAW', 190, H * 0.62, { size: 34, bg: rgba(PALETTE.down, 0.14), fg: PALETTE.down, border: rgba(PALETTE.down, 0.5) });
+      ctx.restore();
+    }
+  }
+  if (mode === 'otc') mineCard('THE OTC WORKAROUND', 'one combined contract mitigates the whipsaw — and adds dealer counterparty risk that OCC-cleared listed options do not carry.', 300);
+}
+
+// ── flowCharity — DAF / CRT flow ─────────────────────────────────────────────
+export function flowCharityScene(g: SceneCtx): void {
+  const { ctx, W, H, t, s } = g;
+  room(g, 'gold');
+  title(g, (s.title as string) || 'Charitable vehicles');
+  srcChip(g);
+  const mode = (s.mode as string) || 'daf-intro';
+  const ap = clamp01(t / 500);
+  const isCrt = mode.startsWith('crt') || mode === 's7520' || mode === 'ordering' || mode === 'remainder' || mode === 'gain-gone';
+  // three nodes: STOCK → VEHICLE → DIVERSIFIED (+ income / remainder)
+  const nx = 220, ny = H * 0.42;
+  const vx = W * 0.42, vy = H * 0.42;
+  const ox = W * 0.72, oy = H * 0.42;
+  const nodeP = clamp01((t - 200) / 500);
+  const node = (x: number, y: number, label: string, gold = false, delay = 0) => {
+    const np = clamp01((t - 200 - delay) / 500);
+    if (np <= 0) return;
+    ctx.save();
+    ctx.globalAlpha = np;
+    gildedCard(ctx, x - 130, y - 74, 260, 148, gold ? rgba(PALETTE.gold, 0.35) : undefined);
+    setFont(ctx, 34, 700);
+    ctx.fillStyle = PALETTE.ink;
+    ctx.textAlign = 'center';
+    ctx.fillText(label, x, y + 6);
+    ctx.restore();
+  };
+  node(nx, ny, 'APPRECIATED', false, 0);
+  node(nx, ny + 46, 'STOCK', false, 0);
+  node(vx, vy, isCrt ? 'CRT' : 'DAF', true, 260);
+  node(ox, oy, 'DIVERSIFIED', false, 520);
+  node(ox, oy + 46, 'PORTFOLIO', false, 520);
+  // the flow arrows
+  const flow = (x0: number, y0: number, x1: number, y1: number, delay: number, label?: string, gold = false) => {
+    const fp = clamp01((t - delay) / 600);
+    if (fp <= 0) return;
+    ctx.save();
+    ctx.globalAlpha = fp;
+    ctx.strokeStyle = gold ? PALETTE.gold : PALETTE.up;
+    ctx.lineWidth = 5;
+    ctx.beginPath();
+    ctx.moveTo(x0, y0);
+    ctx.lineTo(x0 + (x1 - x0) * fp, y0 + (y1 - y0) * fp);
+    ctx.stroke();
+    if (label && fp >= 1) {
+      setFont(ctx, 28, 600);
+      ctx.fillStyle = gold ? PALETTE.goldDeep : PALETTE.up;
+      ctx.textAlign = 'center';
+      ctx.fillText(label, (x0 + x1) / 2, y0 - 22);
+    }
+    ctx.restore();
+  };
+  flow(nx + 140, ny, vx - 140, vy, 700, 'no tax on the sale', true);
+  flow(vx + 140, vy, ox - 140, oy, 1000);
+  if (isCrt) {
+    flow(vx, vy + 100, vx, H * 0.72, 1200, 'income stream to you — for life or a term', true);
+    const rp = clamp01((t - 1500) / 600);
+    if (rp > 0) {
+      ctx.save();
+      ctx.globalAlpha = rp;
+      setFont(ctx, 36, 700);
+      ctx.fillStyle = PALETTE.down;
+      ctx.textAlign = 'center';
+      ctx.fillText('remainder → charity. Permanently.', vx, H * 0.80);
+      ctx.restore();
+    }
+  }
+  const note = (txt: string, y: number, tone: 'gold' | 'down' = 'gold', delay = 1400) => {
+    const np = clamp01((t - delay) / 500);
+    if (np > 0) {
+      ctx.save();
+      ctx.globalAlpha = np;
+      setFont(ctx, 36, 600);
+      ctx.fillStyle = tone === 'gold' ? PALETTE.goldDeep : PALETTE.down;
+      ctx.textAlign = 'left';
+      ctx.fillText(txt, 220, y);
+      ctx.restore();
+    }
+  };
+  if (mode === 'gain-gone') note('THE GAIN IS NOT DEFERRED. IT IS GONE.', H * 0.72, 'gold', 400);
+  if (mode === 'daf-note') note('NO INCOME STREAM BACK — A CHARITABLE CHECKING ACCOUNT WITH A TAX ENGINE', H * 0.68, 'gold', 300);
+  if (mode === 's7520') note('§7520 RATE ≈ 6% (NOV 2026) — HIGHER RATE, BIGGER DEDUCTION', H * 0.72, 'gold', 300);
+  if (mode === 'ordering') note('TAXED IN ORDER: ORDINARY → GAINS → TAX-FREE → PRINCIPAL', H * 0.72, 'gold', 300);
+  if (mode === 'remainder') note('WHAT "WINS" MEANS — THE PRINCIPAL YOU NEVER TOUCH', H * 0.72, 'down', 300);
+}
+
+// ── ruleChange — the 2026 OBBBA / QSBS rule cards ────────────────────────────
+export function ruleChangeScene(g: SceneCtx): void {
+  const { ctx, W, H, t, s } = g;
+  room(g, 'gold');
+  title(g, (s.title as string) || 'The rule change');
+  srcChip(g);
+  const mode = (s.mode as string) || 'floor';
+  const rows: Record<string, Array<[string, string]>> = {
+    floor: [['0.5%-of-AGI FLOOR', 'you lose the deduction on the first half-percent of AGI']],
+    cap: [['35¢ ON THE DOLLAR', 'the 37% bracket\u2019s charitable deduction caps at 35 cents']],
+    limits: [['30%-OF-AGI LIMIT', 'appreciated-asset deduction · five-year carryforward · model 2026, not a 2023 blog post']],
+    qsbs: [['§1202 — THE 2025 TIERS', '50% excluded at 3 yrs · 75% at 4 · 100% at 5 (post-July 4, 2025 stock)']],
+    'qsbs-2': [['$15M PER-ISSUER CAP · $75M GROSS-ASSET TEST', 'older stock keeps $10M / 5 yrs / 100% — read §1202 first']],
+  };
+  const list = rows[mode] || rows.floor;
+  let y = H * 0.32;
+  for (let i = 0; i < list.length; i++) {
+    const ip = clamp01((t - 300 - i * 400) / 550);
+    if (ip <= 0) continue;
+    ctx.save();
+    ctx.globalAlpha = ip;
+    gildedCard(ctx, 190, y, W - 640, 170, rgba(PALETTE.gold, 0.3));
+    setFont(ctx, 48, 700, FONT_DISPLAY);
+    ctx.fillStyle = PALETTE.ink;
+    ctx.textAlign = 'left';
+    ctx.fillText(list[i][0], 250, y + 76);
+    setFont(ctx, 34, 400);
+    ctx.fillStyle = PALETTE.inkSoft;
+    const lines = wrapText(ctx, list[i][1], W - 780, 34, 600);
+    lines.slice(0, 2).forEach((ln, k) => ctx.fillText(ln, 250, y + 126 + k * 42));
+    ctx.restore();
+    y += 210;
+  }
+}
+
+// ── lsLeverage — the 130/30 structure ────────────────────────────────────────
+export function lsLeverageScene(g: SceneCtx): void {
+  const { ctx, W, H, t, s } = g;
+  room(g, 'up');
+  title(g, (s.title as string) || 'The levered long/short');
+  srcChip(g);
+  const mode = (s.mode as string) || 'intro';
+  const ap = clamp01(t / 500);
+  const bx = 190, bw = W - 620, by = H * 0.40, bh = 130;
+  ctx.save();
+  ctx.globalAlpha = ap;
+  // the core 100%
+  const coreW = bw * 0.5;
+  ctx.fillStyle = rgba(PALETTE.up, 0.8);
+  roundRect(ctx, bx + bw * 0.25, by, coreW, bh, 20);
+  ctx.fill();
+  setFont(ctx, 36, 700);
+  ctx.fillStyle = PALETTE.white;
+  ctx.textAlign = 'center';
+  ctx.fillText('YOUR CONCENTRATED CORE', bx + bw * 0.25 + coreW / 2, by + bh / 2 + 12);
+  // long extension (left) / short extension (right) slide out
+  const ep = clamp01((t - 500) / 900);
+  ctx.globalAlpha = ap * ep;
+  ctx.fillStyle = rgba(PALETTE.up, 0.45);
+  roundRect(ctx, bx + bw * 0.25 - bw * 0.25 * ep, by, bw * 0.25, bh, 20);
+  ctx.fill();
+  ctx.fillStyle = rgba(PALETTE.down, 0.5);
+  roundRect(ctx, bx + bw * 0.25 + coreW, by, bw * 0.25 * ep, bh, 20);
+  ctx.fill();
+  setFont(ctx, 30, 700);
+  ctx.fillStyle = PALETTE.up;
+  ctx.fillText('LONG +', bx + bw * 0.12, by + bh / 2 + 10);
+  ctx.fillStyle = PALETTE.down;
+  ctx.fillText('SHORT −', bx + bw * 0.88, by + bh / 2 + 10);
+  ctx.restore();
+  if (mode === 'ratios') {
+    const rp = clamp01((t - 900) / 600);
+    if (rp > 0) {
+      ctx.save();
+      ctx.globalAlpha = rp;
+      setFont(ctx, 56, 700, FONT_DISPLAY);
+      ctx.fillStyle = PALETTE.ink;
+      ctx.textAlign = 'left';
+      ctx.fillText('130/30 — and the aggressive 200/100', 190, H * 0.66);
+      setFont(ctx, 36, 600);
+      ctx.fillStyle = PALETTE.inkSoft;
+      ctx.fillText('tax-neutral diversification, fast', 190, H * 0.66 + 62);
+      ctx.restore();
+    }
+  } else if (mode === 'extensions') {
+    const ep2 = clamp01((t - 700) / 600);
+    if (ep2 > 0) {
+      ctx.save();
+      ctx.globalAlpha = ep2;
+      chip(ctx, 'LONG: BOUGHT WITH BORROWED FUNDS · SHORT: BORROWED AND SOLD', 190, H * 0.66, { size: 30, bg: PALETTE.white, fg: PALETTE.inkSoft });
+      ctx.restore();
+    }
+  }
+}
+
+// ── appleCase — the JAM case study ───────────────────────────────────────────
+export function appleCaseScene(g: SceneCtx): void {
+  const { ctx, W, H, t, s } = g;
+  room(g, 'down');
+  title(g, (s.title as string) || 'The Apple case, 2007\u20132017');
+  srcChip(g);
+  const mode = (s.mode as string) || 'slow';
+  const slowP = mode === 'slow' ? clamp01((t - 400) / 2400) : 1;
+  const fastP = mode === 'fast' ? clamp01((t - 400) / 1600) : mode === 'slow' ? 1 : 0;
+  // slow: active weight barely falls (80% at year 10)
+  const SLOW: [number, number][] = [[0, 100], [0.25, 94], [0.5, 90], [0.75, 85], [1, 80]];
+  // fast: collapses to 1% within two years
+  const FAST: [number, number][] = [[0, 100], [0.1, 42], [0.2, 8], [1, 1]];
+  lineChart(ctx, {
+    x: 190, y: 300, w: W - 700, h: H * 0.40,
+    series: [
+      { name: 'gains budget — sell 5%/yr', tone: 'muted', points: partialPoints(SLOW, slowP) },
+      { name: 'LS 200/100', tone: 'up', points: partialPoints(FAST, fastP) },
+    ],
+    p: 1, t, gridLines: 4, showYAxis: true, lineWidth: 6,
+  });
+  if (mode === 'fast') {
+    const cp = clamp01((t - 600) / 500);
+    if (cp > 0) {
+      ctx.save();
+      ctx.globalAlpha = cp;
+      chip(ctx, 'APPLE AT ~1% WITHIN TWO YEARS — WITH HINDSIGHT, A CALAMITY', 190, H * 0.78, { size: 32, bg: rgba(PALETTE.down, 0.13), fg: PALETTE.down, border: rgba(PALETTE.down, 0.5) });
+      ctx.restore();
+    }
+  } else {
+    const cp = clamp01((t - 600) / 500);
+    if (cp > 0) {
+      ctx.save();
+      ctx.globalAlpha = cp;
+      chip(ctx, 'STILL 80% APPLE AFTER TEN YEARS', 190, H * 0.78, { size: 32, bg: rgba(PALETTE.down, 0.13), fg: PALETTE.down, border: rgba(PALETTE.down, 0.5) });
+      ctx.restore();
+    }
+  }
+}
+
+// ── decisionTable — THE SAVE ARTIFACT ────────────────────────────────────────
+export function decisionTableScene(g: SceneCtx): void {
+  const { ctx, W, H, t, s } = g;
+  room(g, 'gold');
+  title(g, (s.title as string) || 'The framework');
+  const mode = (s.mode as string) || 'intro';
+  const ROWS = [
+    ['10b5-1 plan', 'Legal, disciplined selling', 'New vests, on autopilot', 'Thinks it shelters tax'],
+    ['Exchange fund', 'Instant diversification', 'Big gain, no cash need 7 yrs', 'Needs money inside 7 yrs'],
+    ['Direct indexing', 'Year-round loss harvest', 'High bracket · narrow fee gap', 'No gains · IRA · wide fees'],
+    ['Protective collar', 'A floor for a window', 'Employer allows hedging', 'Bullish · hedging banned'],
+    ['CRT / DAF', 'Gain vanishes, funds giving', 'Genuine intent · spare capital', 'May need the principal'],
+    ['Levered L/S', 'Fast, tax-deferred exit', 'Scale · leverage tolerance', 'Fee- or leverage-averse'],
+  ];
+  const visible = mode === 'intro' ? 0 : mode === 'full' ? 6 : Number(mode.slice(4));
+  const colX = [190, 510, 890, 1300];
+  const colW = [310, 370, 400, 420];
+  const rowY0 = 290, rowH = 100;
+  // header row
+  const hp = clamp01(t / 500);
+  if (hp > 0) {
+    ctx.save();
+    ctx.globalAlpha = hp;
+    const heads = ['EXIT', 'THE ONE JOB', 'CHOOSE IT WHEN', 'KILL CONDITION'];
+    for (let c = 0; c < 4; c++) {
+      setFont(ctx, 30, 700);
+      ctx.fillStyle = PALETTE.goldDeep;
+      ctx.textAlign = 'left';
+      ctx.fillText(heads[c], colX[c], rowY0 - 24);
+    }
+    ctx.strokeStyle = rgba(PALETTE.gold, 0.6);
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    ctx.moveTo(colX[0], rowY0 - 8);
+    ctx.lineTo(colX[3] + colW[3], rowY0 - 8);
+    ctx.stroke();
+    ctx.restore();
+  }
+  for (let r = 0; r < visible; r++) {
+    const rp = clamp01((t - 350 - r * 320) / 550);
+    if (rp <= 0) continue;
+    const y = rowY0 + r * rowH;
+    ctx.save();
+    ctx.globalAlpha = rp;
+    if (r % 2 === 0) {
+      ctx.fillStyle = rgba(PALETTE.card, 0.9);
+      roundRect(ctx, colX[0] - 16, y - 6, colX[3] + colW[3] - colX[0] + 32, rowH - 14, 16);
+      ctx.fill();
+    }
+    setFont(ctx, 32, 700, FONT_DISPLAY);
+    ctx.fillStyle = PALETTE.goldDeep;
+    ctx.fillText(ROWS[r][0], colX[0], y + 40);
+    setFont(ctx, 29, 600);
+    ctx.fillStyle = PALETTE.ink;
+    ctx.fillText(ROWS[r][1], colX[1], y + 36);
+    ctx.fillStyle = PALETTE.inkSoft;
+    ctx.fillText(ROWS[r][2], colX[2], y + 36);
+    ctx.fillStyle = PALETTE.down;
+    ctx.fillText(ROWS[r][3], colX[3], y + 36);
+    ctx.restore();
+  }
+  if (mode === 'full') {
+    const fp = clamp01((t - 2200) / 700);
+    if (fp > 0) {
+      ctx.save();
+      ctx.globalAlpha = fp;
+      chip(ctx, 'SCREENSHOT THIS — OR FIND IT IN THE DESCRIPTION', W / 2 - 420, H * 0.885, { size: 32, bg: PALETTE.goldWash, fg: PALETTE.goldDeep, border: rgba(PALETTE.gold, 0.6) });
+      ctx.restore();
+    }
+  }
+}
+
+// ── sequenceStack — the layered answer ───────────────────────────────────────
+export function sequenceStackScene(g: SceneCtx): void {
+  const { ctx, W, H, t, s } = g;
+  room(g, 'gold');
+  title(g, (s.title as string) || 'The sequence');
+  const ap = clamp01(t / 500);
+  const layers = [
+    ['$6M', 'EXCHANGE FUND — the core', PALETTE.up],
+    ['10b5-1', 'A LADDER FOR EVERY NEW VEST', PALETTE.ink],
+    ['$1M', 'DONOR-ADVISED FUND — if charitably inclined', PALETTE.goldDeep],
+    ['$1M', 'COLLAR — the upside you cannot let go of', PALETTE.muted ?? PALETTE.inkSoft],
+  ];
+  let y = H * 0.30;
+  for (let i = 0; i < layers.length; i++) {
+    const lp = clamp01((t - 350 - i * 380) / 550);
+    if (lp <= 0) continue;
+    ctx.save();
+    ctx.globalAlpha = lp;
+    const w = W * 0.62 - i * 60;
+    const x = 190 + i * 30;
+    gildedCard(ctx, x, y, w, 128, i === 0 ? rgba(PALETTE.gold, 0.3) : undefined);
+    setFont(ctx, 44, 700, FONT_DISPLAY);
+    ctx.fillStyle = layers[i][2];
+    ctx.textAlign = 'left';
+    ctx.fillText(layers[i][0], x + 40, y + 78);
+    setFont(ctx, 30, 600);
+    ctx.fillStyle = PALETTE.inkSoft;
+    ctx.fillText(layers[i][1], x + 240, y + 74);
+    ctx.restore();
+    y += 158;
+  }
+}
+
+// [[MORE]]
+
