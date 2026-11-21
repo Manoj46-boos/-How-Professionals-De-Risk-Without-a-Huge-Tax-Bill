@@ -1277,7 +1277,6 @@ export const SCRIPT: ChapterSpec[] = [
         vo:
           'He could not even put the collar on for six months, so he bought puts outright first — quote, \u201cliterally every single penny I had.\u201d',
         pauseAfter: 550,
-        voice: 'en-US-GuyNeural',
         voStyle: 'quote',
         scene: P('quoteCard', 'e4-puts', {
           kicker: 'Mark Cuban, on the six months before the collar',
@@ -1299,7 +1298,6 @@ export const SCRIPT: ChapterSpec[] = [
         vo:
           'Quote: \u201cMy hedge worked out perfectly.\u201d The collar did not make him rich. It kept him rich.',
         pauseAfter: 450,
-        voice: 'en-US-GuyNeural',
         voStyle: 'quote',
         scene: P('quoteCard', 'e4-hedge', {
           kicker: 'Mark Cuban',
