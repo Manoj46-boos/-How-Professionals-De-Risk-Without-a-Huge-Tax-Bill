@@ -374,18 +374,22 @@ function drawMouthV2(
     // FACE FILL — the rest smile is a FILLED crescent now, not a 5px
     // stroke: the mouth is the face's third mass (brows / eyes / mouth)
     // and a thin line was the first thing the feed dissolved.
+    // A4 FIX: the rest smile widens ±9 -> ±12 so the mouth reads at
+    // conversation scale, not as a hairline.
     ctx.fillStyle = col;
     ctx.beginPath();
-    ctx.moveTo(-9 + mx, 13);
-    ctx.quadraticCurveTo(mx, 14 + smile * 11, 9 + mx, 13);
-    ctx.quadraticCurveTo(mx, 16.5 + smile * 3, -9 + mx, 13);
+    ctx.moveTo(-12 + mx, 13);
+    ctx.quadraticCurveTo(mx, 14 + smile * 11, 12 + mx, 13);
+    ctx.quadraticCurveTo(mx, 16.5 + smile * 3, -12 + mx, 13);
     ctx.closePath();
     ctx.fill();
   } else {
     // the neutral mouth — a filled soft slot (same fill logic at rest)
+    // A4 FIX: the slot widens 7 -> 11 and gains height — a hairline mouth
+    // under big brows read as stunned silence; a real mouth reads as calm.
     ctx.fillStyle = col;
     ctx.beginPath();
-    ctx.ellipse(mx, 14.5, 7, 2.2, 0, 0, Math.PI * 2);
+    ctx.ellipse(mx, 14.2, 11, 3.0, 0, 0, Math.PI * 2);
     ctx.fill();
   }
 }
@@ -620,11 +624,12 @@ export function limb2(
   // AUDIT-ROUND-3 iter-2: the bow floor rises 0.15 → 0.25 — a resting
   // limb still carries a whisper of curvature ("still no knee
   // articulation — two straight tapered columns").
-  // 100-JUDGE PANEL REPORT (fix A4): the RAW bend (no floor) is kept for
-  // the joint-mass gate — a rest-pose limb's near-straight geometry must
-  // not carry a knuckle disc.
+  // A3 MARKET-STANDARD FIX (review report A3 [P1] — THE RUBBER BOW): the
+  // 0.25 floor bowed every resting leg into the flamingo stance the close-up
+  // panel convicted. The floor drops to 0.12 — a whisper of curvature on a
+  // resting limb, a real bow only on a real bend.
   const rawBend = Math.min(1, Math.abs((v1x * v2y - v1y * v2x) / (L1 * L2)));
-  const bend = Math.min(1, Math.max(0.25, rawBend));
+  const bend = Math.min(1, Math.max(0.12, rawBend));
   const BOW = 2.8 * bend;
   const n1x = -v1y / L1, n1y = v1x / L1;
   const side1 = (n1x * v2x + n1y * v2y) < 0 ? 1 : -1;
@@ -643,15 +648,21 @@ export function limb2(
   // a decal — a true pressure spine TAPERS"): the spine now enters at
   // 55% of the bone's width at the root and feathers to 25% at the
   // extremity — thick where the muscle is, hairline at the wrist/ankle.
-  const inner = hexLerp(col, '#F2D98F', 0.36);
+  // A5 MARKET-STANDARD FIX (review report A5 [P2] — THE SAGE TROUSER): the
+  // spine ran at 55% width lerped 36% toward a bright gold — on the wide
+  // legs the lit band DOMINATED the limb and the figure read bare-legged
+  // in sage-khaki under a tunic. The spine is a HIGHLIGHT again: narrow
+  // (34% -> 18% feather) and one step off the ink itself, so legs, shoes
+  // and torso read as ONE ink family — the Alan-Becker one-silhouette rule.
+  const inner = hexLerp(col, '#E8DFC8', 0.18);
   const ls1 = (n1x * 0.7 + n1y * -0.7 >= 0) ? 1 : -1;
   const ls2 = (n2x * 0.7 + n2y * -0.7 >= 0) ? 1 : -1;
   drawnBone(ctx, x + n1x * ls1 * w0 * t0 * 0.15, y + n1y * ls1 * w0 * t0 * 0.15,
              jx + n1x * ls1 * wJ * t0 * 0.15, jy + n1y * ls1 * wJ * t0 * 0.15,
-             w0 * t0 * 0.55, wJ * t0 * 0.32, inner, side1 * BOW * 0.85);
+             w0 * t0 * 0.34, wJ * t0 * 0.20, inner, side1 * BOW * 0.85);
   drawnBone(ctx, jx + n2x * ls2 * wJ * t1 * 0.15, jy + n2y * ls2 * wJ * t1 * 0.15,
              ex + n2x * ls2 * w1 * t1 * 0.15, ey + n2y * ls2 * w1 * t1 * 0.15,
-             wJ * t1 * 0.55, w1 * t1 * 0.25, inner, side2 * BOW * 0.85);
+             wJ * t1 * 0.34, w1 * t1 * 0.16, inner, side2 * BOW * 0.85);
   // the knuckle — the joint mass (elbow/knee) that kills the miter read.
   // 100-JUDGE PANEL REPORT (fix A4): the disc draws ONLY on a real bend.
   // PHASE-1 VISUAL AUDIT (report Phase 1 — Joints, frame evidence
@@ -753,7 +764,13 @@ export function handGlyph(
   // read as a HAND at every staging, so the palm floor rises to 20px
   // screen space (the smallest hand a cold viewer names as a hand on a
   // 1080p frame) and the point glyph's fingertip floor rises to 14px.
-  s = Math.max(s, 20 / Math.max(0.5, rigScale));
+  // A2 MARKET-STANDARD FIX (review report A2 [P1] — GLOVE-ON-A-STRING): the
+  // 20px floor inflated the palm far past the wrist it attaches to — the
+  // mitten read as a boxing glove tied to a wire. The floor drops to 14px
+  // and every glyph's mass scales DOWN so hand mass stays <= ~1.6x the
+  // wrist width, with the limb's own 0.46x wrist disc as the visible
+  // wrist step. Hands read as hands BECAUSE they are proportionate.
+  s = Math.max(s, 14 / Math.max(0.5, rigScale));
   // P1-2 (100-judge audit, Table 3 — HANDS): the FIST + COUNT glyphs.
   // "Featureless mitts in every pose" / "a withered claw" — and the
   // count poses had nothing to count WITH. The fist: a rounded mass + a
@@ -822,7 +839,7 @@ export function handGlyph(
     // between them: the drawn-character grip the report prescribes
     // ("pre-inked glyphs drawn with finger breaks"), reading at close-up;
     // below rig 1.25 the plain mass silhouette holds (feed).
-    roundRect(ctx, -s * 0.42, -s * 0.34, s * 0.56, s * 0.7, s * 0.26);
+    roundRect(ctx, -s * 0.36, -s * 0.29, s * 0.48, s * 0.6, s * 0.22);
     if (rigScale >= 1.25) {
       // P1 U2: the knuckle breaks floor into the audit's readable band —
       // the old s*0.13 bars were 2.3px at rig 1.5 (invisible: the mitt).
@@ -897,26 +914,28 @@ export function handGlyph(
     ctx.translate(x + Math.sin(a) * s * 0.36, y + Math.cos(a) * s * 0.36);
     ctx.rotate(a);
     ctx.beginPath();
-    roundRect(ctx, -s * 0.62, -s * 0.44, s * 0.84, s * 0.9, s * 0.4);
+    roundRect(ctx, -s * 0.50, -s * 0.36, s * 0.68, s * 0.74, s * 0.33);
     if (rigScale >= 1.25) {
-      for (const fy of [-0.33, -0.15, 0.03]) {
-        rrSub(ctx, s * 0.02, fy * s, s * 0.44, s * 0.13, s * 0.055);
+      for (const fy of [-0.27, -0.12, 0.02]) {
+        rrSub(ctx, s * 0.02, fy * s, s * 0.38, s * 0.12, s * 0.05);
       }
     }
     ctx.restore();
     // the thumb lobe — a rounded bump on the wrist side, ONE subpath of
     // the mass's own path (PHASE-5 D-09: the stale beginPath here used to
     // wipe the palm mass before its fill — the point hand drew as a bare
-    // finger + floating lobe; the mass path now survives to the fill)
+    // finger + floating lobe; the mass path now survives to the fill).
+    // A2 FIX: the lobe tucks to the palm silhouette (shorter reach) so it
+    // reads as a thumb, not a second mass.
     {
       const fa = a + 1.05;
       const bx = x + Math.sin(a) * s * 0.36, by = y + Math.cos(a) * s * 0.36;
-      const ex = x + Math.sin(fa) * s * 0.78, ey = y + Math.cos(fa) * s * 0.78;
+      const ex = x + Math.sin(fa) * s * 0.64, ey = y + Math.cos(fa) * s * 0.64;
       ctx.moveTo(bx, by);
-      ctx.quadraticCurveTo(ex + Math.sin(a) * s * 0.18, ey + Math.cos(a) * s * 0.18, ex, ey);
+      ctx.quadraticCurveTo(ex + Math.sin(a) * s * 0.15, ey + Math.cos(a) * s * 0.15, ex, ey);
       ctx.quadraticCurveTo(
-        x + Math.sin(a) * s * 0.28 + Math.sin(a + Math.PI / 2) * s * 0.32,
-        y + Math.cos(a) * s * 0.28 + Math.cos(a + Math.PI / 2) * s * 0.32,
+        x + Math.sin(a) * s * 0.26 + Math.sin(a + Math.PI / 2) * s * 0.26,
+        y + Math.cos(a) * s * 0.26 + Math.cos(a + Math.PI / 2) * s * 0.26,
         bx, by
       );
       ctx.closePath();
@@ -950,7 +969,7 @@ export function handGlyph(
     // under every floor the audit set, so working hands read as blobs.
     // The whole glyph lifts to the palm floor so the hand stays
     // proportionate (lengths ride the same unit).
-    const hs = Math.max(s, 20 / 1.04);
+    const hs = Math.max(s, 14 / 1.04);
     ctx.save();
     ctx.translate(x + Math.sin(fa) * hs * 0.30, y + Math.cos(fa) * hs * 0.30);
     ctx.rotate(fa);
@@ -1052,7 +1071,9 @@ export function handGlyph(
   ctx.translate(x + Math.sin(a) * s * 0.4, y + Math.cos(a) * s * 0.4);
   ctx.rotate(a);
   ctx.beginPath();
-  roundRect(ctx, -s * 0.65, -s * 0.46, s * 1.3, s * 0.98, s * 0.44);
+  // A2 FIX: the mitten mass shrinks one step (1.3s x 0.98s -> 1.04s x 0.8s)
+  // so the palm stays within ~1.6x the wrist disc it attaches to.
+  roundRect(ctx, -s * 0.52, -s * 0.38, s * 1.04, s * 0.8, s * 0.36);
   ctx.restore();
   // PHASE-5 (D-09 — ARTICULATION): at close-up rig scales (host 2.65,
   // cast 1.45+) the plain capsule silhouette reads as a lemon. Three
@@ -1061,25 +1082,26 @@ export function handGlyph(
   // into bump-and-notch knuckles: a hand, not a fruit, on any plane
   // (no interior lines to survive or die at feed scale).
   if (rigScale >= 1.25) {
-    const fxc = x + Math.sin(a) * s * 0.58, fyc = y + Math.cos(a) * s * 0.58;
+    const fxc = x + Math.sin(a) * s * 0.47, fyc = y + Math.cos(a) * s * 0.47;
     const pxs = Math.sin(a + Math.PI / 2), pys = Math.cos(a + Math.PI / 2);
     for (const f of [-1, 0, 1]) {
-      const sx = fxc + pxs * f * 0.28 * s, sy = fyc + pys * f * 0.28 * s;
-      const fr = s * 0.15;
-      ctx.moveTo(sx + Math.sin(a) * s * 0.14 + fr, sy + Math.cos(a) * s * 0.14);
-      ctx.arc(sx + Math.sin(a) * s * 0.14, sy + Math.cos(a) * s * 0.14, fr, 0, Math.PI * 2);
+      const sx = fxc + pxs * f * 0.24 * s, sy = fyc + pys * f * 0.24 * s;
+      const fr = s * 0.13;
+      ctx.moveTo(sx + Math.sin(a) * s * 0.12 + fr, sy + Math.cos(a) * s * 0.12);
+      ctx.arc(sx + Math.sin(a) * s * 0.12, sy + Math.cos(a) * s * 0.12, fr, 0, Math.PI * 2);
     }
   }
   // the thumb lobe — a rounded bump on the wrist side, one subpath
+  // (A2 FIX: tucked reach — thumb, not a second mass)
   {
     const fa = a + 1.05;
     const bx = x + Math.sin(a) * s * 0.4, by = y + Math.cos(a) * s * 0.4;
-    const ex = x + Math.sin(fa) * s * 0.78, ey = y + Math.cos(fa) * s * 0.78;
+    const ex = x + Math.sin(fa) * s * 0.64, ey = y + Math.cos(fa) * s * 0.64;
     ctx.moveTo(bx, by);
-    ctx.quadraticCurveTo(ex + Math.sin(a) * s * 0.18, ey + Math.cos(a) * s * 0.18, ex, ey);
+    ctx.quadraticCurveTo(ex + Math.sin(a) * s * 0.15, ey + Math.cos(a) * s * 0.15, ex, ey);
     ctx.quadraticCurveTo(
-      x + Math.sin(a) * s * 0.30 + Math.sin(a + Math.PI / 2) * s * 0.32,
-      y + Math.cos(a) * s * 0.30 + Math.cos(a + Math.PI / 2) * s * 0.32,
+      x + Math.sin(a) * s * 0.26 + Math.sin(a + Math.PI / 2) * s * 0.26,
+      y + Math.cos(a) * s * 0.26 + Math.cos(a + Math.PI / 2) * s * 0.26,
       bx, by
     );
     ctx.closePath();
@@ -1201,16 +1223,23 @@ function scarfTail(
   // bones shorten to 17/14, and the ribbon thins to 8.5→3.2 units — the
   // flick stays at the shoulder line, the knot + collar carry the brand,
   // and the strap read is geometrically impossible.
+  // A6 MARKET-STANDARD FIX (review report A6 [P1] — THE GOLD TRUNCHEON):
+  // even the 17/14-unit bones at 8.5-unit root read as a rigid bar at hero
+  // rigs — a signature accessory must read as CLOTH at rest AND motion.
+  // The ribbon shortens to a true neck-flick (12/10-unit bones, root
+  // 6.8 units) and the cloth gravity rises 0.0011 -> 0.0017, so the chain
+  // visibly BENDS at rest instead of extending as a bar; the flick still
+  // escapes the shoulder line and the knot + collar carry the brand.
   const rl = Math.hypot(14, 5);
-  const [fp, tp] = followChain(t, seed, anchor, { x: -14 / rl, y: 5 / rl }, 17, 14, -0.0002, 0.0011, 0.86);
+  const [fp, tp] = followChain(t, seed, anchor, { x: -14 / rl, y: 5 / rl }, 12, 10, -0.0002, 0.0017, 0.86);
   const fxp = fp.x, fyp = fp.y;       // the fold — chain node 1
   const ex = tp.x, ey = tp.y;         // the tip — chain node 2
   // ONE continuous tapered ribbon — root segment then fold segment,
   // round caps at the fold so the crease reads as cloth bending.
-  taper(ctx, x0, y0, fxp, fyp, 8.5, 6, colUnder);
-  taper(ctx, fxp, fyp, ex, ey, 6, 3.8, colUnder);
-  taper(ctx, x0, y0, fxp, fyp, 7.2, 5, colTop);
-  taper(ctx, fxp, fyp, ex, ey, 5, 3.2, colTop);
+  taper(ctx, x0, y0, fxp, fyp, 6.8, 4.8, colUnder);
+  taper(ctx, fxp, fyp, ex, ey, 4.8, 3.0, colUnder);
+  taper(ctx, x0, y0, fxp, fyp, 5.8, 4.2, colTop);
+  taper(ctx, fxp, fyp, ex, ey, 4.2, 2.6, colTop);
   // the fold crease — the one seam a real scarf HAS (the two-tone hint
   // at the bend, in the under colour)
   ctx.strokeStyle = rgba(colUnder, 0.85);
@@ -2084,19 +2113,22 @@ export function drawStickmanV2(
       ctx.strokeStyle = ink;
       ctx.lineWidth = 2;
       ctx.stroke();
-      // the deep-V notch — the tee shows through the vest's opening
+      // A1 MARKET-STANDARD FIX — THE CREW-NECK (review report A1 [P1]): the
+      // theatrical deep-V notch is retired — at hero scale the V-plus-shoulder
+      // silhouette read as a gladiator / ringmaster costume. The vest now
+      // meets a modest round crew neckline: a small tee wedge at the top
+      // center only (the garment opening), no center-chest V — one clean
+      // two-tone silhouette, the Becker/Sprouts garment bar.
       ctx.fillStyle = OUTFIT.tee;
       ctx.beginPath();
-      ctx.moveTo(rX(0.97, wS * 0.34), rY(0.97, wS * 0.34));
-      ctx.lineTo(rX(0.62, 0), rY(0.62, 0));
-      ctx.lineTo(lX(0.97, wS * 0.34), lY(0.97, wS * 0.34));
-      ctx.closePath();
+      ctx.ellipse(rX(0.955, 0), rY(0.955, 0), wS * 0.30, wS * 0.20, 0, 0, Math.PI * 2);
       ctx.fill();
     }
-    // shoulder caps — small rounded delts at the shoulder line (vest gold:
-    // the deltoid sits on the vest's shoulder strap; the worker's stay on
-    // his gray-ink torso — FP0 cast-by-value)
-    ctx.fillStyle = prof || worker ? torsoMass : OUTFIT.vest;
+    // shoulder caps — small rounded delts at the shoulder line. A1 FIX: the
+    // caps wear the TEE tone, not vest gold — the deltoid is the sleeve of
+    // the garment underneath, so the gold stays a chest panel and the
+    // "gold epaulette / variety-show shoulder" read dies at every rig.
+    ctx.fillStyle = torsoMass;
     ctx.beginPath();
     ctx.arc(rX(0.92, wS * 0.6), rY(0.92, wS * 0.6), wS * 0.45, 0, Math.PI * 2);
     ctx.fill();
@@ -3140,7 +3172,10 @@ export function drawStickmanV2(
   // PROPORTIONAL TO THE EYE (sclera × 1.28) instead of a fixed 13.5 units —
   // the wire stops dominating the face and frames it.
   const lensR = Math.max(9.0, featureFloor(6.5), scleraR * 1.28);
-  const ivoryPupR = Math.max(3.9, featureFloor(4.9), scleraR * 0.76);
+  // A4 FIX: the pupil fills more of the sclera (0.76 -> 0.88) — the
+  // wide-white/small-dot eye was the startled read; a fuller pupil focuses
+  // the gaze while the ivory crescent survives at every scale.
+  const ivoryPupR = Math.max(3.9, featureFloor(4.9), scleraR * 0.88);
   if (becker) {
     ctx.fillStyle = faceInk;
     ctx.beginPath();
@@ -3150,7 +3185,7 @@ export function drawStickmanV2(
     // D-8: ink pupils inside the sclera — the missing focus point was the
     // googly read's root cause
     ctx.fillStyle = ink;
-    const pupR = 3.8 * (1 + surprise * 0.28); // PHASE-1: +30% with the eye mass
+    const pupR = 4.3 * (1 + surprise * 0.28); // PHASE-1: +30% with the eye mass; A4: fuller cast pupil
     ctx.beginPath();
     ctx.ellipse(-14 + eyeDX, -6, pupR * eyeSL, pupR * eyeOpen * eyeSL, 0, 0, Math.PI * 2);
     ctx.ellipse(14 + eyeDX, -6, pupR * eyeSR, pupR * eyeOpen * eyeSR, 0, 0, Math.PI * 2);
@@ -3181,7 +3216,7 @@ export function drawStickmanV2(
     // at 74% of its radius — still ink-dominant (the drawn-caricature
     // standard), but a visible ivory crescent survives at every scale and
     // the gasp can no longer swallow the eye.
-    const pup = Math.min(ivoryPupR * (1 + surprise * 0.1), surSclera * (0.74 - 0.14 * surprise)); // FP0: whites survive the gasp
+    const pup = Math.min(ivoryPupR * (1 + surprise * 0.1), surSclera * (0.84 - 0.12 * surprise)); // A4: fuller pupil, crescent survives the gasp
     ctx.beginPath();
     ctx.ellipse(-14 + eyeDX, -6, pup * eyeSL, pup * eyeOpen * eyeSL, 0, 0, Math.PI * 2);
     ctx.ellipse(14 + eyeDX, -6, pup * eyeSR, pup * eyeOpen * eyeSR, 0, 0, Math.PI * 2);
@@ -3245,9 +3280,13 @@ export function drawStickmanV2(
     // ivory lift above it — the brow arch reads as attached to the face at
     // every rig, and the travel (AMP.browTravelPx 40 → 14) keeps even the
     // full-surprise arch inside the forehead's own band.
+    // A4 MARKET-STANDARD FIX (review report A4 [P1] — THE RESTING STARE):
+    // the rest line drops two units. Brows parked high + wide sclera read
+    // as a permanent startle; a neutral watcher's brows sit closer to the
+    // eye line. The travel channels still ride on top unchanged.
     const lift = ivory ? 2.5 : 0;
-    const y0 = -15.5 - lift - bRaise - dir * Math.tan(bAng) * 7;
-    const y1 = -13.5 - lift - bRaise + dir * Math.tan(bAng) * 7;
+    const y0 = -13.5 - lift - bRaise - dir * Math.tan(bAng) * 7;
+    const y1 = -11.5 - lift - bRaise + dir * Math.tan(bAng) * 7;
     ctx.strokeStyle = becker ? faceInk : ink;
     ctx.lineWidth = Math.max(smallHead ? 5.5 : 6.5, featureFloor(7), scale >= 2 ? 9.5 : 0);
     ctx.lineCap = 'round';
