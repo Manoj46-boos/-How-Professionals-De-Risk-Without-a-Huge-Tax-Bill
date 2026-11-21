@@ -217,6 +217,7 @@ export const SCRIPT: ChapterSpec[] = [
         pauseAfter: 500,
         scene: P('host', 'c1-base', {
           headline: 'The base rate\nof a single stock',
+          verb: 'card', gesture: 'think',
           kicker: 'chapter one — the math of the trap',
         }),
       },
@@ -303,6 +304,7 @@ export const SCRIPT: ChapterSpec[] = [
         pauseAfter: 500,
         scene: P('host', 'c1-both', {
           headline: 'Pick the right stock,\nhold it forty years',
+          verb: 'card', gesture: 'count2',
           kicker: 'the both-sides beat',
         }),
       },
@@ -312,6 +314,7 @@ export const SCRIPT: ChapterSpec[] = [
         pauseAfter: 450,
         scene: P('host', 'c1-both', {
           headline: 'You cannot know,\nin advance,',
+          gesture: 'shrug',
           kicker: 'which side of the distribution you are on',
         }),
       },
@@ -395,6 +398,7 @@ export const SCRIPT: ChapterSpec[] = [
         voStyle: 'reveal',
         scene: P('host', 'c1-tension', {
           headline: 'Enormous and probabilistic.\nLarge and certain.',
+          gesture: 'aha',
           kicker: 'both true at once — that tension is the subject',
         }),
       },
@@ -454,6 +458,7 @@ export const SCRIPT: ChapterSpec[] = [
         pauseAfter: 450,
         scene: P('host', 'c1-jam', {
           headline: 'The peer-reviewed\nversion of \u201cjust pay the tax\u201d',
+          gesture: 'think',
           kicker: '380 ten-year paths, backtested',
         }),
       },
@@ -463,6 +468,7 @@ export const SCRIPT: ChapterSpec[] = [
         pauseAfter: 500,
         scene: P('host', 'c1-jam', {
           headline: 'Sell everything today,\nbuy the index —',
+          gesture: 'pointR',
           kicker: '\u2248 in line with holding, after tax, on average',
         }),
       },
@@ -481,6 +487,7 @@ export const SCRIPT: ChapterSpec[] = [
         pauseAfter: 450,
         scene: P('host', 'c1-jam', {
           headline: 'The tax is the price\nof the exit —',
+          gesture: 'count1',
           kicker: 'not a reason to stay in the building',
         }),
       },
@@ -558,6 +565,7 @@ export const SCRIPT: ChapterSpec[] = [
         pauseAfter: 500,
         scene: P('host', 'e1-why', {
           headline: 'The discipline\nis the feature',
+          verb: 'card', gesture: 'leanIn',
           kicker: 'the baseline every exit is measured against',
         }),
       },
@@ -717,6 +725,7 @@ export const SCRIPT: ChapterSpec[] = [
         pauseAfter: 450,
         scene: P('host', 'e1-right', {
           headline: 'New vests, on autopilot,\nwith legal cover —',
+          gesture: 'count3',
           kicker: 'while you decide what to do with the block',
         }),
       },
@@ -736,6 +745,7 @@ export const SCRIPT: ChapterSpec[] = [
         voStyle: 'quote',
         scene: P('host', 'e1-out', {
           headline: 'The first of those requires\na seven-year marriage.',
+          gesture: 'close',
           kicker: 'exit 2 — the exchange fund',
         }),
       },
@@ -970,6 +980,7 @@ export const SCRIPT: ChapterSpec[] = [
         pauseAfter: 500,
         scene: P('host', 'e2-right', {
           headline: 'Large, appreciated,\nno liquidity need for seven years —',
+          gesture: 'pointR',
           kicker: 'and the humility to admit you do not know',
         }),
       },
@@ -1079,6 +1090,7 @@ export const SCRIPT: ChapterSpec[] = [
         voStyle: 'calm',
         scene: P('host', 'e3-turn', {
           headline: 'Real, but modest,\nfront-loaded, assumption-dependent',
+          gesture: 'serious',
           kicker: 'where most videos stop selling and start thinking',
         }),
       },
@@ -1203,6 +1215,7 @@ export const SCRIPT: ChapterSpec[] = [
         pauseAfter: 450,
         scene: P('host', 'e3-critique', {
           headline: 'Today\u2019s index owns\ntoday\u2019s winners —',
+          verb: 'card', gesture: 'serious',
           kicker: 'the next generation of wealth creators is not in it yet',
         }),
       },
@@ -1212,6 +1225,7 @@ export const SCRIPT: ChapterSpec[] = [
         pauseAfter: 700,
         scene: P('host', 'e3-critique', {
           headline: 'The \u201csophisticated\u201d choice\nis not automatically better',
+          gesture: 'leanIn',
           kicker: 'a segmented ETF basket can match the losses',
         }),
       },
@@ -1430,6 +1444,7 @@ export const SCRIPT: ChapterSpec[] = [
         pauseAfter: 700,
         scene: P('host', 'e4-right', {
           headline: 'A floor for\na defined window —',
+          gesture: 'count2',
           kicker: 'renting protection, not owning a solution',
         }),
       },
@@ -1440,6 +1455,7 @@ export const SCRIPT: ChapterSpec[] = [
         voStyle: 'reveal',
         scene: P('host', 'e4-out', {
           headline: 'The only strategy that makes\nthe tax disappear entirely —',
+          gesture: 'close',
           kicker: 'and the reason you can never get the money back',
         }),
       },
@@ -1705,6 +1721,7 @@ export const SCRIPT: ChapterSpec[] = [
         pauseAfter: 450,
         scene: P('host', 'e6-evidence', {
           headline: 'The best evidence\nof any strategy here —',
+          gesture: 'pointR',
           kicker: 'peer-reviewed, open-access, 380 ten-year paths',
         }),
       },
@@ -1747,6 +1764,7 @@ export const SCRIPT: ChapterSpec[] = [
         voStyle: 'calm',
         scene: P('host', 'e6-correct', {
           headline: 'The correction:\nthe deferral is not forgiveness',
+          gesture: 'aha',
           kicker: 'the number some summaries get wrong',
         }),
       },
@@ -1822,6 +1840,7 @@ export const SCRIPT: ChapterSpec[] = [
         pauseAfter: 450,
         scene: P('host', 'e6-leverage', {
           headline: 'The leverage\nis not free —',
+          gesture: 'think',
           kicker: 'financing costs erode returns; fees ate half the benefit in Elm\u2019s model',
         }),
       },
@@ -1831,6 +1850,7 @@ export const SCRIPT: ChapterSpec[] = [
         pauseAfter: 650,
         scene: P('host', 'e6-leverage', {
           headline: 'The fee line matters\nmore than the strategy line',
+          gesture: 'shrug',
           kicker: 'at this level',
         }),
       },
@@ -1924,6 +1944,7 @@ export const SCRIPT: ChapterSpec[] = [
         dropOut: true,
         scene: P('host', 'fw-question', {
           headline: 'Would you buy this stock today,\nat this price,',
+          gesture: 'shrug',
           kicker: 'in this concentration?',
         }),
       },
@@ -1959,6 +1980,7 @@ export const SCRIPT: ChapterSpec[] = [
         pauseAfter: 500,
         scene: P('host', 'fw-like', {
           headline: 'The cheapest invoice\nyou will ever pay —',
+          gesture: 'wave',
           kicker: 'and the cheapest intervention you will ever make',
         }),
       },

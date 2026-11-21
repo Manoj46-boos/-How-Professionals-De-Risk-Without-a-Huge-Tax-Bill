@@ -154,7 +154,14 @@ function hostSmall(
   // hand-prop slot ('holdCard' | 'coinStack'); the call site resolves it
   // through the prop ledger before passing. LAST position — existing call
   // sites are untouched.
-  prop?: 'holdCard' | 'coinStack'
+  prop?: 'holdCard' | 'coinStack',
+  // B6 MARKET-STANDARD FIX (review report B6 [P2] — OCCLUSION WITHOUT
+  // INTENT): passthrough of the split-draw phase — a scene that stages the
+  // host BEHIND its data draws 'far' (shadow + far limbs) before the data
+  // and 'rest' (near leg onward + near arm) after it, turning accidental
+  // clipping into a designed depth beat. Both calls run the identical pose
+  // math (pure f(t)), so the two passes reassemble one figure.
+  phase?: 'far' | 'rest' | 'all'
 ): void {
   // v10 (panel CHAR-1/CHAR-3): the side host CYCLES through a gesture set
   // instead of holding one pose for the whole scene — "two poses: shrug,
@@ -334,6 +341,9 @@ function hostSmall(
       // ledger-resolved by the call site (holdCard on statCards, coinStack
       // on dotGrid). Drawn at the near hand — held, never floating.
       prop,
+      // B6: the split-draw phase — 'far' renders shadow + far limbs only,
+      // 'rest' from the near leg onward (the contact solve runs in both).
+      phase,
     },
     seed
   );
@@ -1252,6 +1262,19 @@ export function barsCompareScene(g: SceneCtx): void {
   const { ctx, W, H, t, s } = g;
   bg(g, 111, 0.4, 'gold'); // v10: the data room plate (gold — the winner chart)
   sceneTitle(ctx, s.title as string, 180, 220, clamp01(t / 600));
+  // B6 MARKET-STANDARD FIX (review report B6 [P2] — OCCLUSION WITHOUT
+  // INTENT): the host used to draw in ONE pass after the bars — his
+  // forearm met the row fill wherever placement happened to put it. The
+  // scene now uses the engine's split-draw phase system as a DESIGNED
+  // depth beat: the FAR plane (shadow + far limbs) draws UNDER the bar
+  // rows — his far arm's gesture terms visibly cross BEHIND the data —
+  // and the NEAR plane (near leg onward + the fist planted ON row two's
+  // cap) draws OVER them. Two forearms at two depths around one data
+  // edge: occlusion becomes staging. Both passes run the identical pose
+  // math (pure f(t)) — the two passes reassemble one figure.
+  hostSmall(g, 84, 'present', 13, H * 0.66, 1.35, 0, 'aha', 1.4, 1, true, 0.4,
+    undefined, undefined, { x: 198, y: 458, hand: 'fist' as const }, 'right',
+    undefined, undefined, 'far');
   const bars = (s.bars as any[]) || [];
   const barW = W - 620;
   const yMax = (s.yMax as number) || Math.max(...bars.map((b) => b.value), 1) * 1.15;
@@ -1365,8 +1388,11 @@ export function barsCompareScene(g: SceneCtx): void {
   // [8.4, 159.6], a 30px gap to the label register and 8px inside the
   // frame edge. The fist-on-the-cap contact at (198, 458) stays inside
   // natural reach (no P2 root pull needed).
+  // B6: the NEAR pass — drawn after the rows, the grip and near leg ride
+  // IN FRONT of the data while the far plane sits behind it (above).
   hostSmall(g, 84, 'present', 13, H * 0.66, 1.35, 0, 'aha', 1.4, 1, true, 0.4,
-    undefined, undefined, { x: 198, y: 458, hand: 'fist' as const }, 'right');
+    undefined, undefined, { x: 198, y: 458, hand: 'fist' as const }, 'right',
+    undefined, undefined, 'rest');
 }
 
 // ── trioConverge scene ─────────────────────────────────────────────────────

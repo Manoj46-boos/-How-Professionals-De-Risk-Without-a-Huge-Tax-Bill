@@ -269,6 +269,15 @@ export function bigTextScene(g: SceneCtx): void {
     // → tip 125px, lands); the body core 1256-1404 stays 16px right of the
     // underline's full extent (wipe ends 1240). Ground 735 keeps the feet
     // band clear of the 2-row pill (top 796).
+    // B4 MARKET-STANDARD FIX (review report B4 [P1] — THE STRANDED
+    // FIGURE): at 1.17 the statement host read as an afterthought parked
+    // at the rule's end ("half-presence is worse than absence"). He now
+    // delivers the line at real presence: scale 1.17 → 1.5 (+28% linear,
+    // ~20% frame height), the palm TOUCH becomes a FIST GRIP on the
+    // underline's end-cap (holding the statement, not hovering near it),
+    // and the eye line drops into the type (look -0.6 → -0.75). The grip
+    // target retunes to (1250, 624) so the tip stays inside natural reach
+    // at the new scale (shoulder (1314, 480) → tip 165px < 168 max).
     const sinceLand = t - 2200;
     const squash = sinceLand >= 0 && sinceLand < 300
       ? Math.sin((sinceLand / 300) * Math.PI)
@@ -278,7 +287,7 @@ export function bigTextScene(g: SceneCtx): void {
     // gesture is work; the sleeves roll. Driven inside drawStickmanV2
     // from the pose's own rHand count glyph (cuff at the forearm, on
     // the body's ivory) so every count host inherits it.
-    drawStickmanV2(ctx, 1310, H * 0.681, 1.17, t, { pose, alpha: hp, look: -0.6, parallax: true, squash, contact: { x: 1240, y: 632, hand: 'palm' } }, 31);
+    drawStickmanV2(ctx, 1310, H * 0.681, 1.5, t, { pose, alpha: hp, look: -0.75, parallax: true, squash, contact: { x: 1250, y: 624, hand: 'fist' } }, 31);
   }
 }
 
@@ -1279,7 +1288,17 @@ export function endScreenScene(g: SceneCtx): void {
   // camera — the near hand palms the card's right edge at (820, 505)
   // every frame, contact shadow where hand meets card (reach check:
   // shoulder (849, 460) → edge 52px, lands).
-  drawStickmanV2(ctx, W * 0.44, H * 0.645, 1.3, t, { pose, alpha: clamp01((t - 800) / 600), look: -0.5, parallax: true, parallaxAmt: 0.45, contact: { x: 820, y: 505, hand: 'palm' } }, 37);
+  // B5 MARKET-STANDARD FIX (review report B5 [P2] — THE HOST AS A STAMP):
+  // the conversion frame's character was a ~90px bystander beside the CTA.
+  // Premium channels stage the host INTO the end screen: scale 1.3 → 1.62
+  // (+25% linear — a co-star of the frame, still subordinate to the card),
+  // the palm-point becomes a FIST GRIP on the card's edge (holding the
+  // next-week card, the report's own prescription), the eye line commits
+  // to the CTA (look -0.5 → -0.75), and the pointL pose keeps selling the
+  // WATCH NEXT chip below. Envelope: head top ≈ 340 (subscribe box ends
+  // 174), feet band ≈ 712 (chip band ends 775, one-row pill ≈ 990) — all
+  // clear; the guard sweep re-arbitrates the final envelope.
+  drawStickmanV2(ctx, W * 0.44, H * 0.645, 1.62, t, { pose, alpha: clamp01((t - 800) / 600), look: -0.75, parallax: true, parallaxAmt: 0.45, contact: { x: 820, y: 505, hand: 'fist' } }, 37);
 
   // ── v8: the WATCH NEXT arrow — the end screen's click mechanism ────────
   // The panel's verdict: "no thumbnail target = the most commercially

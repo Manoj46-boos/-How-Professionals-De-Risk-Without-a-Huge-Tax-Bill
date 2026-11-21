@@ -664,6 +664,21 @@ export function hostSceneV2(g: SceneCtx): void {
     const s = stageStartIdx(id);
     return s >= 0 ? blockX(s) : BLOCKS[Math.floor(hashStr(id) * BLOCKS.length) % BLOCKS.length];
   };
+  // B2 MARKET-STANDARD FIX (review report B2 [P0] — THE HAND TOUCHES
+  // NOTHING): the nine sampled editorial beats were all free raises from a
+  // fixed stand — the contact-verb system the film already ships never ran
+  // on the beats that dominate the runtime. Beats marked verb:'card' CARRY
+  // THE EXHIBIT: the holdCard prop (the system's own held-object verb —
+  // the ledger-governed card the statCards beats already certify) rides the
+  // near hand every frame while the far arm keeps the sentence-spring — the
+  // hand connects to an object on the beats that dominate the runtime.
+  // (A first cut braced the fist on the headline's hairline rail from a
+  // close block; the guard sweep convicted it three ways — the close
+  // block's hip band plated the exhibit card under drift, and the grip's
+  // contact pad crossed the headline glyph band. The rail is geometrically
+  // out of reach from every guard-clean block; the held card is the verb
+  // the report itself benchmarked.)
+  const verbRule = (g.s.verb as string | undefined) === 'card' && stage === 'spot';
   const hxTarget = blockFor(g.sentenceId);
   // PANEL-12 / P1-1: the editorial host uses walkIn() — the old branch
   // eased his POSITION while holding an idle pose, which is the foot-slide
@@ -774,6 +789,38 @@ export function hostSceneV2(g: SceneCtx): void {
   const hx2 = (g.s.stage === 'kflip' || g.s.stage === 'kclimb' || g.s.stage === 'kdescend')
     ? W * 0.50
     : W * 0.47;
+  // ── B2 (hoisted headline metrics): the rail grip needs the headline's
+  // own metrics BEFORE the figure draws — the same shrink loop the type
+  // block runs below, hoisted so ruleY is computable at the draw site.
+  const voSentences = (g.beat.vo || '').match(/[^.!?]+[.!?]*/g)?.map((s) => s.trim()).filter(Boolean) ?? [];
+  const mkPull = (txt: string): { head: string; rest: string } => {
+    const words = txt.replace(/\s+/g, ' ').split(' ').filter(Boolean);
+    const hLines: string[] = [];
+    let i = 0;
+    while (i < words.length && hLines.length < 3) {
+      let line = words[i++];
+      while (i < words.length && (line + ' ' + words[i]).length <= 26) line += ' ' + words[i++];
+      hLines.push(line);
+    }
+    return { head: hLines.join('\n'), rest: words.slice(i).join(' ') };
+  };
+  const pull = voSentences[0] ? mkPull(voSentences[0]) : { head: 'Two numbers\nthat don’t add up.', rest: '' };
+  const head = (g.s.headline as string) ?? pull.head;
+  const lines = head.split('\n');
+  const hSizeFit = ((): number => {
+    let hs = 88;
+    setFont(ctx, hs, 700, FONT_SERIF);
+    const maxHeadW = W - hx2 - 200;
+    while (Math.max(...lines.map((l) => ctx.measureText(l).width)) > maxHeadW && hs > 54) {
+      hs -= 3;
+      setFont(ctx, hs, 700, FONT_SERIF);
+    }
+    return hs;
+  })();
+  // the hairline rail's y — the same formula the type block draws it at
+  // (kept for the glyph-band text registry below)
+  const ruleY = 330 + (Math.min(lines.length, 3) - 1) * hSizeFit * 1.11 + 40;
+  void ruleY;
   const nodP = g.speaking ? nodPulse(g.beatT, g.wordTimes) : 0;
   const talk = g.speaking ? talkAt(g.beatT, g.wordTimes) : 0;
   // 100-JUDGE PANEL / Phase 2 item 4 — TAKE GRAMMAR WIRING (report §6
@@ -860,7 +907,19 @@ export function hostSceneV2(g: SceneCtx): void {
       // plates its own text. The fingertip registers cls 'contact'; the
       // headline registers as reading text below — the guard's hand-vs-text
       // pass verifies the rule on every sweep frame.
-      pointAt: { x: hx2, y: 240, w: W - hx2 - 180, h: 320, enforce: true },
+      // B1 MARKET-STANDARD FIX (review report B1 [P0] — THE HAND ON THE
+      // TYPE): the enforce band began at y240 — BELOW the kicker chip
+      // (y 168-220) — so the mitten parked ON "THE DATA DESK ·" (hb-1 /
+      // hb-3 / hb-4 / d-decayCurves all sampled it) and, approaching from
+      // above, never entered the band at all. The band now covers the
+      // ENTIRE type column — kicker top to sub-copy floor — so any hand
+      // entering the column's airspace solves to the boundary: the gesture
+      // points AT the type, never ON it.
+      // B2: the held exhibit card on verb beats — the hand connects to an
+      // object every frame (pointAt keeps enforcing the text clearance for
+      // the card-holding arm as well).
+      prop: verbRule ? ('holdCard' as const) : undefined,
+      pointAt: { x: hx2, y: 158, w: W - hx2 - 180, h: 462, enforce: true },
     },
     11
   );
@@ -870,22 +929,8 @@ export function hostSceneV2(g: SceneCtx): void {
   // the far stage block (W*0.42) never plates the kicker/headline — the
   // host PRESENTS BESIDE his content (fix 4's converse) instead of
   // standing under it. (hx2 hoisted above — the host's clearance rule
-  // consumes it before this block.)
-  const voSentences = (g.beat.vo || '').match(/[^.!?]+[.!?]*/g)?.map((s) => s.trim()).filter(Boolean) ?? [];
-  const mkPull = (txt: string): { head: string; rest: string } => {
-    const words = txt.replace(/\s+/g, ' ').split(' ').filter(Boolean);
-    const hLines: string[] = [];
-    let i = 0;
-    while (i < words.length && hLines.length < 3) {
-      let line = words[i++];
-      while (i < words.length && (line + ' ' + words[i]).length <= 26) line += ' ' + words[i++];
-      hLines.push(line);
-    }
-    return { head: hLines.join('\n'), rest: words.slice(i).join(' ') };
-  };
-  const pull = voSentences[0] ? mkPull(voSentences[0]) : { head: 'Two numbers\nthat don’t add up.', rest: '' };
-  const head = (g.s.headline as string) ?? pull.head;
-  const lines = head.split('\n');
+  // consumes it before this block. voSentences / pull / head / lines are
+  // hoisted ABOVE the figure draw — the rail grip consumes the metrics.)
   const sub = (g.s.sub as string) ??
     (pull.rest ? (pull.rest.length > 110 ? pull.rest.slice(0, 109) + '…' : pull.rest)
     : (voSentences[1] ? voSentences[1].slice(0, 110) :
@@ -935,14 +980,22 @@ export function hostSceneV2(g: SceneCtx): void {
     // guard's hand-vs-text pass verifies the clearance rule (the host's
     // pointAt above enforces it) on every frame; the text-vs-text pass
     // skips same-family ids, so the pair never self-collides.
-    registerText('hostV2:headlineTxt', hx2, 240, W - hx2 - 180, 320);
-    let hSize = 88;
-    setFont(ctx, hSize, 700, FONT_SERIF);
-    const maxHeadW = W - hx2 - 200; // guard sweep: survives the exit camera
-    while (Math.max(...lines.map((l) => ctx.measureText(l).width)) > maxHeadW && hSize > 54) {
-      hSize -= 3;
-      setFont(ctx, hSize, 700, FONT_SERIF);
+    // B1/B2 precision: the registration shrinks to the GLYPH band (the
+    // serif lines' real ink: from the first baseline's cap to the last
+    // line's descender) instead of the blanket 320px box — the rail grip
+    // (verb:'rule') plants a fist in the dead band BETWEEN the glyph
+    // bottom and the sub copy, and the guard can now tell grip-from-plate:
+    // a hand ON the rail is a contact, a hand ON the glyphs is a crime.
+    // B1: the kicker chip joins the reading-text registry too — it is
+    // display text, and the sampled frames had the mitten parked on it.
+    {
+      const glyphBottom = 330 + (Math.min(lines.length, 3) - 1) * hSizeFit * 1.11 + hSizeFit * 0.24;
+      registerText('hostV2:headlineTxt', hx2, 244, W - hx2 - 180, glyphBottom - 244);
+      setFont(ctx, 34, 600);
+      const kw2 = ctx.measureText((g.s.kicker as string) ?? 'THE DATA DESK · THE K-SHAPED ECONOMY').width;
+      registerText('hostV2:kickerTxt', hx2, 168, kw2 + 48, 52);
     }
+    let hSize = hSizeFit; // B2: hoisted — identical shrink loop ran above the figure draw
     setFont(ctx, hSize, 700, FONT_SERIF);
     // D9 companion: up to THREE headline lines (ink / gold / ink) — the
     // VO-derived pull-quotes wrap wider than the two-line props; the
