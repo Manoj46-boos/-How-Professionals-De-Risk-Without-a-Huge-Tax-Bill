@@ -89,7 +89,12 @@ const BODY_MASS = '#143829';
 // garment read, the figure keeps ONE gold cue — the scarf, its brand
 // badge); the type block's gold serif line becomes the frame's single
 // bright mass (scenes-host). Coral/teal carry the data roles.
-const OUTFIT = { tee: '#0E2F24', vest: '#1C3B33', trouser: '#22302B' } as const;
+// U8 (review report U8 [P1] — THE VEST IS ONE GOLD TONE): the host's vest
+// panel and the brand scarf share exactly one gold — OUTFIT.vest — with the
+// deep-bronze rolled-sleeve cuff (#A8851B) as the only second tone. The
+// trouser joins the ink family: one step lighter than the near-limb ink
+// (#232E27), never sage-khaki — legs and shoes draw as one system.
+const OUTFIT = { tee: '#0E2F24', vest: PALETTE.gold, trouser: '#35423B' } as const;
 /** AUDIT-ROUND-3 iter-2 (ONE INK, ALL FOUR LIMBS): the gold near-arm
  *  sleeve (ARM_MASS) read to the re-review panel as "the near limb
  *  darker/warmer in tone than the far — the mismatched limb shading
@@ -402,7 +407,7 @@ function drawMouthV2(
     // under big brows read as stunned silence; a real mouth reads as calm.
     ctx.fillStyle = col;
     ctx.beginPath();
-    ctx.ellipse(mx, 14.2, 11, 3.0, 0, 0, Math.PI * 2);
+    ctx.ellipse(mx, 14.2, 12, 3.2, 0, 0, Math.PI * 2);
     ctx.fill();
   }
 }
@@ -761,8 +766,10 @@ export function handGlyph(
   s: number, col: string,        // glyph size unit (16 near / 12 far at the call sites)
   rigScale = 1,                  // P1-2 r3: the figure's rig scale — picks the glyph tier
   mode: HandMode = undefined,    // P1-2: explicit glyph override (fist / countN)
-  grip = 1                       // PANEL ACCEPTANCE (audit FIX 5): the re-grip flex
+  grip = 1,                      // PANEL ACCEPTANCE (audit FIX 5): the re-grip flex
                                  // 0.84..1.16 — finger splay breathes on a slow clock
+  wristW = 0                     // U9: the limb's wrist disc diameter in local
+                                 // units (0.92 x the bone tip width); 0 = uncapped
 ): void {
   const a = forearmAngle * D2R;
   // FP0 (Verdict P0 — SCREEN-SPACE HAND FLOORS): hands were sized in fixed
@@ -784,6 +791,14 @@ export function handGlyph(
   // wrist width, with the limb's own 0.46x wrist disc as the visible
   // wrist step. Hands read as hands BECAUSE they are proportionate.
   s = Math.max(s, 14 / Math.max(0.5, rigScale));
+  // U9 (review report U9 — THE PROPORTIONATE HAND): the mass cap. The
+  // A2 floor fixed nub hands; at hero rigs the glyphs still read as clubs
+  // because the mitten ran ~1.75x its wrist width. Every glyph's mass now
+  // caps at ~1.6x the wrist disc (0.92 x w1, passed by the call sites) —
+  // the limb's own 0.46x wrist ball is the visible step, the thumb lobe
+  // stays tucked. The cap never undercuts the 14px feed floor (the floor
+  // governs below rig ~1.3, the cap at hero — clubs at hero, nubs at feed,
+  // neither survives).
   // P1-2 (100-judge audit, Table 3 — HANDS): the FIST + COUNT glyphs.
   // "Featureless mitts in every pose" / "a withered claw" — and the
   // count poses had nothing to count WITH. The fist: a rounded mass + a
@@ -826,6 +841,15 @@ export function handGlyph(
   }
   if (mode === 'count1' && rigScale >= 2) {
     mode = 'pinch';
+  }
+  if (wristW > 0) {
+    const massK = mode === 'fist' || mode === 'count1' || mode === 'count2' || mode === 'count3' ? 0.6
+      : mode === 'point' ? 0.74
+      : mode === 'pinch' ? 0.7
+      : mode === 'open' ? 0.82
+      : 0.8; // the resting mitten
+    const capS = (1.6 * wristW) / massK;
+    s = Math.min(s, Math.max(14 / Math.max(0.5, rigScale), capS));
   }
   if (mode === 'fist' || mode === 'count1' || mode === 'count2' || mode === 'count3') {
     const n = mode === 'fist' ? 0 : Number(mode.slice(5));
@@ -1244,7 +1268,7 @@ function scarfTail(
   // visibly BENDS at rest instead of extending as a bar; the flick still
   // escapes the shoulder line and the knot + collar carry the brand.
   const rl = Math.hypot(14, 5);
-  const [fp, tp] = followChain(t, seed, anchor, { x: -14 / rl, y: 5 / rl }, 12, 10, -0.0002, 0.0017, 0.86);
+  const [fp, tp] = followChain(t, seed, anchor, { x: -14 / rl, y: 5 / rl }, 12, 10, -0.0002, 0.0034, 0.86);
   const fxp = fp.x, fyp = fp.y;       // the fold — chain node 1
   const ex = tp.x, ey = tp.y;         // the tip — chain node 2
   // ONE continuous tapered ribbon — root segment then fold segment,
@@ -1466,6 +1490,13 @@ export function drawStickmanV2(
      *  gasp reads at 320px. Drive from the reaction envelope at the call
      *  site (1 + 1*rP on the twist beat). */
     jaw2x?: number;
+    /** U11 (review report U11 — THE NEUTRAL + TWO REGISTERS): explicit
+     *  expression registers a 40-minute host can hold. 'focus' = brows
+     *  level, slight squint, pupils a step larger (the working face —
+     *  surprise is a spice, not a base). 'shock' = the existing jaw
+     *  multiplier + full surprise channel. Scenes call it on the draw
+     *  options; the neutral below is the default resting face. */
+    expression?: 'focus' | 'shock';
     /** P1-1 (100-judge audit, Table 3 — HEAD REDESIGN): 'classic' = the
      *  shipped cream head + 14px outline (the "ninja-hood" read);
      *  'thin' = the same head, outline 14 → 9.5px (a drawn line, not a
@@ -1561,7 +1592,9 @@ export function drawStickmanV2(
   const stretch = Math.min(1, r.stretch ?? 0);
   // BLUEPRINT Phase 2: the jaw multiplier reaches the mouth (the shock
   // reaction's 2x gasp).
-  const jaw2x = r.jaw2x ?? 1;
+  // U11: the 'shock' register drives the existing jaw multiplier — a scene
+  // that names shock gets the gasp without hand-tuning jaw2x per call site.
+  const jaw2x = Math.max(r.jaw2x ?? 1, r.expression === 'shock' ? 1.5 : 1);
   // P2-4 (audit Table 4 — DEPTH WITH INTENT): "raise parallax to 0.55 on
   // 2-3 hero moments". The default differential stays 0.40 (the
   // certified phone-gate register); hero moments (the reaction close-ups,
@@ -1954,19 +1987,19 @@ export function drawStickmanV2(
     // the silhouette reads "gold workshirt with pushed-up sleeves" over an
     // ink arm, not a bare mustard capsule. Drawn UNDER the torso (before
     // it), so the sleeve root tucks into the shoulder like real clothing.
-    if (!prof) {
-      // 100-JUDGE VISUAL AUDIT (Fix 1 — THE STAIN CUFF): the rolled sleeve
-      // band tracks the vest at a full register darker — with the C3 vest
-      // demotion the cuff is deep ink-teal (#12241F) over the #1C3B33 vest:
-      // "ink workshirt, sleeves pushed up", a clear cuff edge at feed, and
-      // the figure carries no second gold mass.
+    {
+      // U8 (review report U8): the rolled-sleeve cuff ships on the prof as
+      // the report's DEEP-BRONZE (#A8851B) — "the torso gold runs out
+      // mid-upper-arm in a slightly wider bronze band": gold workshirt,
+      // sleeves pushed up. The cast keeps the deep ink-teal cuff over its
+      // dark garment (the stain-cuff fix survives unchanged).
       taper(ctx,
         neckX - 4 + Math.sin(shT) * -4, neckY + 3 + Math.sin(shT) * 9 - (pose.shoulderDrop ?? 0) * 0.6,
         neckX - 4 + Math.sin(shT) * -4 + Math.sin(farAU * D2R) * U_ARM * 0.58,
         neckY + 3 + Math.sin(shT) * 9 - (pose.shoulderDrop ?? 0) * 0.6 + Math.cos(farAU * D2R) * U_ARM * 0.58,
-        INK.armFar[0] + 5, INK.armFar[0] - 1, '#12241F');
+        INK.armFar[0] + 5, INK.armFar[0] - 1, prof ? '#A8851B' : '#12241F');
     }
-      handGlyph(ctx, farHand.ex, farHand.ey, farAL, 15, farInk, scale, pose.lHand, grip); // PHASE-1: the far hand runs the same mitten glyph — one hand language at every scale
+      handGlyph(ctx, farHand.ex, farHand.ey, farAL, 15, farInk, scale, pose.lHand, grip, INK.armFar[2] * 0.92); // U9: the mass caps at the wrist
     // AUDIT-2 / 0.1: the far shoe steps with its limb (farInk) — depth,
     // not a second colour system.
     shoeWedge(farFoot, farInk, pose.lToe ?? 0);
@@ -1978,9 +2011,13 @@ export function drawStickmanV2(
   // oversized and forward-set.
   // BLUEPRINT Phase 2 (INK): near leg 15/12/10 -> 21/16/12 — the support
   // leg is the figure's anchor mass.
-  const nearFoot = limb2(ctx, hipRX, hipRY, pose.rLU, pose.rLL, U_LEG, L_LEG, INK.legNear[0], INK.legNear[1], INK.legNear[2], ink, pose.rLift ?? 0, 1.14); // iter-3: knee mass
+  // U10 (review report U10 — THE TROUSER REGISTER): the near leg draws in
+  // OUTFIT.trouser — ink family, one step lighter than the near-limb ink,
+  // never sage-khaki — and the shoe rides the SAME colour, so legs and
+  // shoes are one system (the tunic-hem read dies with the seam).
+  const nearFoot = limb2(ctx, hipRX, hipRY, pose.rLU, pose.rLL, U_LEG, L_LEG, INK.legNear[0], INK.legNear[1], INK.legNear[2], OUTFIT.trouser, pose.rLift ?? 0, 1.14); // iter-3: knee mass
   bbTouch(nearFoot.ex, nearFoot.ey, 24); // PHASE 3 bbox: near shoe
-  shoeWedge(nearFoot, ink, pose.rToe ?? 0);
+  shoeWedge(nearFoot, OUTFIT.trouser, pose.rToe ?? 0);
 
   // 100-JUDGE PANEL / Phase 2 item 2 — LEG SMEARS ON THE RUN (report §6
   // Phase 2, p.14: "allow leg smears on the run"). The arm smear draws
@@ -2127,7 +2164,11 @@ export function drawStickmanV2(
     // FP0 (Verdict P0 — CAST BY VALUE): the worker stops sharing the host's
     // bronze tee — his torso mass drops to a lighter WARM GRAY-INK so the
     // ownerWorker pair differentiates by VALUE, not just by cap shape.
-    const torsoMass = prof ? ink : worker ? '#6B6157' : OUTFIT.tee;
+    // U8: the host wears the STRAIGHT CREW-NECK VEST — one gold panel from
+    // collar to hip hem (the capsule fill), no center-chest V, no trapezoid
+    // band: the "gladiator read" dies. The tee (dark) survives as the neck
+    // opening and the sleeves; the ink outline frames the panel.
+    const torsoMass = prof ? OUTFIT.vest : worker ? '#6B6157' : OUTFIT.tee;
     ctx.fillStyle = torsoMass;
     ctx.beginPath();
     ctx.moveTo(rX(0, wH), rY(0, wH));
@@ -2148,21 +2189,26 @@ export function drawStickmanV2(
     ctx.strokeStyle = ink;
     ctx.lineWidth = 3.5;
     ctx.stroke();
-    // P1 — THE GOLD VEST PANEL: same torso rail, FP0 two-tone split at the
-    // 50% torso line (vest owns the chest band 0.50..0.98, the tee owns the
-    // belly), inset ~12% so the tee's ink outline still frames it. Filled +
-    // 2px ink outline; the deep-V tee notch below returns the tee at the
-    // center chest. FP0 CAST: the worker does NOT wear the brand vest — the
-    // gray-ink torso is his silhouette (the gold vest is the host's alone).
+    // P1 — THE GOLD VEST PANEL. U8 (review report U8 — THE VEST IS ONE GOLD
+    // PANEL): the old split owned only the chest band 0.50..0.98 and the tee
+    // owned the belly — the gold stopped mid-torso and read as a BIB. The
+    // host's main variant wears the report's straight crew-neck vest: ONE
+    // gold panel from collar (just under the crew opening, rail 0.955) to
+    // the hem (rail 0.045, the 2px ink edge at the hip), inset ~12% so the
+    // tee's ink outline still frames it. Filled + 2px ink outline. FP0 CAST:
+    // the worker does NOT wear the brand vest — the gray-ink torso is his
+    // silhouette (the gold vest is the host's alone).
     if (!prof && !worker) {
       ctx.fillStyle = OUTFIT.vest;
       ctx.beginPath();
-      ctx.moveTo(rX(0.50, wW * 0.88), rY(0.50, wW * 0.88));
-      ctx.quadraticCurveTo(rX(0.62, wW * 0.96), rY(0.62, wW * 0.96), rX(0.75, wC * 0.82), rY(0.75, wC * 0.82));
-      ctx.quadraticCurveTo(rX(0.90, wC * 0.80), rY(0.90, wC * 0.80), rX(0.98, wS * 0.78), rY(0.98, wS * 0.78));
-      ctx.lineTo(lX(0.98, wS * 0.78), lY(0.98, wS * 0.78));
+      ctx.moveTo(rX(0.045, wH * 0.9), rY(0.045, wH * 0.9));
+      ctx.quadraticCurveTo(rX(0.30, wW * 0.9), rY(0.30, wW * 0.9), rX(0.45, wW * 0.86), rY(0.45, wW * 0.86));
+      ctx.quadraticCurveTo(rX(0.62, wW * 0.94), rY(0.62, wW * 0.94), rX(0.75, wC * 0.82), rY(0.75, wC * 0.82));
+      ctx.quadraticCurveTo(rX(0.90, wC * 0.80), rY(0.90, wC * 0.80), rX(0.955, wS * 0.72), rY(0.955, wS * 0.72));
+      ctx.lineTo(lX(0.955, wS * 0.72), lY(0.955, wS * 0.72));
       ctx.quadraticCurveTo(lX(0.90, wC * 0.80), lY(0.90, wC * 0.80), lX(0.75, wC * 0.82), lY(0.75, wC * 0.82));
-      ctx.quadraticCurveTo(lX(0.62, wW * 0.96), lY(0.62, wW * 0.96), lX(0.50, wW * 0.88), lY(0.50, wW * 0.88));
+      ctx.quadraticCurveTo(lX(0.62, wW * 0.94), lY(0.62, wW * 0.94), lX(0.45, wW * 0.86), lY(0.45, wW * 0.86));
+      ctx.quadraticCurveTo(lX(0.30, wW * 0.9), lY(0.30, wW * 0.9), lX(0.045, wH * 0.9), lY(0.045, wH * 0.9));
       ctx.closePath();
       ctx.fill();
       ctx.strokeStyle = ink;
@@ -2179,11 +2225,21 @@ export function drawStickmanV2(
       ctx.ellipse(rX(0.955, 0), rY(0.955, 0), wS * 0.30, wS * 0.20, 0, 0, Math.PI * 2);
       ctx.fill();
     }
+    // U8: the prof's crew neckline — the same modest round opening (the tee
+    // wedge at the collar), so the gold panel reads as WORN, not painted on.
+    if (prof) {
+      ctx.fillStyle = OUTFIT.tee;
+      ctx.beginPath();
+      ctx.ellipse(rX(0.955, 0), rY(0.955, 0), wS * 0.30, wS * 0.20, 0, 0, Math.PI * 2);
+      ctx.fill();
+    }
     // shoulder caps — small rounded delts at the shoulder line. A1 FIX: the
     // caps wear the TEE tone, not vest gold — the deltoid is the sleeve of
-    // the garment underneath, so the gold stays a chest panel and the
+    // the garment underneath, so the gold stays the vest panel and the
     // "gold epaulette / variety-show shoulder" read dies at every rig.
-    ctx.fillStyle = torsoMass;
+    // U8: on the prof the caps run the TEE (the dark sleeve) so the gold
+    // vest panel ends at the shoulder seam — one gold tone, no epaulette.
+    ctx.fillStyle = prof ? OUTFIT.tee : torsoMass;
     ctx.beginPath();
     ctx.arc(rX(0.92, wS * 0.6), rY(0.92, wS * 0.6), wS * 0.45, 0, Math.PI * 2);
     ctx.fill();
@@ -2198,10 +2254,11 @@ export function drawStickmanV2(
     ctx.fill();
     // 100-JUDGE PANEL REPORT (fix A3 — THE HEM): a 3px ink line across the
     // capsule's bottom edge — the gold mass becomes a hemmed garment
-    // instead of a leotard. Skips the prof (ink torso: ink on ink).
-    if (!prof) {
+    // instead of a leotard. U8: the prof's vest hem is the report's 2px ink
+    // edge at the hip (gold panel, hemmed — no leotard read).
+    if (!prof || true) {
       ctx.strokeStyle = ink;
-      ctx.lineWidth = 3;
+      ctx.lineWidth = prof ? 2 : 3;
       ctx.beginPath();
       ctx.moveTo(lX(0.045, wH * 0.86), lY(0.045, wH * 0.86));
       ctx.lineTo(rX(0.045, wH * 0.86), rY(0.045, wH * 0.86));
@@ -2222,24 +2279,11 @@ export function drawStickmanV2(
   // Phase 1 item 1: the band RETIRES on the host — the torso mass now
   // IS the gold signature (BODY_MASS); a gold band on a gold body reads
   // as decoration. The scarf + knot remain the collar brand.
-  if (r.scarf !== false && prof) {
-    const bandY = pelvisY - TORSO * 0.55;
-    const bandW = (INK.torso[0]) * 0.9 + 8;
-    ctx.save();
-    ctx.translate(neckX * 0.5, bandY);
-    ctx.rotate(leanR2);
-    ctx.fillStyle = rgba(PALETTE.gold, 0.75);
-    ctx.beginPath();
-    ctx.moveTo(-bandW, -6);
-    ctx.lineTo(bandW, -6);
-    ctx.lineTo(bandW * 0.85, 6);
-    ctx.lineTo(-bandW * 0.85, 6);
-    ctx.closePath();
-    ctx.fill();
-    ctx.fillStyle = rgba(PALETTE.goldDeep, 0.5);
-    ctx.fillRect(-bandW * 0.85, 4, bandW * 1.7, 2);
-    ctx.restore();
-  }
+  // U8 (review report U8 [P1]): the trapezoid chest band is DELETED. Its
+  // slanted sides + the knot above it fused into the "deep-V gold panel"
+  // the report convicts (the gladiator read); with the straight crew-neck
+  // vest the gold signature is the panel itself — the band is redundant
+  // mass and is gone. The scarf + knot remain the collar brand (U12).
 
   // AUDIT-2 / 1.4 (report §10.2, C6) — THE COLLAR BREAK. The gold knot
   // flowed into the head circle with no separation ("the head looks
@@ -2570,12 +2614,14 @@ export function drawStickmanV2(
   bbTouch(hand.ex, hand.ey, 18); // PHASE 3 bbox: near hand glyph
   // 100-JUDGE PANEL REPORT (fix A3 — THE ROLLED SLEEVE, near arm): same
   // band as the far arm — the near limb is the one the camera reads.
-  if (!prof) {
+  {
+    // U8: the near arm's rolled sleeve — deep bronze on the prof's gold
+    // vest, deep ink-teal on the cast (same rule as the far arm above).
     taper(ctx,
       neckX + 4 + Math.sin(shT) * 4, neckY + 3 - Math.sin(shT) * 9 + shDrop,
       neckX + 4 + Math.sin(shT) * 4 + Math.sin(pose.rAU * D2R) * U_ARM * 0.58,
       neckY + 3 - Math.sin(shT) * 9 + shDrop + Math.cos(pose.rAU * D2R) * U_ARM * 0.58,
-      INK.armNear[0] + 5, INK.armNear[0] - 1, '#12241F');
+      INK.armNear[0] + 5, INK.armNear[0] - 1, prof ? '#A8851B' : '#12241F');
   }
   // AUDIT-ROUND-3 (Fix 1): the torso rim light block that drew here is
   // RETIRED — see the note above the near arm. One light edge (the
@@ -2610,7 +2656,7 @@ export function drawStickmanV2(
   // PHASE 1 round 5 (the panel's "no palm pad" note): a hand mid-contact
   // draws one size step up so the pad reads at feed scale — a pressing palm,
   // not a tapered limb tip.
-  handGlyph(ctx, hand.ex, hand.ey, pose.rAL, r.contact ? 19 : 16, ink, scale, pose.rHand, grip); // P1-2 r3: rig scale picks the glyph tier; Phase 1: hands stay ink
+  handGlyph(ctx, hand.ex, hand.ey, pose.rAL, r.contact ? 19 : 16, ink, scale, pose.rHand, grip, INK.armNear[2] * 0.92); // U9: the mass caps at the wrist; P1-2 r3: rig scale picks the glyph tier
   // 100-JUDGE PANEL / Phase 1 item 4 — CAST BY SILHOUETTE (report §6
   // Phase 1): "the count host gets rolled sleeves." When the near hand
   // runs a count glyph, the sleeve's cuff ROLLS — a bright ivory band at
@@ -3136,10 +3182,30 @@ export function drawStickmanV2(
   //   squint    (low browRaise + smile) → warm lids at 45%.
   // Six readable emotions (surprised / worried / skeptical / delighted /
   // deadpan / warm) from the data SceneCtx already carries.
-  const surprise = clamp01((pose.browRaise - 0.55) / 0.45);
-  const concerned = clamp01((pose.browAngle - 8) / 12);
+  // U11 (review report U11 — THE NEUTRAL): the resting face is built for a
+  // 40-minute watch — the A4 fix already dropped the rest brows 2 units
+  // (startle -> neutral watcher), the rest mouth holds its 12px slot and
+  // the cheeks sit at a whisper (0.09 — subtler than the report's 0.25
+  // target, same intent). On top, the TWO explicit registers:
+  //   'focus' — brows level, a slight squint, pupils a step larger: the
+  //             working face the host holds between reactions;
+  //   'shock' — the full surprise channel + the jaw gasp.
+  const reg = r.expression;
+  let surprise = clamp01((pose.browRaise - 0.55) / 0.45);
+  let concerned = clamp01((pose.browAngle - 8) / 12);
+  let regSquint = 0;
+  let regPupil = 1;
+  if (reg === 'focus') {
+    surprise = 0;
+    concerned = 0;
+    regSquint = 0.14;
+    regPupil = 1.12;
+  } else if (reg === 'shock') {
+    surprise = 1;
+    concerned = 0;
+  }
   const squint = clamp01((0.35 - pose.browRaise) / 0.35) * clamp01(pose.smile) * 0.45;
-  const lid = Math.max(concerned * 0.5, squint);
+  const lid = Math.max(concerned * 0.5, squint, regSquint);
   const eyeOpen = blink * (1 - lid);
   // PANEL-12 / P0-5 (report §12.5) — TWO-STATE EYES. Above browRaise 0.6
   // (surprise / aha / shock) the dot eyes open into 6.2px white sclera
@@ -3243,7 +3309,7 @@ export function drawStickmanV2(
   // G1: the pupil floor 4.9 -> 8.4 screen px (~2.8px at the twin) — the
   // report's "bigger pupils rather than scaled-down hero features". The
   // 0.88 sclera ratio still governs above the floor.
-  const ivoryPupR = Math.max(3.9, featureFloor(8.4), scleraR * 0.88);
+  const ivoryPupR = Math.max(3.9, featureFloor(8.4), scleraR * 0.88) * regPupil;
   if (becker) {
     ctx.fillStyle = faceInk;
     ctx.beginPath();

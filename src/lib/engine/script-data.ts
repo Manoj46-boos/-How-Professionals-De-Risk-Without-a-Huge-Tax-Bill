@@ -2026,6 +2026,72 @@ export const SCRIPT: ChapterSpec[] = [
 
 // ── Upload kit — the packaging block from the script's PACKAGING section ────
 
+// ── U13-U16 (review report Phase 2 — CONTACT: scene policy, not new math) ───
+// A pure data pass over the beat table that wires the report's four policy
+// items into machinery that already exists — no new math:
+//   U13 — every host beat whose narration NAMES a number carries
+//     numberNamed: true; drawHost solves the near hand ON the kicker chip
+//     (the contact target is a CHIP or CARD, never raw type) and points.
+//   U14 — one held prop per chapter, written as beat assignments: ch1 host
+//     beats hold the exhibit card (verb 'card' → the ledger-gated holdCard
+//     prop the B2 rule already renders); the exits chapters' host beats
+//     press the SIX EXITS tile edge (exitsContact); the collar chapter's
+//     quote-card hosts keep the palm-on-the-rule contact — the kContact
+//     verb on the desk the quote is set on (the payoff chart itself is
+//     figureless, so the floor press rides the chapter's host beats).
+//   U16 — the per-beat pose table: host beats without an explicit
+//     gesture/entrance rotate the body-pose vocabulary (lean / countN /
+//     crossed / step-in / sit / walk — every one already a POSES key or
+//     the walk entrance) with consecutive repeats CAPPED AT TWO.
+const U16_CYCLE = ['lean', 'countN', 'crossed', 'stepIn', 'sit', 'walk'] as const;
+{
+  let last = '';
+  let run = 0;
+  let cyc = 0;
+  for (const ch of SCRIPT) {
+    const exits = /^exit[1-6]$/.test(ch.id);
+    for (const b of ch.beats) {
+      if (b.scene.type !== 'host') continue;
+      // U13: the narration names a number → the hand parks ON the chip.
+      // Digits AND the spelled-out numbers the VO actually speaks
+      // ("three-point-seven million", "eighty-five-dollar strike",
+      // "two-thirds", "basis points") — the report's rule is about the
+      // VOICE, not the orthography.
+      if (/[$\d]|\b(one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety|hundred|thousand|million|billion|dozen|couple|half|quarter|percent|percentage|basis points?)\b/i.test(b.vo)) {
+        b.scene.numberNamed = true;
+        if (!b.scene.gesture && !b.scene.entrance && !b.scene.verb) {
+          b.scene.gesture = 'pointR';
+        }
+      }
+      // U14: the chapter's held-prop / contact assignments
+      if (ch.id === 'ch1' && !b.scene.verb) b.scene.verb = 'card';
+      if (exits && !b.scene.verb && !b.scene.entrance) b.scene.exitsContact = true;
+      // U16: the pose column, repeats capped at two
+      if (!b.scene.gesture && !b.scene.entrance && !b.scene.verb) {
+        let pose = U16_CYCLE[cyc++ % U16_CYCLE.length];
+        if (pose === last && run >= 2) {
+          cyc++;
+          pose = U16_CYCLE[cyc % U16_CYCLE.length];
+        }
+        run = pose === last ? run + 1 : 1;
+        last = pose;
+        switch (pose) {
+          case 'lean': b.scene.gesture = 'leanIn'; break;
+          case 'countN': b.scene.gesture = `count${(cyc % 3) + 1}`; break;
+          case 'crossed': b.scene.gesture = 'crossed'; break;
+          case 'stepIn': b.scene.entrance = 'walk'; b.scene.walkMs = 1400; break;
+          case 'sit': b.scene.gesture = 'sitBack'; break;
+          case 'walk': b.scene.entrance = 'walk'; break;
+        }
+      } else {
+        const p = (b.scene.entrance as string) ?? (b.scene.gesture as string) ?? '';
+        run = p === last ? run + 1 : 1;
+        last = p;
+      }
+    }
+  }
+}
+
 export const VIDEO_TITLE = 'How the Rich Sell $10M of Stock Without Paying $3.7M in Taxes';
 
 export const TITLE_OPTIONS = [

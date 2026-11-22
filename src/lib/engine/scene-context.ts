@@ -128,6 +128,15 @@ export const REACTIONS: Record<string, ReactionSpec> = {
   // close-up frames host-braced-against-the-wall, hand planted.
   'c8-fund': { atFrac: 0.42, durMs: AMP.reactionWindowMs, amp: AMP.reactionAmp.fund, px: 1420, py: 560 },
   'c9-three': { atFrac: 0.4, durMs: AMP.reactionWindowMs, amp: AMP.reactionAmp.three, px: 500, py: 560 },
+  // U15 (review report U15 — REACTION STAGING ON THE HERO NUMBERS): the
+  // film needs 3-5 reaction close-ups on the numbers the thumbnails are
+  // made of. co-question follows the $3.7M tax-bill card (the face the
+  // audience should wear at the film's own price tag); e3-turn and
+  // e3-critique bracket the 500-line-items direct-indexing reveal. The
+  // windows ride the same take() grammar and the shock register.
+  'co-question': { atFrac: 0.5, durMs: AMP.reactionWindowMs, amp: AMP.reactionAmp.paradox, px: 500, py: 560 },
+  'e3-turn': { atFrac: 0.36, durMs: AMP.reactionWindowMs, amp: AMP.reactionAmp.three, px: 500, py: 560 },
+  'e3-critique': { atFrac: 0.3, durMs: AMP.reactionWindowMs, amp: AMP.reactionAmp.paradox, px: 1420, py: 560 },
 };
 
 /**

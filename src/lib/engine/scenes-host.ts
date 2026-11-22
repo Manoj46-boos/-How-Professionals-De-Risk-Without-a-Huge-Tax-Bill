@@ -971,12 +971,41 @@ export function hostSceneV2(g: SceneCtx): void {
     ctx.stroke();
     ctx.restore();
   }
+  // U13/U14/U15 (review report Phase 2 — CONTACT): the scene-level contact
+  // policy, resolved BEFORE the draw so the hand SOLVES onto a target:
+  //   U13 — a number-naming beat parks the near hand ON the kicker chip
+  //     (the keyword line's chip: contact on a chip, never raw type);
+  //   U14 — exits-chapter beats press the SIX EXITS tile edge (the ladder
+  //     card at fx0 = hx2 + 12, fy0 = 604 — the same geometry the card
+  //     block draws below);
+  //   U15 — a live reaction window drives the shock register (face +
+  //     shoulder + the take) on the film's hero numbers.
+  // The held exhibit card (verbRule) keeps priority: the hand holds the
+  // card; the pointAt enforce band still guards the type column.
+  const numberNamed = g.s.numberNamed === true;
+  const exitsContact = g.s.exitsContact === true;
+  const chipContact = numberNamed
+    ? { x: hx2 + 10, y: 194, hand: 'point' as const }
+    : undefined;
+  const tileContact = exitsContact
+    ? { x: hx2 + 12, y: 648, hand: 'palm' as const }
+    : undefined;
+  const rEnv = reactionAt(g.s.sceneKey, t, g.d);
+  const regExpr = (g.s.expression === 'focus' || g.s.expression === 'shock')
+    ? (g.s.expression as 'focus' | 'shock')
+    : rEnv > 0.15 ? ('shock' as const) : undefined;
   drawStickmanV2(
     // PANEL ACCEPTANCE (audit FIX 1): ground H*0.585 → HOST_GROUND (0.62) —
     // at the 0.585 ground the 2.4× host's head topped out at 56px headroom
     // (5%); the shared 0.62 ground restores the ~9% the probe gate wants.
     ctx, hx, HOST_GROUND(H), HOST_SCALE * (1 - 0.027 * walkShrinkK), t,
     { pose, alpha: 0.85 + 0.15 * clamp01(g.sceneT / 180), look: 0.8, scarf: true, nod: nodP, talk, smear: smr, walkPhase, squash: walkPhase !== undefined ? walkStrike(walkPhase) : 0, parallax: true, parallaxAmt: 0.55, // P2-4: hero moment — clear space, deep differential
+      // U13/U14: the hand touches what the voice narrates — on the chip or
+      // the tile, per the report's contact policy.
+      contact: verbRule ? undefined : (chipContact ?? tileContact),
+      // U15: the reaction register rides the draw (focus/shock — the U11
+      // explicit registers; the reaction window names shock).
+      expression: regExpr,
       // PANEL ACCEPTANCE (audit FIX 2): full-body envelope — see drawHost.
       hostBody: true,
       stretch: Math.min(1,
