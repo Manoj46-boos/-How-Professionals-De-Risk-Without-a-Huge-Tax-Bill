@@ -84,7 +84,10 @@ function bg(g: SceneCtx, seed: number, gold = 0.4, plate?: 'up' | 'down' | 'gold
   // kMotifs(g.ctx, g.W, g.H, g.t, 0.18);
 }
 
-function hostSmall(
+// B2 MARKET-STANDARD FIX: exported — the finance data rooms (crossChart,
+// distBars, taxStack, payoffDiagram, drawdownChart, decisionTable) stage
+// the same certified side-host presenter from scenes-finance.ts.
+export function hostSmall(
   g: SceneCtx, x: number, gesture = 'present', seed = 3,
   // v9 (report D-02): default ground H*0.86 → H*0.68 — the side hosts'
   // feet+shadows (to y≈985) sat inside the caption pill band on every
@@ -344,6 +347,12 @@ function hostSmall(
       // B6: the split-draw phase — 'far' renders shadow + far limbs only,
       // 'rest' from the near leg onward (the contact solve runs in both).
       phase,
+      // B2 MARKET-STANDARD FIX (review report B2 [P1]): every side host
+      // registers its figure area with the occupancy registry — the data
+      // family's presenter floor (3%) has teeth, and the harness can
+      // assert the presenter's staging per evidence frame.
+      subject: true,
+      figureTag: 'data-presenter',
     },
     seed
   );
@@ -1259,7 +1268,7 @@ export function magChipsScene(g: SceneCtx): void {
     // the hip blows the frame edge under it from EITHER column. The certified
     // premium staging: the left margin at 1.2 (+29% area over the shipped
     // 1.1), palm ON the stat card's left edge — the contact verb holds.)
-    hostSmall(g, 185, 'present', 22, H * 0.66, 1.2, 0, 'aha', 1.4, 1, false, 0.4,
+    hostSmall(g, 185, 'present', 22, H * 0.66, 1.3, 0, 'aha', 1.4, 1, false, 0.4, // B2: 1.2 → 1.3 — clears the data family's new 3% presenter floor
       undefined, undefined, { x: 261, y: H * 0.50 + 60, hand: 'palm' as const }, 'right', true);
   }
   sourceTag(ctx, W, s.source as string, H - 60);

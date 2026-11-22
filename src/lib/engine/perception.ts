@@ -143,8 +143,12 @@ export const AMP = {
    *  content stays IN frame. The faceScale 1.4-1.8x + DOF + veil carry the
    *  close-up read — the camera supports them, it does not replace them. */
   reactionAmp: { paradox: 0.34, fund: 0.4, three: 0.32 } as Record<string, number>,
-  /** The head-yaw cap, deg. */
-  headYawDeg: 14,
+  /** The head-yaw cap, deg. B4 (review report B4 [P2] — THE
+   *  DISCONNECTED GAZE): 14 → 30 — the old cap displaced the head ~10px
+   *  at the editorial rig toward content half a frame away, under the
+   *  register its own 320 gate needed. 30° carries a real head turn
+   *  (neck break + pseudo-3D squash follow the effective yaw). */
+  headYawDeg: 30,
   /** Brow-raise travel, px. PHASE-5 (report §11 Phase 5): 14 -> 21 (+50%)
    *  — the brow's vertical travel is a silhouette emotion; at 14px it died
    *  at the 320px feed. 100-JUDGE VISUAL AUDIT (Fix 1 — CHARACTER

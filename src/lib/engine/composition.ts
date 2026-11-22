@@ -77,7 +77,16 @@ export const FAMILY_TEMPLATE: Record<
   data: {
     darkMass: 'chart ink + the hero numeral',
     brightMass: 'the hero data surface (cream panel, gold highlight)',
-    figureFloorPct: 0,
+    // B2 MARKET-STANDARD FIX (review report B2 [P1] — NO PRESENTER IN THE
+    // DATA CHAPTERS): the template declared data rooms as figureless
+    // slides ("the chart ink is the dark mass", floor 0) — a stick-man
+    // channel spending its majority runtime as a deck, the mascot that
+    // earns the click absent from the beats that carry the facts. The
+    // data family now carries a presenter floor: every figure staged in
+    // a data room owns >= 3% of frame area (the certified side-host band
+    // starts at rig 1.3 ≈ 3.2%), and the report-named chart scenes stage
+    // the Data Desk presenter beside their charts (scenes-finance.ts).
+    figureFloorPct: 3,
     heroFloorPct: AREA_FLOORS.dataHeroPct,
   },
   statement: {

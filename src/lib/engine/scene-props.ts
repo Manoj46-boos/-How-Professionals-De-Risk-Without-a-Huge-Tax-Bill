@@ -106,6 +106,10 @@ export const PROP_OWNERSHIP: PropOwnership[] = [
   { prop: 'coffee mug', owner: 'the prof character (divergeK lower arm)', verb: 'held', where: 'divergeK' },
   { prop: 'chart satchel', owner: 'every data-chapter host (strap + hip bag)', verb: 'held', where: 'film-wide' },
   { prop: 'thumb prop (takeaway 3)', owner: 'the takeaways host fist', verb: 'held', where: 'takeaways' },
+  // B3 MARKET-STANDARD FIX: the bill beats' props get staged owners
+  { prop: 'tax-stack coin count', owner: 'taxStack presenter (near palm)', verb: 'held', where: 'taxStack' },
+  { prop: 'the $3.7M verdict card', owner: 'taxStack presenter (near hand)', verb: 'held', where: 'taxStack' },
+  { prop: 'decision framework card', owner: 'decisionTable presenter (near hand)', verb: 'held', where: 'decisionTable' },
   // ── contact verbs (palm / tap / fist / bracket) ─────────────────────────
   { prop: 'S&P chart card edge', owner: 'chartTwin host (near hand)', verb: 'palm', where: 'chartTwin' },
   { prop: 'pie wedge', owner: 'pieChart host (near hand)', verb: 'palm', where: 'pieChart' },
@@ -231,8 +235,13 @@ export const PROP_LEDGER: Record<string, string[]> = {
   // P2 (Verdict report — CARRIED-PROP VERBS): the host holds a stat card's
   // edge (the statCards perch) and balances a coin stack on his palm (the
   // dotGrid counting beat) — silhouette events, ledger-governed.
-  holdCard: ['statCards'],
-  coinStack: ['dotGrid'],
+  // B3 MARKET-STANDARD FIX (review report B3 [P1] — HOLSTERED VERBS): the
+  // bill beats join the ledger — the taxStack presenter balances the
+  // line-by-line coin count and holds the $3.7M verdict card, the
+  // decisionTable presenter holds the framework card. The props the film
+  // owns fire in the beats whose objects they are.
+  holdCard: ['statCards', 'taxStack', 'decisionTable'],
+  coinStack: ['dotGrid', 'taxStack'],
 };
 
 export interface PropUsage {

@@ -2902,15 +2902,25 @@ export function drawStickmanV2(
   }
 
   // head — tilt + eye glints + subtle cheek warmth
+  // B4 MARKET-STANDARD FIX (review report B4 [P2] — THE DISCONNECTED
+  // GAZE): the look value is computed UP FRONT so it can drive the HEAD,
+  // not only the pupils — the audit's own rule ("head yaw first, eyes
+  // second") at amplitudes that survive the 320 gate.
+  const lookBase = clamp01((r.look ?? 0) * 0.5 + 0.5) * 2 - 1;
+  const look = clamp(lookBase + Math.sin(t / 7400 + seed * 1.4) * 0.15, -1, 1);
   const tiltR = (pose.lean + pose.headTilt) * D2R;
   // AUDIT-ROUND-2 (fix 11 — HEAD YAW AT CONTENT): the whole head pivots
-  // about the NECK joint by pose.headYaw (±14°, set by the same pointBias
-  // the arms use in Stickman.poseAt). The head displaces toward the
-  // content (~10px at host scale) and its features rotate with it — a
-  // genuine 2D head turn. The pupils' 7px look travel rides ON TOP
-  // (eyeDX below), exactly as the audit specified: "the audience reads
-  // connection through the head yaw first, eyes second".
-  const yawR = (pose.headYaw ?? 0) * D2R;
+  // about the NECK joint by pose.headYaw. The head displaces toward the
+  // content and its features rotate with it — a genuine 2D head turn.
+  // The pupils' look travel rides ON TOP (eyeDX below), exactly as the
+  // audit specified: "the audience reads connection through the head yaw
+  // first, eyes second".
+  // B4: the look's own ±14° yaw rides ON TOP of the pose's pointBias
+  // yaw, clamped to the raised AMP.headYawDeg cap — at the editorial rig
+  // that is ~24px of head displacement toward content half a frame away
+  // (the old register produced ~10px toward content 600px distant).
+  const yawEff = clamp((pose.headYaw ?? 0) + look * 14, -AMP.headYawDeg, AMP.headYawDeg);
+  const yawR = yawEff * D2R;
   const headCX = neckX + Math.sin(tiltR) * (10 + 24);
   const headCY = neckY - Math.cos(tiltR) * (10 + 24);
   bbTouch(headCX, headCY, 31 * (r.faceScale ?? 1) + 6); // FP0: the shrunken egg + crest
@@ -2974,17 +2984,18 @@ export function drawStickmanV2(
     ctx.translate(-neckX, -neckY);
   }
   // 100-JUDGE VISUAL AUDIT (Phase 1 — THE NECK BREAK): on look-turns the
-  // head TRANSLATES toward the look direction (up to 5 head-units at full
+  // head TRANSLATES toward the look direction (up to 9 head-units at full
   // yaw) on top of the neck-pivot rotation — the silhouette reads as the
   // neck bending toward the content, the caricature turn a rigid pivot
-  // can never give. Pure function of the pose's own headYaw.
-  const neckBreak = Math.min(1, Math.abs(pose.headYaw ?? 0) / AMP.headYawDeg) * 5 * Math.sign((pose.headYaw ?? 0) || 1);
+  // can never give. Pure function of the EFFECTIVE yaw (B4: pose yaw +
+  // look-driven yaw, the turn the head actually makes).
+  const neckBreak = Math.min(1, Math.abs(yawEff) / AMP.headYawDeg) * 9 * Math.sign(yawEff || 1);
   ctx.translate(headCX + neckBreak, headCY + nod);
   // PREMIUM UPGRADE 3D-3: PSEUDO-3D HEAD TURN. The head narrows as it turns
   // (scaleX squash proportional to yaw) — a cheap 2.5D read that the head is
   // rotating in 3D, not just pivoting in 2D. At full yaw (14°) the head
   // compresses to 88% width, reading as a head turning away.
-  const yawMag = Math.abs((pose.headYaw ?? 0) / AMP.headYawDeg);
+  const yawMag = Math.abs(yawEff / AMP.headYawDeg);
   // PLAYBOOK P3 (report §8.1 — JAW/CHEEK CHANNEL): a 12px mouth is
   // sub-pixel at the feed; the HEAD itself must act. On the OPEN visemes
   // (A/E/H envelope or C/E/F/H shapes) the head squash-drives: 4%
@@ -3227,9 +3238,10 @@ export function drawStickmanV2(
   // cycle. A fixed pupil for 40 seconds is the "cardboard cutout" tell;
   // the eye leading the head is what makes an illustrated character feel
   // operated. Clamped to the existing look range; deterministic in t.
-  const lookBase = clamp01((r.look ?? 0) * 0.5 + 0.5) * 2 - 1;
-  const look = clamp(lookBase + Math.sin(t / 7400 + seed * 1.4) * 0.15, -1, 1);
-  const eyeDX = look * 7;
+  // B4: the look itself is computed up front (it now drives the head
+  // yaw); this site only sizes the PUPIL travel — 7 → 12 local units, a
+  // travel the feed's 3px eye can actually register.
+  const eyeDX = look * 12;
   // AUDIT-2 / 0.2 (report §10.1, C3) — the RAISED-COSINE BLINK. The old
   // blink was `((t + seed*700) % 4200) < 120 ? 0.12 : 1` — a single-frame
   // pop the panel read instantly ("a step"). Now: close over ~2 frames

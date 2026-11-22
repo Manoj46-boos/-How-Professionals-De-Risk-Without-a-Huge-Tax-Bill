@@ -104,6 +104,7 @@ const SHOTS = [
   ['c1-jpm', 2, 2600, 'distBars-40pct'],
   ['c1-bess', 0, 2600, 'dotGrid-bess'],
   ['c1-tax', 2, 1800, 'taxStack-total'],
+  ['c1-tax', 0, 2200, 'taxStack-rows'], // B2/B3 evidence: the row-counting beat with the presenter + coin stack
   ['c1-unh', 1, 2200, 'drawdownChart'],
   ['e1-plan', 1, 2200, 'planConveyor'],
   ['e1-kill', 0, 2200, 'killCard'],

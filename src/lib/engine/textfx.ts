@@ -102,6 +102,15 @@ export function drawCaptions(
   // ── v9 window: word-capped, sliding, 2 words of spoken context back ──
   const len = words.length;
   let winStart = len <= maxWords ? 0 : Math.max(0, Math.min(lastSpoken - 2, len - maxWords));
+  // C2 MARKET-STANDARD FIX (review report C2 [P0] — THE ORPHAN ROW): the
+  // sliding window may OPEN on a clause tail — a word ending in , ; . ! ?
+  // whose clause belongs to the previous caption moment ("million," as
+  // the first word of a row). Skip such tails (never past the currently
+  // spoken word) so a window never opens on a dangling fragment.
+  while (
+    winStart > 0 && winStart <= lastSpoken - 1 &&
+    /[,;:.!?…]$/.test(words[winStart].w)
+  ) winStart++;
   let winEnd = Math.min(len, winStart + maxWords);
   // never strand a fully-spoken window behind (early window keeps moving)
   if (lastSpoken >= 0 && winEnd <= lastSpoken) {
@@ -148,6 +157,15 @@ export function drawCaptions(
       winWords.forEach((wd, i) => {
         if (i < winWords.length - 1 && /[,;:.!?—–”)%]$/.test(wd.w)) breaks.push(i + 1);
       });
+      // C2 MARKET-STANDARD FIX (review report C2 [P0] — the break scorer's
+      // missing grammar guard): a row boundary is a grammar event, not
+      // just a width split. A candidate break is VALID only when
+      //   • both rows carry ≥ 2 words (no single-word orphan rows like
+      //     a "million," clause tail alone on a line), and
+      //   • row 2 never OPENS on a clause tail (a word ending in
+      //     , ; . ! ? at a row head is the orphan read itself).
+      const validBreak = (b: number): boolean =>
+        b >= 2 && winWords.length - b >= 2 && !/[,;:.!?…]$/.test(winWords[b].w);
       let best = -1;
       let bestScore = Infinity;
       for (const b of breaks) {
@@ -156,7 +174,7 @@ export function drawCaptions(
         // PANEL-10: row 1 of a 2-row split never carries the trailing mark
         // (it continues INSIDE the same pill), so only row 0's ellW counts
         // in the break fit; row 1 needs room for its own trlW.
-        if (w1 + ellW <= maxW && w2 + trlW <= maxW) {
+        if (w1 + ellW <= maxW && w2 + trlW <= maxW && validBreak(b)) {
           const score = Math.abs(w1 - total / 2);
           if (score < bestScore) { bestScore = score; best = b; }
         }
@@ -184,6 +202,21 @@ export function drawCaptions(
         // room, the unplaced tail still announces continuation.
         if (placed < winWords.length) trails = true;
         rows = [r0, r1].filter((r) => r.length);
+        // C2 orphan repair: the width fallback can strand one word on a
+        // side. If either row carries a single word and the other can
+        // spare one, move a NON-tail word across the boundary — a clause
+        // tail never moves to a row head.
+        if (rows.length === 2 && r1.length === 1 && r0.length >= 3) {
+          let idx = r0.length - 1;
+          while (idx > 0 && /[,;:.!?…]$/.test(r0[idx].w)) idx--;
+          const moved = r0.splice(idx, 1)[0];
+          r1.unshift(moved);
+        } else if (rows.length === 2 && r0.length === 1 && r1.length >= 3) {
+          let idx = 0;
+          while (idx < r1.length - 1 && /[,;:.!?…]$/.test(r1[idx].w)) idx++;
+          const moved = r1.splice(idx, 1)[0];
+          r0.push(moved);
+        }
       }
     }
   }
@@ -288,12 +321,21 @@ export function drawCaptions(
       // text; the spoken state stays ink at ≈9.6:1.
       const since = tMs - w.t;
       const punch = activeW && since >= 0 && since < 260;
+      const ww = ctx.measureText(w.w).width;
+      // C1 MARKET-STANDARD FIX (review report C1 [P0] — JOINED WORDS): the
+      // punch scaled the word about its center while the advance kept the
+      // unwidened width — the glyph's left growth ate the space before it
+      // ("lossharvesting", "roughlythree-point-seven"). The punched word
+      // now draws with its LEFT EDGE PINNED at x (the scale pivot sits at
+      // the scaled word's own center, so the glyph grows rightward into
+      // space it owns) and the ADVANCE reserves the scaled width — the
+      // space to the left is never eaten and the next word never
+      // underlaps the right growth.
+      const k = punch ? 1 + 0.06 * Math.sin(clamp01(since / 260) * Math.PI) : 1;
+      const sw = ww * k;
       if (punch) {
-        // the punch: scale the word about its own center, gold fill
-        const k = 1 + 0.06 * Math.sin(clamp01(since / 260) * Math.PI);
-        const ww = ctx.measureText(w.w).width;
         ctx.save();
-        ctx.translate(x + ww / 2, y);
+        ctx.translate(x + sw / 2, y);
         ctx.scale(k, k);
         ctx.fillStyle = PALETTE.goldInk;
         ctx.fillText(w.w, -ww / 2, 0);
@@ -303,13 +345,12 @@ export function drawCaptions(
         ctx.fillText(w.w, x, y);
       }
       if (style.mode === 'karaoke' && activeW) {
-        const ww = ctx.measureText(w.w).width;
         const sweep = clamp01((tMs - w.t) / Math.max(w.d, 80));
         ctx.fillStyle = PALETTE.up;                       // v5: teal karaoke sweep
         roundRect(ctx, x - 2, y + fontSize * 0.6, (ww + 4) * easeOutQuad(sweep), 8, 4);
         ctx.fill();
       }
-      x += ctx.measureText(w.w).width + spaceW;
+      x += sw + spaceW;
     }
   });
   ctx.restore();

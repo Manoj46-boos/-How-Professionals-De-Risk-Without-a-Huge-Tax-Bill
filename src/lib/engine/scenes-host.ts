@@ -1454,7 +1454,7 @@ export function splitNumbersScene(g: SceneCtx): void {
       // hero; the host presents at the certified 1.55 participant band.
       pose: Stickman.poseAt(t, { gesture: 'present', speaking: g.speaking, sentenceId: g.sentenceId, sentenceT: g.sentenceT, wordTimes: g.gWordTimes }),
       alpha: clamp01((t - 400) / 500),
-      look: mode === 'left' ? -0.7 : 0.7,
+      look: mode === 'left' ? -0.95 : 0.95, // B4: the presenter commits the gaze to the panel (was ±0.7 — under the register the head-yaw channel needs)
       talk: g.speaking ? talkAt(g.beatT, g.wordTimes) : 0,
       parallax: true,
       // 100-JUDGE REPORT (fix D05): the contact verb — palm ON the panel edge.
@@ -2444,7 +2444,7 @@ export function channelIntroScene(g: SceneCtx): void {
   // intro's host IS the beat's subject — 1.5 → 1.8 toward the 10%
   // frame-area floor (the wave envelope stays inside the frame edge:
   // 0.84W + half-span ≈ 1775 < 1920).
-  drawStickmanV2(ctx, W * 0.84, H * 0.645, 1.8, t, { pose: wavePose, alpha: clamp01((t - 600) / 500), look: -0.6, talk, parallax: true, subject: true, figureTag: 'intro-host' }, 9); // fix 6.1: 1.27 -> 1.5; PHASE 3: 1.5 -> 1.8
+  drawStickmanV2(ctx, W * 0.84, H * 0.645, 1.8, t, { pose: wavePose, alpha: clamp01((t - 600) / 500), look: -0.95, talk, parallax: true, subject: true, figureTag: 'intro-host' }, 9); // fix 6.1: 1.27 -> 1.5; PHASE 3: 1.5 -> 1.8; B4: the intro gaze commits to the room (was -0.6)
 }
 
 // ── recapSplit (used at ch5 open and ch10 open) ─────────────────────────────
@@ -2566,7 +2566,7 @@ export function recapSplitScene(g: SceneCtx): void {
   // 100-JUDGE VISUAL AUDIT (Fix 3 — HOST-SCALE HIERARCHY): 1.35 → 1.5 — the
   // premium area band; x holds at W*0.79 (the wider core keeps the palm
   // solve and stays off the frame edge; the guard sweep re-arbitrates).
-  drawStickmanV2(ctx, W * 0.79, H * 0.645, 1.5, t, { pose, alpha: clamp01((t - 140) / 420), look: -0.4, talk, parallax: true, contact: { x: 1610, y: 570, hand: 'palm' } }, 17);
+  drawStickmanV2(ctx, W * 0.79, H * 0.645, 1.5, t, { pose, alpha: clamp01((t - 140) / 420), look: -0.85, talk, parallax: true, contact: { x: 1610, y: 570, hand: 'palm' } }, 17); // B4: the contact verb's gaze follows the palm (was -0.4)
 }
 
 function miniPanel(
@@ -2919,7 +2919,7 @@ export function paradoxResolveScene(g: SceneCtx): void {
     // column at rest and at every push frame.
     ctx, W * 0.80, H * 0.667, 1.5, t,
     {
-      pose, alpha: clamp01((t - 600) / 500), look: 0.5, talk,
+      pose, alpha: clamp01((t - 600) / 500), look: 0.9, talk, // B4: the reaction close-up faces the content it reacts to (was 0.5)
       // AUDIT-PHASE-3: faceScale peak 1.65 -> 1.8 — the paradox reaction
       // beat finally reads as a face close-up at phone scale.
       faceScale: 1 + 0.8 * rP,

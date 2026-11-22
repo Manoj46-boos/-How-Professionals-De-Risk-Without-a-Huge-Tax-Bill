@@ -19,6 +19,11 @@ import { drawStickmanV2, talkAt } from './stickman-v2';
 import { POSES, blendPose } from './stickman';
 import { registerRect, registerText } from './collision';
 import { sourceTag, sceneTitle } from './charts';
+// B2 MARKET-STANDARD FIX (review report B2 [P1]): the finance data rooms
+// stage the certified side-host presenter (the same figure every other
+// data scene uses) — the chart beats stop rendering as a figureless deck.
+import { hostSmall } from './scenes-data';
+import { resolveProp } from './scene-props';
 
 // ── shared furniture ─────────────────────────────────────────────────────────
 
@@ -226,6 +231,12 @@ export function crossChartScene(g: SceneCtx): void {
     ], t, 700, 'benchmark ghost: the $100B gap is the decision, not the market');
   }
 
+  // B2 MARKET-STANDARD FIX (review report B2 [P1] — NO PRESENTER IN THE
+  // DATA CHAPTERS): the cold-open crossing gets its narrator — the Data
+  // Desk presenter stands in the room's free left column at the certified
+  // side-host register, his gesture cycle pointing INTO the crossing.
+  hostSmall(g, 130, 'pointR', 31, g.H * 0.66, 1.3, 0, 'aha', 1.4, 1, true, 0.4);
+
   // the HOLD chip — the thesis in one word
   if (mode === 'hold-chip' || mode === 'build-b' || mode === 'cross-marked' || mode === 'delta') {
     const cp = clamp01((t - 200) / 500);
@@ -404,6 +415,12 @@ export function drawdownChartScene(g: SceneCtx): void {
       ctx.restore();
     }
   }
+
+  // B2 MARKET-STANDARD FIX (review report B2 [P1] — NO PRESENTER IN THE
+  // DATA CHAPTERS): the drawdown curve gets its narrator — the shape
+  // ledger owns the right column, so the presenter stands in the quiet
+  // left column, gesture cycle aimed into the curve.
+  hostSmall(g, 92, 'pointR', 35, g.H * 0.66, 1.3, 0, 'aha', 1.4, 1, true, 0.4);
 }
 
 // ── exitTiles — the six gold tiles ───────────────────────────────────────────
@@ -576,6 +593,11 @@ export function distBarsScene(g: SceneCtx): void {
       ctx.restore();
     }
   }
+
+  // B2 MARKET-STANDARD FIX (review report B2 [P1] — NO PRESENTER IN THE
+  // DATA CHAPTERS): the base-rate bars get their narrator — he stands in
+  // the quiet left column, gesture cycle aimed at the bar row.
+  hostSmall(g, 110, 'pointR', 32, g.H * 0.66, 1.3, 0, 'aha', 1.4, 1, true, 0.4);
 }
 
 // ── taxStack — the $3.7M bill, line by line ──────────────────────────────────
@@ -666,6 +688,22 @@ export function taxStackScene(g: SceneCtx): void {
     ctx.restore();
     impactRing(ctx, W / 2, H * 0.515 + 100, t, 700);
     if (tp >= 1) sparkles(ctx, W / 2 + 290, H * 0.515 + 50, t, 700, { count: 8, radius: 100 });
+  }
+
+  // B2 MARKET-STANDARD FIX (review report B2 [P1] — NO PRESENTER IN THE
+  // DATA CHAPTERS): the bill's COUNTING beats (row-1/2/3) get their
+  // narrator — the presenter stands in the quiet left column with his
+  // palm planted ON the bill's left edge (the certified contact solve),
+  // the head and gesture aimed at the current line. In total mode the
+  // $3.7M verdict card owns the lower band and the camera pushes — the
+  // room belongs to the number (the scene's own staging declaration).
+  // B3 MARKET-STANDARD FIX (review report B3 [P1] — HOLSTERED VERBS): he
+  // BALANCES THE COIN COUNT on the same palm (the ledger-resolved
+  // coinStack) — the bill is counted by a person, not floating.
+  if (!totalMode) {
+    hostSmall(g, 92, 'present', 33, g.H * 0.66, 1.3, 0, 'aha', 1.4, 1, true, 0.4,
+      undefined, undefined, { x: 196, y: 600, hand: 'palm' }, undefined, undefined,
+      resolveProp('taxStack', 'coinStack', true) ? 'coinStack' : undefined);
   }
 }
 
@@ -1323,6 +1361,12 @@ export function payoffDiagramScene(g: SceneCtx): void {
       ctx.restore();
     }
   }
+
+  // B2 MARKET-STANDARD FIX (review report B2 [P1] — NO PRESENTER IN THE
+  // DATA CHAPTERS): the collar's payoff diagram gets its narrator — he
+  // stands in the free right column (the chart spans x 190-1410), his
+  // gesture cycle pointing back INTO the payoff bands.
+  hostSmall(g, 1706, 'pointL', 34, g.H * 0.66, 1.35, 0, 'aha', 1.4, 1, true, 0.4);
 }
 
 // ── taxMine — the collar tax minefield ───────────────────────────────────────
@@ -1808,6 +1852,17 @@ export function decisionTableScene(g: SceneCtx): void {
       ctx.restore();
     }
   }
+
+  // B2 MARKET-STANDARD FIX (review report B2 [P1] — NO PRESENTER IN THE
+  // DATA CHAPTERS): the framework table gets its presenter — he stands
+  // left of the row cards (the table's registered left edge is 174), his
+  // gesture cycle aimed at the rows. B3 MARKET-STANDARD FIX (review
+  // report B3 [P1] — HOLSTERED VERBS): he HOLDS THE FRAMEWORK CARD (the
+  // ledger-resolved holdCard) — the verdict someone walks you through,
+  // not a plate that floats.
+  hostSmall(g, 92, 'pointR', 36, g.H * 0.66, 1.3, 0, 'aha', 1.4, 1, true, 0.4,
+    undefined, undefined, undefined, undefined, undefined,
+    resolveProp('decisionTable', 'holdCard', true) ? 'holdCard' : undefined);
 }
 
 // ── sequenceStack — the layered answer ───────────────────────────────────────
