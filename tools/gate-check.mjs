@@ -86,7 +86,7 @@ SCRIPT.forEach((ch, ci) => {
   });
 });
 const tl = buildTimeline(manifest, 30);
-const OPTS = { captions: 'off', channelName: 'The Data Desk', nextVideoTitle: 'x', watermark: false, progressBar: false };
+const OPTS = { captions: 'karaoke', channelName: 'The Data Desk', nextVideoTitle: 'x', watermark: false, progressBar: false };
 
 // ── the gate ─────────────────────────────────────────────────────────────────
 const W = 1920, H = 1080;
@@ -102,10 +102,34 @@ fx.imageSmoothingQuality = 'high';
 
 const lum = (d, i) => 0.2126 * d[i] + 0.7152 * d[i + 1] + 0.0722 * d[i + 2];
 
+// ── the D1 acceptance (review report §5.1 0.5 — WIRE THE GATE) ───────────────
+// The pixel-audit acceptance was written twice in the audit comments — mean
+// 180-215 with RMS 40+ per frame — and never enforced. It is enforced here:
+// a checkpoint whose mean climbs past 215 (washed light) or whose RMS drops
+// under 40 (flat, the champagne-on-champagne failure) FAILS the gate. Mean
+// UNDER 180 prints as a DARK row — the kill-card family breaks the band
+// deliberately (the film's one dark register), so the low side informs, it
+// does not fail.
+const MEAN_MAX = 215, RMS_FLOOR = 40, MEAN_MIN = 180;
+
 const rows = [];
 let fails = 0;
+let washed = 0;
 for (let t = 2000; t < tl.durationMs; t += STEP) {
   drawFrame(fctx, tl, t, OPTS);
+  // the D1 acceptance measures the FULL frame at the render scale
+  const fd = fctx.getImageData(0, 0, W, H).data;
+  let sum = 0, sum2 = 0;
+  const n = W * H;
+  for (let i = 0; i < n * 4; i += 4) {
+    const L = lum(fd, i);
+    sum += L; sum2 += L * L;
+  }
+  const mean = sum / n;
+  const rms = Math.sqrt(Math.max(0, sum2 / n - mean * mean));
+  const darkRow = mean < MEAN_MIN;
+  const washedRow = mean > MEAN_MAX || rms < RMS_FLOOR;
+  if (washedRow) washed++;
   fx.drawImage(frame, 0, 0, FW, FH);
   const d = fx.getImageData(0, 0, FW, FH).data;
   // the subject band: the center-left/center columns where the host or the
@@ -123,11 +147,12 @@ for (let t = 2000; t < tl.durationMs; t += STEP) {
   const gap = bMax - sMin;
   const ok = gap >= GAP_FLOOR;
   if (!ok) fails++;
-  rows.push({ t, gap: Math.round(gap), ok });
-  console.log(`t=${(t / 1000).toFixed(1)}s  subject-bg gap ${Math.round(gap)}/255  ${ok ? 'PASS' : 'FAIL'}`);
+  rows.push({ t, gap: Math.round(gap), mean: Math.round(mean), rms: Math.round(rms), ok, washed: washedRow, dark: darkRow });
+  console.log(`t=${(t / 1000).toFixed(1)}s  gap ${Math.round(gap)}/255 ${ok ? 'PASS' : 'FAIL'}  |  mean ${mean.toFixed(1)} rms ${rms.toFixed(1)} ${darkRow ? 'DARK-REGISTER' : washedRow ? 'WASHED-FAIL' : 'IN-BAND'}`);
 }
-if (OUT) fs.writeFileSync(OUT, JSON.stringify({ gapFloor: GAP_FLOOR, step: STEP, rows, fails }, null, 2));
-console.log(fails === 0
-  ? `\ngate-check: PASS — ${rows.length} checkpoints, all >= ${GAP_FLOOR}/255`
-  : `\ngate-check: FAIL — ${fails}/${rows.length} checkpoints under ${GAP_FLOOR}/255 (fix the value plan, not the numbers)`);
-process.exit(fails === 0 ? 0 : 1);
+if (OUT) fs.writeFileSync(OUT, JSON.stringify({ gapFloor: GAP_FLOOR, meanBand: [MEAN_MIN, MEAN_MAX], rmsFloor: RMS_FLOOR, step: STEP, rows, fails, washed }, null, 2));
+const totalFails = fails + washed;
+console.log(totalFails === 0
+  ? `\ngate-check: PASS — ${rows.length} checkpoints, gap >= ${GAP_FLOOR}/255 and D1 acceptance (mean <= ${MEAN_MAX}, rms >= ${RMS_FLOOR}) clean`
+  : `\ngate-check: FAIL — gap fails ${fails}/${rows.length}, washed/flat fails ${washed}/${rows.length} (fix the value plan, not the numbers)`);
+process.exit(totalFails === 0 ? 0 : 1);

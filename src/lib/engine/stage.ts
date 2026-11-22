@@ -88,8 +88,6 @@ export function drawStageWorld(
   const base = STAGE_TABLE[family];
   const st = {
     horizonY: ov.horizonY ?? base.horizonY,
-    mullions: base.mullions,
-    mullionAlpha: base.mullionAlpha,
     floorAlpha: ov.floorAlpha ?? base.floorAlpha,
     floorLines: ov.floorLines ?? base.floorLines,
   };
@@ -129,28 +127,14 @@ export function drawStageWorld(
     ctx.stroke();
   }
 
-  // ── 2. THE ARCHITECTURE BAND ──────────────────────────────────────────
-  // the studio wall behind every scene: large vertical mullion bands in
-  // the upper field. Widths 90-160px (≥15px at the feed), deterministic
-  // placement, alpha below the mass threshold — structure, never content.
-  const bandTop = H * 0.10;
-  const bandBottom = horizonY - H * 0.03;
-  for (let i = 0; i < st.mullions; i++) {
-    const u = hash01(i * 13.7 + 3);
-    const wBand = W * (0.05 + hash01(i * 5.1 + 29) * 0.035);
-    const x = W * (0.10 + u * 0.80) - wBand / 2;
-    // a gentle vertical gradient: the band fades in from its top and out
-    // at its foot — it reads as light falling between mullions
-    const a = st.mullionAlpha * (0.75 + hash01(i * 3.3) * 0.5);
-    const breathe = Math.sin(t / 7000 + i * 2.1) * 0.012;   // slow, cinematic
-    g = ctx.createLinearGradient(0, bandTop, 0, bandBottom);
-    g.addColorStop(0, rgba(ink, 0));
-    g.addColorStop(0.35, rgba(ink, Math.max(0, a + breathe)));
-    g.addColorStop(0.85, rgba(ink, a * 0.5));
-    g.addColorStop(1, rgba(ink, 0));
-    ctx.fillStyle = g;
-    ctx.fillRect(x, bandTop, wBand, bandBottom - bandTop);
-  }
+  // ── 2. THE ARCHITECTURE BAND — DELETED ────────────────────────────────
+  // 0.4 (review report §5.1 Phase 0 — RETIRE OR COMMIT THE WHISPER
+  // STRIPES): the mullion band loop is DELETED, the panel's own
+  // recommendation. The D2 register cut (mullionAlpha → 0) silenced the
+  // bands but the loop still cost per-frame time on every scene; now the
+  // cost is gone too. The room composes from the planes that carry real
+  // mass — the floor plane, the horizon band, the perspective lines and
+  // the desk edge — and the upper field stays clean for the content.
 
   // ── 3. THE DESK EDGE ──────────────────────────────────────────────────
   // the frame's foot: a soft foreground rail the camera looks over

@@ -106,7 +106,7 @@ export const PALETTE: Palette = {
   // 0.32 -> 0.40. bgTop HOLDS — the light frames' mean anchor — so the
   // spread grows from both directions without falling out of the band.
   bgBottom: '#D3BE8B',
-  bgSoft: '#E0D0A9',
+  bgSoft: '#D9C69C',
   ink: '#141B16',
   inkSoft: '#2F3831',
   inkFaint: '#4E5850',
@@ -147,9 +147,9 @@ export const PALETTE: Palette = {
   //   downSoft #FAE7E1 -> #F2DAD2 (mood rooms' coral field — gentlest
   //                                step: coral rooms already ran lowest)
   // Target: every scene frame lands 200-215 mean luminance, RMS 30+.
-  goldWash: '#E2CD96',
+  goldWash: '#DBC48A',
   up: '#0E5C43',
-  upSoft: '#BDD2C2',
+  upSoft: '#B3C9B6',
   down: '#8E2F3C',
   // U25 (review report U25 — THE WASH IS TWO REGISTERS WITH MEANING): the
   // C2 consolidation (sage = data/analysis, cream-gold = statement) stands;
@@ -157,7 +157,7 @@ export const PALETTE: Palette = {
   // terracotta, so wherever the soft-down register touches a frame (the
   // down-tone badges in textfx) it reads as deliberate clay, never as a
   // staining pink wash.
-  downSoft: '#DFC09E',
+  downSoft: '#D7B78F',
   // v10 (panel COLOR-3): the vivid data-ink ramp — strokes only, never text
   upVivid: '#0F7E58',
   downVivid: '#B23B47',
@@ -777,7 +777,7 @@ export function scenePlate(
   // D1: the multiply register returns one step — 0.32 -> 0.40 (effective
   // ~0.33 at the 0.82 plate) — the tonal field reads again under the
   // transcode instead of a slightly greener white.
-  ctx.fillStyle = rgba(soft, strength * 0.40);
+  ctx.fillStyle = rgba(soft, strength * 0.44);
   ctx.fillRect(0, 0, W, H);
   ctx.globalCompositeOperation = 'source-over';
   // PHASE-2 (report §11 Phase 2): THE VIVID CHAPTER WASH — a direct wash of
