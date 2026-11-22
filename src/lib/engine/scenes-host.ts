@@ -13,6 +13,7 @@ import { HERO } from './perception';
 import { SceneCtx, declareOnScreenHeadline } from './scene-context';
 import { pivotTakeStart, stageMoves, stageRestIdx, stageStartIdx } from './pivots';
 import { CARD_TEXT_PAD_BOTTOM } from './collision';
+import { DT_ROWS } from './scenes-finance';
 import { reactionAt, reactionStart } from './scene-context';
 import { registerRect, registerText, declareHostContact } from './collision';
 // PHASE 1 (100-Judge audit Table 6): the HOST_SCALE rule + the figure
@@ -1239,20 +1240,39 @@ export function hostSceneV2(g: SceneCtx): void {
     // gold vest and gold kicker chip. The ladder re-keys to the UP teal
     // ramp with an ink label: the exhibit reads as DATA, the type block
     // owns the frame's gold.
+    // 4.3 (review report §4.3 — THE SAVE ARTIFACT, REPRISED): on a chapter
+    // close that carries `reprise: N`, THIS ladder becomes the progress
+    // rail the report asks for — the report's own words: "reuse the
+    // chapter-card rail; the delta is a highlight state". The completed
+    // exits' bars turn the gold ramp, the chapter's own bar goes FULL gold
+    // with the deep-gold ring, and the label prints the exit counter
+    // (EXIT N OF 6). Zero new furniture — the certified exhibit slot holds.
+    const rp = Number(g.s.reprise ?? 0);
     for (let i = 0; i < barsN; i++) {
       const bh = 26 + i * 15;
       const bx2 = lx0 + i * (barW + 14);
-      ctx.fillStyle = i === barsN - 1 ? PALETTE.upVivid : rgba(PALETTE.up, 0.55 + i * 0.07);
+      const done = rp > 0 && i < rp;
+      const hot = rp > 0 && i === rp - 1;
+      ctx.fillStyle = hot ? PALETTE.gold
+        : done ? rgba(PALETTE.gold, 0.42)
+        : (i === barsN - 1 ? PALETTE.upVivid : rgba(PALETTE.up, 0.55 + i * 0.07));
       roundRect(ctx, bx2, baseY - bh, barW, bh, 8);
       ctx.fill();
+      if (hot) {
+        ctx.strokeStyle = rgba(PALETTE.goldDeep, 0.75);
+        ctx.lineWidth = 3;
+        roundRect(ctx, bx2 - 5, baseY - bh - 5, barW + 10, bh + 10, 11);
+        ctx.stroke();
+      }
     }
     // the cap — the K mark on the tallest bar
     drawK(ctx, lx0 + (barsN - 1) * (barW + 14) + barW / 2, baseY - (26 + (barsN - 1) * 15) - 26, 15, 2.5, PALETTE.up);
-    // the label — right-aligned inside the card
+    // the label — right-aligned inside the card; on a reprise beat it
+    // prints the exit counter state (the progress tick's caption)
     setFont(ctx, TYPE_FLOOR, 700);
     ctx.textAlign = 'right';
-    ctx.fillStyle = PALETTE.ink;
-    ctx.fillText('THE SIX EXITS', fx0 + fw - 24, fy0 + 44);
+    ctx.fillStyle = rp > 0 ? PALETTE.goldDeep : PALETTE.ink;
+    ctx.fillText(rp > 0 ? `EXIT ${rp} OF 6 — ${DT_ROWS[rp - 1][0].toUpperCase()}` : 'THE SIX EXITS', fx0 + fw - 24, fy0 + 44);
     ctx.restore();
   }
   // D9: on chartstand beats the presented exhibit lives in the SAME

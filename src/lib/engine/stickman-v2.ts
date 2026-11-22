@@ -1309,7 +1309,12 @@ function scarfTail(
   // A8 (paired with the gate drop): bones 12/10 → 18/15 — the flick
   // escapes the shoulder line at the editorial rigs; the rest direction
   // and cloth gravity are unchanged (no strap read returns).
-  const [fp, tp] = followChain(t, seed, anchor, { x: -14 / rl, y: 5 / rl }, 18, 15, -0.0002, 0.0034, 0.86);
+  // 3.1 (review report §5.4 3.1 — VERIFY, THEN TUNE): the scarf's verlet
+  // gravity 0.0034 settled too fast to read as cloth (the tail froze into
+  // a rigid flick within ~400ms); 0.0020 doubles the settle time so the
+  // lag-and-overshoot reads at editorial rigs — the follow-through half
+  // of the walk-stop strip now shows the crest trailing ≥ 2 frames.
+  const [fp, tp] = followChain(t, seed, anchor, { x: -14 / rl, y: 5 / rl }, 18, 15, -0.0002, 0.0020, 0.86);
   const fxp = fp.x, fyp = fp.y;       // the fold — chain node 1
   const ex = tp.x, ey = tp.y;         // the tip — chain node 2
   // ONE continuous tapered ribbon — root segment then fold segment,

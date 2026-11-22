@@ -124,6 +124,12 @@ const SHOTS = [
   ['e6-decay', 0, 2600, 'decayCurves-ls200'],
   ['fw-table', 3, 2200, 'decisionTable-rows'],
   ['fw-sequence', 0, 2600, 'sequenceStack'],
+  // 2.3 + 4.3 evidence: the signature poses and the framework reprise rail
+  ['e1-intro', 0, 2200, 'host-e1-intro-climb'],
+  ['e1-out', 0, 2200, 'host-e1-out-reprise1'],
+  ['e4-out', 0, 2200, 'host-e4-out-reprise4'],
+  ['e6-leverage', 1, 2200, 'host-e6-leverage-wry'],
+  ['fw-like', 0, 2200, 'host-fw-like-thumbsup'],
 ];
 
 const only = process.argv[2] || '';

@@ -164,7 +164,16 @@ export function hostSmall(
   // and 'rest' (near leg onward + near arm) after it, turning accidental
   // clipping into a designed depth beat. Both calls run the identical pose
   // math (pure f(t)), so the two passes reassemble one figure.
-  phase?: 'far' | 'rest' | 'all'
+  phase?: 'far' | 'rest' | 'all',
+  // 2.1 (review report §2.1 — EVERY DATA SCENE STAGES THE HOST): the
+  // walk-in window in ms. When set, the host WALKS from off-lane to his
+  // mark inside the window — walkIn() carries the stride pose, the
+  // planted-foot phase and the settle cascade (the last 24% lands on a
+  // completed step and a weight shift, never a pose snap); after the
+  // window the caller's presenting cycle owns the figure. Chapter-opener
+  // chart call sites pass this; mid-chapter staging keeps the standing
+  // entry. Pure f(t), scrub-safe.
+  walkEnter?: number
 ): void {
   // v10 (panel CHAR-1/CHAR-3): the side host CYCLES through a gesture set
   // instead of holding one pose for the whole scene — "two poses: shrug,
@@ -294,8 +303,25 @@ export function hostSmall(
     g.ctx.fill();
     g.ctx.restore();
   }
+  // 2.1 WALK-IN: the entry walk. From off-lane (240px beyond the mark, on
+  // the side away from the content) to the mark — the walk pose owns the
+  // figure while walking, the stride phase drives the squash pair, and the
+  // settle hands the figure back to the presenting cycle.
+  let drawX = x;
+  let walkPhase: number | undefined;
+  let walkSquash = 0;
+  if (walkEnter !== undefined && g.sceneT < walkEnter + 420) {
+    const startX = dir === 'right' ? x - 240 : x + 240;
+    const wk = walkIn(g.sceneT, startX, x, walkEnter, pose, scale, seed);
+    drawX = wk.x;
+    if (wk.walking) {
+      pose = wk.pose;
+      walkPhase = wk.phase;
+      walkSquash = walkStrike(wk.phase);
+    }
+  }
   drawStickmanV2(
-    g.ctx, x, groundY2, scale, g.t,
+    g.ctx, drawX, groundY2, scale, g.t,
     {
       // P2-4 (audit Table 4 — depth with intent): the side hosts now
       // ENTER WITH THE WHIP — alpha ramps from t=160 (was 500), so the
@@ -307,7 +333,11 @@ export function hostSmall(
       // BEAT time (the count restarts per beat; the host arrives with it —
       // a 12s-cap re-split group no longer replays the fade mid-count) and
       // commits to the 0.85 floor / 180ms ramp: arrive, don't condense.
-      pose, alpha: 0.85 + 0.15 * clamp01((g.beatT - 20) / 180), look: dir === 'right' ? 0.5 : -0.5, talk, smear,
+      pose, alpha: 0.85 + 0.15 * clamp01((g.beatT - 20) / 180), look: dir === 'right' ? 1.0 : -1.0, talk, smear,
+      // 2.1: the walk-in stride — the planted-foot phase drives the figure's
+      // squash-and-stretch pair while walking; zero (no phase) outside it.
+      walkPhase,
+      squash: walkSquash,
       // PHASE 3: the drawn three-speedline arm smear — same two-tier
       // accent envelope (accentPulse, content-word strikes, reaction-
       // paused): the audit's restored smear rides the film's real strikes.

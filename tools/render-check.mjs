@@ -91,6 +91,8 @@ let silhouetteViolations = 0, faceSemanticViolations = 0, handInkViolations = 0,
 const VALUE_EVIDENCE = [];
 const FEED_EVIDENCE = [];
 
+ledger.resetPropRunStats ? ledger.resetPropRunStats() : null;
+
 const { SCRIPT } = require(path.join(BUILD, 'script-data.js'));
 const { splitSentences } = require(path.join(BUILD, 'easing.js'));
 const { buildTimeline } = require(path.join(BUILD, 'timeline.js'));
@@ -192,6 +194,8 @@ const OPTS = {
 const targets = [];
 const t0 = Date.now();
 let guardViolations = 0;
+// 4.2 FIGURE COVERAGE GATE — the runtime-coverage registers (per sweep sample)
+let covFrames = [], covBareStreak = 0, covBareFlagged = false, coverageViolations = 0;
 
 function render(name, tMs) {
   if (guard) {
@@ -817,6 +821,43 @@ if (guard && !process.argv.includes('--no-sweep')) {
     guard.resetGuard(`sweep@${(t / 1000).toFixed(1)}s`);
     drawFrame(ctx, tl, t, OPTS);
     report(t, guard.collectViolations());
+    // 4.2 (review report §4.2 — FIGURE COVERAGE AS A GATE): every sweep
+    // sample reports figure-or-animating-chart coverage — a sample is
+    // COVERED when a figure is registered in the frame OR the frame's
+    // content share clears the family's fill floor (a chart mid-reveal,
+    // cards, furniture). Consecutive bare samples past 8s are the
+    // bare-slide violation class the report kills structurally.
+    {
+      const figs = figureRegistry();
+      const ocx = composition.frameContext();
+      const img = ctx.getImageData(0, 0, W, H).data;
+      // the corner-average paper tone (the same measure as the C8 gate)
+      let cr = 0, cg = 0, cb = 0, cn = 0;
+      for (const [sx, sy] of [[10, 10], [W - 11, 10], [10, H - 11], [W - 11, H - 11]]) {
+        const o = (sy * W + sx) * 4;
+        cr += img[o]; cg += img[o + 1]; cb += img[o + 2]; cn++;
+      }
+      cr /= cn; cg /= cn; cb /= cn;
+      let content = 0, total = 0;
+      for (let py = 0; py < H; py += 8) {
+        for (let px2 = 0; px2 < W; px2 += 8) {
+          const o = (py * W + px2) * 4;
+          if (Math.abs(img[o] - cr) + Math.abs(img[o + 1] - cg) + Math.abs(img[o + 2] - cb) > 72) content++;
+          total++;
+        }
+      }
+      const covered = figs.length > 0 || (content / total) * 100 >= 40;
+      covFrames.push({ t, covered });
+      if (covered) covBareStreak = 0;
+      else {
+        covBareStreak += step;
+        if (covBareStreak > 8000 && !covBareFlagged) {
+          coverageViolations++;
+          covBareFlagged = true;
+          console.error(`  !! COVERAGE GATE — @${(t / 1000).toFixed(1)}s: ${covBareStreak / 1000}s of bare-slide runtime (no figure, no live chart)`);
+        }
+      }
+    }
     swept++;
   }
   // PANEL-10 (D-08/D-09 lesson): a 4s grid walks straight past the defects —
@@ -1027,9 +1068,29 @@ function iou(a, b) {
   }
 }
 
+// 4.2 report: the runtime figure-or-animating-chart coverage ratio
+{
+  const covN = covFrames.filter((f) => f.covered).length;
+  const ratio = covFrames.length ? (100 * covN) / covFrames.length : 100;
+  console.log(`  [figure-coverage] ${covN}/${covFrames.length} sweep samples covered (${ratio.toFixed(1)}% — gate 70%; bare-slide streaks > 8s fail)`);
+  if (covFrames.length && ratio < 70) {
+    coverageViolations++;
+    console.error(`  !! COVERAGE GATE — runtime coverage ${ratio.toFixed(1)}% under the 70% floor`);
+  }
+  // 2.2 report: the prop-draw gate metric — the held props must FIRE
+  const pd = ledger.propDrawCount ? ledger.propDrawCount() : -1;
+  if (pd >= 0) {
+    console.log(`  [prop-draws] ${pd} held-prop draw(s) registered this run (floor 2: holdCard + coinStack)`);
+    if (pd < 2) {
+      coverageViolations++;
+      console.error(`  !! PROP-DRAW GATE — only ${pd} held-prop draw(s) fired (floor 2) — the stat beats went figureless-handed`);
+    }
+  }
+}
+
 if (guardViolations || metricViolations || scaleViolations || propViolations || occupancyViolations || valueViolations || feedViolations
-  || silhouetteViolations || faceSemanticViolations || handInkViolations || motionViolations || anchorViolations) {
-  console.error(`\n✗ RENDER CHECK FAILED: ${guardViolations} collision(s), ${metricViolations} metric violation(s), ${scaleViolations} scale-law violation(s), ${propViolations} prop-ledger violation(s), ${occupancyViolations} occupancy violation(s), ${valueViolations} value-mass violation(s), ${feedViolations} feed-density violation(s), ${silhouetteViolations} silhouette(s), ${faceSemanticViolations} face-semantic(s), ${handInkViolations} hand-ink(s), ${motionViolations} motion(s), ${anchorViolations} anchor(s) — fix the scene layout before rendering.`);
+  || silhouetteViolations || faceSemanticViolations || handInkViolations || motionViolations || anchorViolations || coverageViolations) {
+  console.error(`\n✗ RENDER CHECK FAILED: ${coverageViolations} coverage/prop-draw(s), ${guardViolations} collision(s), ${metricViolations} metric violation(s), ${scaleViolations} scale-law violation(s), ${propViolations} prop-ledger violation(s), ${occupancyViolations} occupancy violation(s), ${valueViolations} value-mass violation(s), ${feedViolations} feed-density violation(s), ${silhouetteViolations} silhouette(s), ${faceSemanticViolations} face-semantic(s), ${handInkViolations} hand-ink(s), ${motionViolations} motion(s), ${anchorViolations} anchor(s) — fix the scene layout before rendering.`);
   process.exit(1);
 }
 

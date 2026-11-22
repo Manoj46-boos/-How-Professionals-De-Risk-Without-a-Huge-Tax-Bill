@@ -520,6 +520,7 @@ export const SCRIPT: ChapterSpec[] = [
         scene: P('host', 'e1-intro', {
           headline: 'Exit one — the 10b5-1 plan\nmost executives misuse',
           kicker: 'exit 1 of 6 — the conveyor belt',
+          gesture: 'climb', // 2.3: the signature pose — the discipline climb
         }),
       },
       {
@@ -739,7 +740,8 @@ export const SCRIPT: ChapterSpec[] = [
         voStyle: 'quote',
         scene: P('host', 'e1-out', {
           headline: 'The first of those requires\na seven-year marriage.',
-          gesture: 'close',
+          gesture: 'climb', // 2.3: the exit-1 signature pose
+          reprise: 1, // 4.3: the framework rail, row 1 lit
           kicker: 'exit 2 — the exchange fund',
         }),
       },
@@ -974,7 +976,7 @@ export const SCRIPT: ChapterSpec[] = [
         pauseAfter: 500,
         scene: P('host', 'e2-right', {
           headline: 'Large, appreciated,\nno liquidity need for seven years —',
-          gesture: 'pointR',
+          gesture: 'crossed', // 2.3: the lock's refusal pose
           kicker: 'and the humility to admit you do not know',
         }),
       },
@@ -1084,7 +1086,7 @@ export const SCRIPT: ChapterSpec[] = [
         voStyle: 'calm',
         scene: P('host', 'e3-turn', {
           headline: 'Real, but modest,\nfront-loaded, assumption-dependent',
-          gesture: 'serious',
+          gesture: 'sitBack', // 2.3: the machine's patient perch
           kicker: 'where most videos stop selling and start thinking',
         }),
       },
@@ -1209,7 +1211,7 @@ export const SCRIPT: ChapterSpec[] = [
         pauseAfter: 450,
         scene: P('host', 'e3-critique', {
           headline: 'Today\u2019s index owns\ntoday\u2019s winners —',
-          verb: 'card', gesture: 'serious',
+          verb: 'card', gesture: 'sitBack', // 2.3: the exit-3 signature pose
           kicker: 'the next generation of wealth creators is not in it yet',
         }),
       },
@@ -1438,7 +1440,7 @@ export const SCRIPT: ChapterSpec[] = [
         pauseAfter: 700,
         scene: P('host', 'e4-right', {
           headline: 'A floor for\na defined window —',
-          gesture: 'count2',
+          gesture: 'leanOnK', // 2.3: leaning on the floor
           kicker: 'renting protection, not owning a solution',
         }),
       },
@@ -1449,7 +1451,8 @@ export const SCRIPT: ChapterSpec[] = [
         voStyle: 'reveal',
         scene: P('host', 'e4-out', {
           headline: 'The only strategy that makes\nthe tax disappear entirely —',
-          gesture: 'close',
+          gesture: 'leanOnK', // 2.3: the exit-4 signature pose
+          reprise: 4, // 4.3: the framework rail, row 4 lit
           kicker: 'and the reason you can never get the money back',
         }),
       },
@@ -1715,7 +1718,7 @@ export const SCRIPT: ChapterSpec[] = [
         pauseAfter: 450,
         scene: P('host', 'e6-evidence', {
           headline: 'The best evidence\nof any strategy here —',
-          gesture: 'pointR',
+          gesture: 'wry', // 2.3: the family-office eyebrow
           kicker: 'peer-reviewed, open-access, 380 ten-year paths',
         }),
       },
@@ -1834,7 +1837,8 @@ export const SCRIPT: ChapterSpec[] = [
         pauseAfter: 450,
         scene: P('host', 'e6-leverage', {
           headline: 'The leverage\nis not free —',
-          gesture: 'think',
+          gesture: 'wry', // 2.3: the exit-6 signature pose
+          reprise: 6, // 4.3: the framework rail, row 6 lit
           kicker: 'financing costs erode returns; fees ate half the benefit in Elm\u2019s model',
         }),
       },
@@ -1974,7 +1978,7 @@ export const SCRIPT: ChapterSpec[] = [
         pauseAfter: 500,
         scene: P('host', 'fw-like', {
           headline: 'The cheapest invoice\nyou will ever pay —',
-          gesture: 'wave',
+          gesture: 'thumbsUp', // 2.3: the close
           kicker: 'and the cheapest intervention you will ever make',
         }),
       },

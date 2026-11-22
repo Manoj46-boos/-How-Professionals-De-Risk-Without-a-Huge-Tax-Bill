@@ -10,14 +10,14 @@
  * data ink, gold-leaf accents, serif display numerals.
  */
 
-import { clamp01, easeInOutCubic, easeOutBack, easeOutCubic, easeOutQuad, hashStr, lerp, springTo } from './easing';
+import { clamp01, easeInOutCubic, easeOutBack, easeOutCubic, easeOutQuad, hashStr, landPulse, lerp, springTo } from './easing';
 import { PALETTE, TONE, card, chip, rgba, roundRect, setFont, fitText, FONT_DISPLAY, FONT_UI, CAPTION_ZONE_TOP, scenePlate, paintBg, chapterFamily } from './theme';
 import { impactRing, microShake, sparkles, drawK, depthShift } from './effects';
 import { SceneCtx } from './scene-context';
 import { lineChart, lineChartYBounds, wrapText, SeriesSpec } from './charts';
 import { drawStickmanV2, talkAt } from './stickman-v2';
 import { POSES, blendPose } from './stickman';
-import { registerRect, registerText } from './collision';
+import { registerRect, registerText, declareHostContact } from './collision';
 import { sourceTag, sceneTitle } from './charts';
 // B2 MARKET-STANDARD FIX (review report B2 [P1]): the finance data rooms
 // stage the certified side-host presenter (the same figure every other
@@ -237,10 +237,23 @@ export function crossChartScene(g: SceneCtx): void {
   }
 
   // B2 MARKET-STANDARD FIX (review report B2 [P1] — NO PRESENTER IN THE
-  // DATA CHAPTERS): the cold-open crossing gets its narrator — the Data
-  // Desk presenter stands in the room's free left column at the certified
-  // side-host register, his gesture cycle pointing INTO the crossing.
-  hostSmall(g, 130, 'pointR', 31, g.H * 0.66, 1.3, 0, 'aha', 1.4, 1, true, 0.4);
+  // DATA CHAPTERS) + 2.1 (review report §2.1 — EVERY DATA SCENE STAGES
+  // THE HOST): on the crossing beats the narrator WALKS IN (the chapter
+  // opener's entry walk) to the mark's left and the contact solve lands
+  // his fingertip ON the crossing dot the moment the gold ring pops —
+  // the presenter physically touches the crossing.
+  if (mode === 'cross-marked' || mode === 'delta') {
+    // 2.1: the presenter stands IN the data to touch the crossing — the
+    // designed host-over-chart depth beat; the guard is told which rects
+    // the host may overlap (the plot he stands before, the mark chip he
+    // presents).
+    declareHostContact('lineChart:plot@310', 'chip:JULY 2024 — TH');
+    hostSmall(g, cx + cw * 0.88 - 130, 'pointR', 31, g.H * 0.66, 1.3, 0, 'aha', 1.4, 1, true, 0.4,
+      undefined, undefined, { x: cx + cw * 0.88, y: cy + ch * 0.36, hand: 'palm', easeAt: 900 },
+      undefined, undefined, undefined, undefined, 900);
+  } else {
+    hostSmall(g, 130, 'pointR', 31, g.H * 0.66, 1.3, 0, 'aha', 1.4, 1, true, 0.4);
+  }
 
   // the HOLD chip — the thesis in one word
   if (mode === 'hold-chip' || mode === 'build-b' || mode === 'cross-marked' || mode === 'delta') {
@@ -611,8 +624,13 @@ export function distBarsScene(g: SceneCtx): void {
     ctx.fillStyle = tone.vivid ?? tone.main;
     roundRect(ctx, bx + 330, y, (bw - 330) * (r.value / 100), 130, 26);
     ctx.fill();
-    // serif numeral right of the fill
-    setFont(ctx, 104, 700, FONT_DISPLAY);
+    // serif numeral right of the fill — 3.2 (review report §5.4 3.2, THE
+    // MOTION CONTRACT): the landing is a REGISTERED EVENT — the numeral
+    // pops on landPulse at the bar's doneAt (the pulse existed and was
+    // rarely driven), so the beat's arrival is felt at feed scale and the
+    // novelty audit's 3s window sees a visible event.
+    const land = landPulse(t - (300 + i * 350 + 800), 66, 160);
+    setFont(ctx, Math.round(104 * (1 + 0.10 * land)), 700, FONT_DISPLAY);
     ctx.fillStyle = PALETTE.ink;
     ctx.textAlign = 'left';
     ctx.fillText(r.big, bx + 330 + (bw - 330) * (r.value / 100) + 30, y + 92);
@@ -633,9 +651,16 @@ export function distBarsScene(g: SceneCtx): void {
   }
 
   // B2 MARKET-STANDARD FIX (review report B2 [P1] — NO PRESENTER IN THE
-  // DATA CHAPTERS): the base-rate bars get their narrator — he stands in
-  // the quiet left column, gesture cycle aimed at the bar row.
-  hostSmall(g, 110, 'pointR', 32, g.H * 0.66, 1.3, 0, 'aha', 1.4, 1, true, 0.4);
+  // DATA CHAPTERS): the base-rate bars get their narrator. 2.1 (review
+  // report §2.1): on the 40% beat he steps to the row and the contact
+  // solve lands the fingertip on the fill's edge at the impactRing beat —
+  // the presenter physically touches the 40%.
+  if (mode === 'bar-2') {
+    hostSmall(g, bx + 330 + (bw - 330) * 0.4 - 130, 'pointR', 32, g.H * 0.66, 1.3, 0, 'aha', 1.4, 1, true, 0.4,
+      undefined, undefined, { x: bx + 330 + (bw - 330) * 0.4, y: H * 0.28 + 160 + 65, hand: 'palm', easeAt: 1450 });
+  } else {
+    hostSmall(g, 110, 'pointR', 32, g.H * 0.66, 1.3, 0, 'aha', 1.4, 1, true, 0.4);
+  }
 }
 
 // ── taxStack — the $3.7M bill, line by line ──────────────────────────────────
@@ -742,6 +767,18 @@ export function taxStackScene(g: SceneCtx): void {
     hostSmall(g, 92, 'present', 33, g.H * 0.66, 1.3, 0, 'aha', 1.4, 1, true, 0.4,
       undefined, undefined, { x: 196, y: 600, hand: 'palm' }, undefined, undefined,
       resolveProp('taxStack', 'coinStack', true) ? 'coinStack' : undefined);
+  } else {
+    // 2.1 (review report §2.1 — THE TOTAL ROW TOUCH): in total mode the
+    // ledger card owns the right column and the host steps to it — the
+    // contact solve lands the fingertip ON the gold TOTAL AT SALE row
+    // (the $3.7M verdict is a number someone touches, not a floating
+    // plate). The card's rows start at ly+96, 58px pitch; the TOTAL row
+    // is the fourth.
+    // the host stands before the gilded verdict card (a designed depth
+    // beat — the guard is told the card he may overlap)
+    declareHostContact('card@580,556');
+    hostSmall(g, lx - 130, 'pointR', 33, g.H * 0.66, 1.3, 0, 'aha', 1.4, 1, true, 0.4,
+      undefined, undefined, { x: lx + 46, y: ly + 96 + 3 * 58 + 29, hand: 'palm', easeAt: 1200 });
   }
 }
 
@@ -1514,15 +1551,16 @@ export function payoffDiagramScene(g: SceneCtx): void {
   // DATA CHAPTERS): the collar's payoff diagram gets its narrator — he
   // stands in the free right column (the chart spans x 190-1410), his
   // gesture cycle pointing back INTO the payoff bands.
-  hostSmall(g, 1706, 'pointL', 34, g.H * 0.66, 1.35, 0, 'aha', 1.4, 1, true, 0.4);
+  hostSmall(g, 1550, 'pointL', 34, g.H * 0.66, 1.35, 0, 'aha', 1.4, 1, true, 0.4,
+    undefined, undefined, { x: cx + cw - 10, y: cy + ch - (205 / 260) * ch, hand: 'palm', easeAt: 1300 });
 
   // E3 MARKET-STANDARD FIX (review report E3 [P1] — THE MASCOT IS ABSENT
   // FROM THE BEATS THAT CARRY THE FACTS): the exit chapters were
   // figureless — a stick-man channel's retention contract is that the
   // character carries the argument, and here he was a recurring guest.
-  // The certified side-host register (the B2 staging: the free left band,
-  // gesture cycle aimed INTO the scene's content) joins this drawer.
-  hostSmall(g, 92, 'pointR', 33, g.H * 0.66, 1.3, 0, 'aha', 1.4, 1, true, 0.4);
+  // 2.1 supersedes the plain left-column staging: the single presenter
+  // stands at the cap line and TOUCHES it (the contact solve above) —
+  // the double-host frame this drawer briefly carried is dead.
 }
 
 // ── taxMine — the collar tax minefield ───────────────────────────────────────
@@ -1954,20 +1992,28 @@ export function appleCaseScene(g: SceneCtx): void {
 }
 
 // ── decisionTable — THE SAVE ARTIFACT ────────────────────────────────────────
+// 4.3: the six framework rows live at module level so the chapter-close
+// reprise rail (scenes-host) shares the SAME strings — one source of truth.
+export const DT_ROWS: string[][] = [
+  ['10b5-1 plan', 'Legal, disciplined selling', 'New vests, on autopilot', 'Thinks it shelters tax'],
+  ['Exchange fund', 'Instant diversification', 'Big gain, no cash need 7 yrs', 'Needs money inside 7 yrs'],
+  ['Direct indexing', 'Year-round loss harvest', 'High bracket · narrow fee gap', 'No gains · IRA · wide fees'],
+  ['Protective collar', 'A floor for a window', 'Employer allows hedging', 'Bullish · hedging banned'],
+  ['CRT / DAF', 'Gain vanishes, funds giving', 'Genuine intent · spare capital', 'May need the principal'],
+  ['Levered L/S', 'Fast, tax-deferred exit', 'Scale · leverage tolerance', 'Fee- or leverage-averse'],
+];
 export function decisionTableScene(g: SceneCtx): void {
   const { ctx, W, H, t, s } = g;
   room(g, 'gold');
   title(g, (s.title as string) || 'The framework');
   const mode = (s.mode as string) || 'intro';
-  const ROWS = [
-    ['10b5-1 plan', 'Legal, disciplined selling', 'New vests, on autopilot', 'Thinks it shelters tax'],
-    ['Exchange fund', 'Instant diversification', 'Big gain, no cash need 7 yrs', 'Needs money inside 7 yrs'],
-    ['Direct indexing', 'Year-round loss harvest', 'High bracket · narrow fee gap', 'No gains · IRA · wide fees'],
-    ['Protective collar', 'A floor for a window', 'Employer allows hedging', 'Bullish · hedging banned'],
-    ['CRT / DAF', 'Gain vanishes, funds giving', 'Genuine intent · spare capital', 'May need the principal'],
-    ['Levered L/S', 'Fast, tax-deferred exit', 'Scale · leverage tolerance', 'Fee- or leverage-averse'],
-  ];
-  const visible = mode === 'intro' ? 0 : mode === 'full' ? 6 : Number(mode.slice(4));
+  const ROWS = DT_ROWS;
+  // 4.3 (review report §4.3 — THE SAVE ARTIFACT, REPRISED): 'reprise-N'
+  // stages the FULL table at a chapter close with THIS chapter's row
+  // highlighted — the row's plate turns gold, a 5px gold rule seats the
+  // row, and the exit counter prints its progress tick (N / 6).
+  const reprise = mode.startsWith('reprise-') ? Math.min(6, Math.max(1, Number(mode.slice(8)))) : 0;
+  const visible = mode === 'intro' ? 0 : mode === 'full' || reprise > 0 ? 6 : Number(mode.slice(4));
   // F3 (review report F3 [P0] — decisionTable NEVER DRAWS ITS HERO): the
   // 12-second intro beat gated rows to zero — at 60% and 85% of the beat
   // the frame held only the title and four column labels while the VO
@@ -2013,10 +2059,20 @@ export function decisionTableScene(g: SceneCtx): void {
     // zebra banded by SKIPPING rows — rows one and three carried plates,
     // row two shipped bare (read as a dropped element, not a design).
     // Every row now carries its plate; the banding reads through alpha.
-    ctx.fillStyle = rgba(PALETTE.card, r % 2 === 0 ? 0.9 : 0.55);
+    // 4.3: the reprise row's plate is the GOLD state — the chapter's own
+    // row, one rule, no ambiguity about where we are in the framework.
+    const hot = reprise > 0 && r === reprise - 1;
+    ctx.fillStyle = hot ? rgba(PALETTE.gold, 0.16) : rgba(PALETTE.card, r % 2 === 0 ? 0.9 : 0.55);
     roundRect(ctx, colX[0] - 16, y - 6, colX[3] + colW[3] - colX[0] + 32, (ghost ? 82 : rowH) - 14, 16);
     ctx.fill();
-    setFont(ctx, 32, 700, FONT_DISPLAY);
+    if (hot) {
+      // the gold rule seats the highlighted row — one vertical stroke at
+      // the plate's left edge (the exit counter tick carries the progress)
+      ctx.fillStyle = PALETTE.gold;
+      roundRect(ctx, colX[0] - 24, y - 2, 6, (ghost ? 82 : rowH) - 22, 3);
+      ctx.fill();
+    }
+    setFont(ctx, Math.round((hot ? 36 : 32) * (1 + 0.08 * landPulse(t - (350 + r * 320 + 550)))), 700, FONT_DISPLAY);
     ctx.fillStyle = PALETTE.goldDeep;
     ctx.fillText(ROWS[r][0], colX[0], y + 40);
     if (ghost) {
@@ -2044,6 +2100,29 @@ export function decisionTableScene(g: SceneCtx): void {
       cell(ROWS[r][3], colX[3], colW[3], PALETTE.down);
     }
     ctx.restore();
+  }
+  if (reprise > 0) {
+    // 4.3: the exit counter's progress tick — N of 6 filled dots at the
+    // header line's right end, the chapter's own dot in gold, the rest in
+    // track tone. The rail the chapter cards use, now with a STATE.
+    const tickY = rowY0 - 26;
+    const dotR = 9, dotGap = 30;
+    const x0 = colX[3] + colW[3] - (6 - 1) * dotGap;
+    for (let d = 0; d < 6; d++) {
+      ctx.beginPath();
+      ctx.arc(x0 + d * dotGap, tickY, d === reprise - 1 ? dotR + 3 : dotR, 0, Math.PI * 2);
+      ctx.fillStyle = d < reprise ? (d === reprise - 1 ? PALETTE.gold : rgba(PALETTE.gold, 0.45)) : rgba(PALETTE.ink, 0.14);
+      ctx.fill();
+      if (d === reprise - 1) {
+        ctx.strokeStyle = rgba(PALETTE.goldDeep, 0.7);
+        ctx.lineWidth = 2.5;
+        ctx.stroke();
+      }
+    }
+    setFont(ctx, 26, 700);
+    ctx.fillStyle = PALETTE.goldDeep;
+    ctx.textAlign = 'left';
+    ctx.fillText(`EXIT ${reprise} OF 6`, x0 - 24 - 190, tickY + 9);
   }
   if (mode === 'full') {
     const fp = clamp01((t - 2200) / 700);

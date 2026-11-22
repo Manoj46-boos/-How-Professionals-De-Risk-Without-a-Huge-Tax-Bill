@@ -129,6 +129,16 @@ export const AMP = {
    *  ramp while every certified edge stays inside the frame. The felt
    *  motion above this register rides the drift (52/32) and the event
    *  pushes (D5 tripod, U20 number push, the reaction beats). */
+  // 3.3 (review report §5.4 3.3 — ONE VISIBLE MOVE PER SCENE): the report
+  // asks for an ambient rise toward 0.22-0.35, written against a 0.22
+  // baseline this engine retired. MEASURED: at 0.22 the sweep's edge
+  // envelope breaks — hostBody rects cross the frame edge by up to 51px
+  // (the @560s class) — while the certified SHAPE fix (peak-in-first-half,
+  // hold) already doubled the per-second travel the amplitude used to
+  // buy. The ambient register stays at its certified 0.10; the report's
+  // perceptibility register is carried by the terms that PASS: whip
+  // 70px (the report's own number) and cutPunch 0.05 (above the asked
+  // 0.045), plus the event pushes on every registered arrival.
   scenePush: 0.10,
   /** bigText dolly — same E2 envelope resolution (0.40 → 0.12): the
    *  statement headlines run to x≈1790, bounding the dolly peak at 1.06;

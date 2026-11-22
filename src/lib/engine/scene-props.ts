@@ -280,11 +280,30 @@ const PROP_DRAWS = new Set<string>();
 /** stickman-v2 calls this when a prop actually renders this frame. */
 export function notePropDraw(prop: string): void {
   PROP_DRAWS.add(prop);
+  // the run-level register: render-check resets PROP_DRAWS per frame, so
+  // the gate metric counts over the WHOLE run here.
+  PROP_DRAWS_RUN.add(prop);
+}
+
+/** 2.2 run-level prop-draw register — cleared once per render-check pass. */
+const PROP_DRAWS_RUN = new Set<string>();
+
+export function resetPropRunStats(): void {
+  PROP_DRAWS_RUN.clear();
 }
 
 /** Director/harness reset — per frame, like the rest of the guard state. */
 export function resetPropDraws(): void {
   PROP_DRAWS.clear();
+}
+
+/** 2.2 (review report §2.2 — HELD PROPS ON EVERY STAT BEAT): the prop-draw
+ * count as a GATE METRIC — the harness prints it per run and asserts a
+ * floor, so a refactor that silently stops the held props (the ledger
+ * card, the coin stack) fails the gate instead of shipping figureless
+ * stat beats. */
+export function propDrawCount(): number {
+  return PROP_DRAWS_RUN.size;
 }
 
 /** Violations: a prop FIRED with no allowed ledger resolution this frame. */
