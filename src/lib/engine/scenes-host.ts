@@ -178,7 +178,15 @@ function hostStage(g: SceneCtx, side: 'center' | 'left' | 'right'): void {
   // same full-bleed tone plate as the data scenes, so the presenter stands
   // in a lit space instead of on a lightbox.
   scenePlate(ctx, W, H, g.chapterTone ?? 'up', 0.95, chapterFamily(g.chapterIdx));
-  kMotifs(ctx, W, H, g.t, 0.18);
+  // G2 (review report G2 [P1] — GHOST PANELS BECOME NOISE): the 0.18-alpha
+  // watermark ingot top-right measured at the 320px twin as "an undefined
+  // smudge the eye tries to resolve — exactly what transcode-noise
+  // critiques describe". This module's own law (effects.ts, the watermark
+  // decision): "a brand watermark either declares or disappears; the
+  // middle is noise." At 0.18 alpha it IS the middle — it takes the
+  // disappear branch; the brand already lives in the header plate and the
+  // content ingots.
+  kMotifs(ctx, W, H, g.t, 0);
 
   const stage = g.s.stage as string;
   const hx = HOST_X(W, side);
@@ -593,7 +601,15 @@ export function hostSceneV2(g: SceneCtx): void {
   paintBg(ctx, W, H, t, g.chapterTone);
   // P1-2 (report §12.2): the editorial host's room — same plate, his tone.
   scenePlate(ctx, W, H, g.chapterTone ?? 'up', 0.95, chapterFamily(g.chapterIdx), { furniture: false });
-  kMotifs(ctx, W, H, t, 0.18);
+  // G2 (review report G2 [P1] — GHOST PANELS BECOME NOISE): the 0.18-alpha
+  // watermark ingot top-right measured at the 320px twin as "an undefined
+  // smudge the eye tries to resolve — exactly what transcode-noise
+  // critiques describe". This module's own law (effects.ts, the watermark
+  // decision): "a brand watermark either declares or disappears; the
+  // middle is noise." At 0.18 alpha it IS the middle — it takes the
+  // disappear branch; the brand already lives in the header plate and the
+  // content ingots.
+  kMotifs(ctx, W, H, g.t, 0);
   // P1-6 (report): the editorial host's halo — the close-up composition
   // gets the strongest lift (his face is the film's recurring close shot)
   subjectHalo(ctx, W * 0.28, H * 0.46, 520, 0.85) // AUDIT-ROUND-3 (Fix 3): the bright value plane behind the host;

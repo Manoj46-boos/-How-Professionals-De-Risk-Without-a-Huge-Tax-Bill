@@ -246,49 +246,14 @@ export function bigTextScene(g: SceneCtx): void {
   // sparkle burst is GONE from the statement beat — celebration VFX
   // never sits on statement typography; the slam's own impact grammar
   // (micro-shake + ring) carries the emphasis.
-  // PHASE-4 (report §11 Phase 4) + Table 2 receipt 8: the count host's
-  // alpha keys to BEAT time (a 12s-cap re-split group no longer replays his
-  // entrance mid-count) and commits to the 0.85 floor / 180ms ramp — he
-  // arrives after the slam at full presence instead of condensing.
-  const hp = g.beatT < 2200 ? 0 : 0.85 + 0.15 * clamp01((g.beatT - 2200) / 180);
-  if (hp > 0) {
-    const pose = Stickman.poseAt(t, { gesture: 'count2', speaking: false });
-    // v3 (panel P0-3): v2 renderer — one body style across the whole film
-    // P1-1 (report): +30% (0.9 → 1.17); ground 756 → 726 (envelope bottom 768,
-    // clear of the worst-case 2-row pill envelope 776).
-    // PANEL-12 / P2-1: foreground parallax.
-    // AUDIT-3 / §2.4 (report Phase 2.4 — SQUASH ON LANDINGS): the count
-    // host LANDS — a 300ms volume-preserving squash about his feet as he
-    // arrives (the film's loudest words get a body that receives them).
-    // 100-JUDGE PANEL / PHASE 1 item 1 — CONTACT IS MANDATORY (report §6
-    // Phase 1). The count host's data is the STATEMENT — the near hand
-    // SOLVES onto the gold underline's right end-cap (1246, 632): the palm
-    // BRACKETS the statement's underline while the far hand keeps the
-    // count2 tally raised. The host steps in from W*0.83 to 1330 so the
-    // underline tip is inside the 131px arm envelope (shoulder (1334, 543)
-    // → tip 125px, lands); the body core 1256-1404 stays 16px right of the
-    // underline's full extent (wipe ends 1240). Ground 735 keeps the feet
-    // band clear of the 2-row pill (top 796).
-    // B4 MARKET-STANDARD FIX (review report B4 [P1] — THE STRANDED
-    // FIGURE): at 1.17 the statement host read as an afterthought parked
-    // at the rule's end ("half-presence is worse than absence"). He now
-    // delivers the line at real presence: scale 1.17 → 1.5 (+28% linear,
-    // ~20% frame height), the palm TOUCH becomes a FIST GRIP on the
-    // underline's end-cap (holding the statement, not hovering near it),
-    // and the eye line drops into the type (look -0.6 → -0.75). The grip
-    // target retunes to (1250, 624) so the tip stays inside natural reach
-    // at the new scale (shoulder (1314, 480) → tip 165px < 168 max).
-    const sinceLand = t - 2200;
-    const squash = sinceLand >= 0 && sinceLand < 300
-      ? Math.sin((sinceLand / 300) * Math.PI)
-      : 0;
-    // 100-JUDGE PANEL / Phase 1 item 4 — CAST BY SILHOUETTE (report §6
-    // Phase 1): "the count host gets rolled sleeves" — the counting
-    // gesture is work; the sleeves roll. Driven inside drawStickmanV2
-    // from the pose's own rHand count glyph (cuff at the forearm, on
-    // the body's ivory) so every count host inherits it.
-    drawStickmanV2(ctx, 1310, H * 0.681, 1.5, t, { pose, alpha: hp, look: -0.75, parallax: true, squash, contact: { x: 1250, y: 624, hand: 'fist' } }, 31);
-  }
+  // G3 (review report G3 [P2] — STATEMENT FRAMES ARE TYPE-ONLY, part 2):
+  // the count-host gripper (1.5-scale fist on the underline's end-cap)
+  // measured ~58px of thin ink at the 320px twin — the panel's "a headline
+  // and a 60px smudge — the figure does not contribute". The panel's own
+  // first-listed fix governs this scene: the statement slam is the type —
+  // headline, punchline, gold underline, impact grammar — nothing else.
+  // (retired) count host: drawStickmanV2(ctx, 1310, H * 0.681, 1.5, ...,
+  //   { pose 'count2', contact { x: 1250, y: 624, hand: 'fist' } }, 31);
 }
 
 // ── stampCard: "RECORD HIGHS — ACCURATE" ─────────────────────────────────────
@@ -473,24 +438,17 @@ export function stampCardScene(g: SceneCtx): void {
     ctx.fillRect(0, 0, W, H);
     ctx.restore();
   }
-  // host nodding
-  const hp = clamp01((t - 900) / 600);
-  if (hp > 0) {
-    const pose = { ...POSES.close, headTilt: Math.sin(t / 700) * 4 };
-    // v3 (panel P0-3): v2 renderer
-    // P1-1 (report): +30% (1.0 → 1.3); ground → H*0.667 (envelope 767).
-    // PANEL-12 / P2-1: foreground parallax.
-    // P0 defect sweep: the exit's max camera still carried the feet band
-    // 13px into the 2-row caption pill (traced at 1000.5s). The stage
-    // rises to 0.62 — the band's worst-case bottom clears the pill by
-    // ~16px, the card row and the pose are untouched.
-    // P0 defect sweep: the FULL-FIGURE rect (feet + contact shadow) must
-    // clear the 2-row caption pill's top at the exit's max camera — the
-    // solved ground is 0.597 (feet 645, rect bottom 761, screen 782 at
-    // the 1.116 lift — 14px of air over the pill). The crown stays ~86px
-    // below the title band; the card row is untouched.
-    drawStickmanV2(ctx, W * 0.19, H * 0.597, 1.3, t, { pose, alpha: hp, look: 0.6, parallax: true }, 32); // PLAYBOOK D3: ground 0.667 -> 0.597 (full-figure rect clears the 2-row pill at max camera)
-  }
+  // G3 (review report G3 [P2] — THE STATEMENT FRAME IS TYPE-ONLY): the
+  // 1.3-scale nodding figure stood ON the gold underline — at the feed
+  // twin the composition read as "a headline and a 60px smudge", the
+  // figure a thin-limbed blob on a line ("the gold underline + tiny
+  // figure ... reads as a smudge on a line"). The panel's own first-listed
+  // fix applies, and it matches this scene's declared doctrine (the
+  // scenePlate call above: "a statement beat is typography + room tone"):
+  // statement slams are TYPE-ONLY — headline, punchline, gold underline,
+  // impact grammar. The beats that stage a CONTRIBUTING figure (takeaways'
+  // 2.0-scale host at 43% of frame height) keep it.
+  // (retired) host nodding: drawStickmanV2(ctx, W * 0.19, H * 0.597, 1.3, ...)
 }
 
 // ── quoteCard: caveats, quotes, disclaimer ───────────────────────────────────
@@ -704,12 +662,19 @@ export function quoteCardScene(g: SceneCtx): void {
     const gesture = (s.hostGesture as string) || 'think';
     const pose = Stickman.poseAt(t, { gesture, speaking: false });
     // v3 (panel P0-3): v2 renderer
-    // P1-1 (report): +30% (0.94 → 1.22); ground → H*0.672 (envelope 770).
+    // P1-1 (report): +30% (0.94 → 1.22).
     // PANEL-12 / P2-1: foreground parallax.
     // ── PHASE-5 (the pull-quote's contact verb): the palm rests ON the
     // foot rule's right end — a hand on the desk the quote is set on,
     // 8px clear of the text zone (body core 1480-1640).
-    drawStickmanV2(ctx, 1560, H * 0.672, 1.22, t, { pose, alpha: hp, look: -0.7, parallax: true, contact: { x: 1428, y: footY - 6, hand: 'palm' } }, 33);
+    // U6 (review report U6 [P1] — layering collisions): the host's
+    // full-figure rect dipped ~33px into the 2-row caption pill's
+    // envelope (guard: stickman@1550,738). The stage rises 0.672 → 0.631
+    // — the feet band clears the pill by ~12px at the worst-case camera;
+    // the palm contact target (footY − 6) stays inside the 168px reach
+    // envelope (shoulder → tip ≈ 135px), so the hand-on-the-rule verb
+    // reads unchanged.
+    drawStickmanV2(ctx, 1560, H * 0.631, 1.22, t, { pose, alpha: hp, look: -0.7, parallax: true, contact: { x: 1428, y: footY - 6, hand: 'palm' } }, 33);
   }
 }
 

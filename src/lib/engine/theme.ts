@@ -832,18 +832,21 @@ export function scenePlate(
       // transcode is decoration, by the pipeline's own two-tier mask
       // logic." The window rises to functional alpha with real mass:
       // warm pane fill, a 3.5px frame, a sill — architecture, not hairlines.
-      const wg = ctx.createLinearGradient(wx, wy, wx, wy + wh);
-      wg.addColorStop(0, rgba(PALETTE.gold, 0.34));
-      wg.addColorStop(1, rgba(PALETTE.gold, 0.16));
-      ctx.fillStyle = wg;
+      // G2 (review report G2 [P1] — GHOST PANELS BECOME NOISE): the window
+      // sat BETWEEN registers — too present to ignore, too soft to read —
+      // at the 320px twin it resolved as "an undefined smudge the eye
+      // tries to resolve". It now COMMITS to readable architecture: a
+      // solid pane (no fade-to-nothing gradient), a 4.5px frame, mullions
+      // and sill one step deeper — at the twin it reads as a window.
+      ctx.fillStyle = rgba(PALETTE.gold, 0.5);
       roundRect(ctx, wx, wy, ww, wh, 10);
       ctx.fill();
-      ctx.strokeStyle = rgba(PALETTE.ink, 0.34);
-      ctx.lineWidth = 3.5;
+      ctx.strokeStyle = rgba(PALETTE.ink, 0.42);
+      ctx.lineWidth = 4.5;
       roundRect(ctx, wx, wy, ww, wh, 10);
       ctx.stroke();
-      ctx.strokeStyle = rgba(PALETTE.ink, 0.24);
-      ctx.lineWidth = 3;
+      ctx.strokeStyle = rgba(PALETTE.ink, 0.32);
+      ctx.lineWidth = 4;
       ctx.beginPath();
       ctx.moveTo(wx + ww / 2, wy);
       ctx.lineTo(wx + ww / 2, wy + wh);
@@ -851,8 +854,8 @@ export function scenePlate(
       ctx.lineTo(wx + ww, wy + wh / 2);
       ctx.stroke();
       // the sill — a filled ledge under the window (owned architecture)
-      ctx.fillStyle = rgba(PALETTE.ink, 0.26);
-      roundRect(ctx, wx - 10, wy + wh, ww + 20, 9, 4);
+      ctx.fillStyle = rgba(PALETTE.ink, 0.34);
+      roundRect(ctx, wx - 10, wy + wh, ww + 20, 11, 4);
       ctx.fill();
       ctx.restore();
       // THE DESK EDGE — one ink hairline + leg tick, bottom-right: the desk

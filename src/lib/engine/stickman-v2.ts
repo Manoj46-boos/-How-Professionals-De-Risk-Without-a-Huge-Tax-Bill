@@ -246,7 +246,11 @@ function drawMouthV2(
   // mouth is the face's third mass — the floors lift one step (15 → 17
   // hero / 9 → 10 compact) so the film's talking face carries the
   // thumbnail's mouth presence at every rig.
-  const wFloor = bigFace ? 17 : 10;
+  // G1: the mouth is the face's third mass — the width floors lift one
+  // more step (17/10 -> 21/12 local) so the report's "wider mouth" clears
+  // the twin (~5px of mouth at host rig, was ~4 and vanished with the
+  // cavity fill).
+  const wFloor = bigFace ? 21 : 12;
   const mouthCavity = (cx: number, cy: number, rw: number, rh: number): void => {
     ctx.fillStyle = 'rgba(28,22,16,0.5)';
     ctx.beginPath();
@@ -2265,8 +2269,14 @@ export function drawStickmanV2(
     // v10 (panel CHAR-3): a goldDeep outline on the knot — at side-host
     // scale the solid knot read as "a stain"; the two-tone knot reads as
     // a tied scarf at any size.
-    ctx.strokeStyle = PALETTE.goldDeep;
-    ctx.lineWidth = 2.2;
+    // G1 (the scarf/vest blob): both garments are gold and the knot's
+    // 2.2-local outline dropped to ~0.75px at the twin — scarf, vest and
+    // neck fused into "one gold blob". The knot and the collar wrap take
+    // a screen-floored (>= 5.1px) INK outline at feed scales — a drawn
+    // seam that separates the two garments at any size; above rig 1.6
+    // the goldDeep two-tone returns (it reads there).
+    ctx.strokeStyle = scale < 1.6 ? PALETTE.ink : PALETTE.goldDeep;
+    ctx.lineWidth = Math.max(2.2, 5.1 / scale);
     ctx.beginPath();
     ctx.ellipse(neckX, neckY + 10, 10, 6.5, leanR * 0.6, 0, Math.PI * 2);
     ctx.stroke();
@@ -2277,8 +2287,8 @@ export function drawStickmanV2(
     ctx.fillStyle = PALETTE.gold;
     roundRect(ctx, neckX - 10, neckY + 1, 20, 9, 4.5);
     ctx.fill();
-    ctx.strokeStyle = PALETTE.goldDeep;
-    ctx.lineWidth = 2;
+    ctx.strokeStyle = scale < 1.6 ? PALETTE.ink : PALETTE.goldDeep;
+    ctx.lineWidth = Math.max(2, 5.1 / scale);
     roundRect(ctx, neckX - 10, neckY + 1, 20, 9, 4.5);
     ctx.stroke();
   }
@@ -3218,15 +3228,22 @@ export function drawStickmanV2(
   // smaller egg; the pupil derives from the SCLERA (0.76 of its radius =
   // 58% of the eye's area — past the verdict's 55% floor), never from the
   // lens, so the eye reads ink-first at every scale.
-  const scleraR = Math.max(5.5, featureFloor(6.2), scale >= 2 ? 6.2 : 0);
+  // G1 (review report G1 [P1] — THE FEED FACE): at the 320px twin the
+  // sclera/lens/pupil stack collapsed — "glasses merge into a dark band".
+  // The screen-space floors lift one step so each eye term clears the
+  // twin's pixel grid: sclera 6.2 -> 7.8 local-floor, lens floor 10.
+  const scleraR = Math.max(5.5, featureFloor(7.8), scale >= 2 ? 6.2 : 0);
   // FP0 (Verdict P0 — GLASSES AS SECONDARY ACCENT): the lens radius is now
   // PROPORTIONAL TO THE EYE (sclera × 1.28) instead of a fixed 13.5 units —
   // the wire stops dominating the face and frames it.
-  const lensR = Math.max(9.0, featureFloor(6.5), scleraR * 1.28);
+  const lensR = Math.max(9.0, featureFloor(10), scleraR * 1.28);
   // A4 FIX: the pupil fills more of the sclera (0.76 -> 0.88) — the
   // wide-white/small-dot eye was the startled read; a fuller pupil focuses
   // the gaze while the ivory crescent survives at every scale.
-  const ivoryPupR = Math.max(3.9, featureFloor(4.9), scleraR * 0.88);
+  // G1: the pupil floor 4.9 -> 8.4 screen px (~2.8px at the twin) — the
+  // report's "bigger pupils rather than scaled-down hero features". The
+  // 0.88 sclera ratio still governs above the floor.
+  const ivoryPupR = Math.max(3.9, featureFloor(8.4), scleraR * 0.88);
   if (becker) {
     ctx.fillStyle = faceInk;
     ctx.beginPath();
@@ -3236,7 +3253,9 @@ export function drawStickmanV2(
     // D-8: ink pupils inside the sclera — the missing focus point was the
     // googly read's root cause
     ctx.fillStyle = ink;
-    const pupR = 4.3 * (1 + surprise * 0.28); // PHASE-1: +30% with the eye mass; A4: fuller cast pupil
+    // G1: the cast pupil takes the same screen-space floor — at feed the
+    // fixed 4.3-local dot dropped sub-pixel and the eye read as a hole
+    const pupR = Math.max(4.3 * (1 + surprise * 0.28), featureFloor(8.4));
     ctx.beginPath();
     ctx.ellipse(-14 + eyeDX, -6, pupR * eyeSL, pupR * eyeOpen * eyeSL, 0, 0, Math.PI * 2);
     ctx.ellipse(14 + eyeDX, -6, pupR * eyeSR, pupR * eyeOpen * eyeSR, 0, 0, Math.PI * 2);
@@ -3370,7 +3389,10 @@ export function drawStickmanV2(
     // check reads the two faces as different characters. The wire floor
     // returns to 3.4px (the brows still own the upper band; the rim is
     // the brand's second voice).
-    ctx.lineWidth = Math.max(1.0, featureFloor(3.4));
+    // G1: the wire floor 3.4 -> 5.1 screen px (~1.1px at the twin) — the
+    // two rims + bridge now draw as WIRES at feed instead of merging into
+    // one dark band across the face
+    ctx.lineWidth = Math.max(1.0, featureFloor(5.1));
     ctx.lineCap = 'round';
     const gR = lensR;
     ctx.beginPath();

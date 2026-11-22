@@ -349,23 +349,25 @@ export function lightRays(
   const rot = -0.5 + Math.sin(t / 8000) * 0.04;
   ctx.translate(x, -80);
   ctx.rotate(rot);
-  for (let i = 0; i < 5; i++) {
+  // G2 (review report G2 [P1] — the smudge behind the headline): five
+  // overlay wedges riding to H*1.3 at 0.22-0.30 alpha collapsed at the
+  // 320px twin into ONE mid-tan trapezoid floating behind the headline —
+  // "an undefined smudge the eye tries to resolve". The shaft now BOUNDS
+  // itself: three wedges, a tighter spread, and a gradient that reaches
+  // clear by mid-frame — the light stays at its source (the top edge, by
+  // the window) instead of paneling the type.
+  for (let i = 0; i < 3; i++) {
     const wRay = 90 + i * 70;
-    // BLUEPRINT Phase 4 (report §11): 0.07-0.10 -> 0.14-0.18 — "no light
-    // in the room" becomes a room with light. Still inside the light
-    // register (overlay composite, warm ivory, no blown highlights).
-    // AUDIT-PHASE-1: light rays alpha 0.14–0.18 -> 0.22–0.30 — the room
-    // gains visible light; no longer a lightbox.
-    const a = (0.22 + hash01(i) * 0.08) * alpha;
-    const g = ctx.createLinearGradient(0, 0, 0, H * 1.3);
+    const a = (0.2 + hash01(i) * 0.06) * alpha;
+    const g = ctx.createLinearGradient(0, 0, 0, H * 0.52);
     g.addColorStop(0, rgba('#FFF9E8', a));
     g.addColorStop(1, rgba('#FFF9E8', 0));
     ctx.fillStyle = g;
     ctx.beginPath();
     ctx.moveTo(-wRay / 2, 0);
     ctx.lineTo(wRay / 2, 0);
-    ctx.lineTo(wRay * 1.6 + 200, H * 1.3);
-    ctx.lineTo(-wRay * 1.6 + 60, H * 1.3);
+    ctx.lineTo(wRay * 1.05 + 80, H * 0.52);
+    ctx.lineTo(-wRay * 1.05 + 30, H * 0.52);
     ctx.closePath();
     ctx.fill();
   }
