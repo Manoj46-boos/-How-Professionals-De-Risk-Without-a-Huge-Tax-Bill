@@ -1766,7 +1766,34 @@ export function drawStickmanV2(
   // static-perception floor — the audit measured "a breathing statue". 0.8
   // keeps the CONTRAST (the alive cycles read as alive) without dying.
   const holdK = holdCycle > 0.667 ? 0.8 : 1;             // the last cycle of every 3 runs quieter
-  const weight = Math.sin(t / 4600 + seed * 2.3) * AMP.weightShift * holdK;
+  // D3 MARKET-STANDARD FIX (review report D3 [P1] — ONE POSE PER BEAT):
+  // the sampled 400ms strips showed the hold as a FROZEN MANNEQUIN for
+  // full sentences (frames 0-4 identical) — the idle terms are real but
+  // continuous, and a continuous micro-sway is under the phone's
+  // static-perception floor. The fix is EVENTS, not amplitude: two
+  // deterministic body beats layered on the hold, so the BODY changes
+  // register several times a minute (the pattern-interrupt bar):
+  //   1. THE WEIGHT RE-SETTLE — every ~5.7s the hips take one visible
+  //      ±9px shift over 700ms (easeOutBack settle, not a sine drift).
+  //   2. THE GLANCE — every ~8.9s the head turns ±11° off the camera
+  //      for ~1.3s and back (ride headYaw: the rig's neck-break and 3/4
+  //      machinery answer it, so it reads as a TURN, not a tilt).
+  // Both are pure f(t, seed), scrub-safe, and phase-offset per figure so
+  // the cast never moves in unison.
+  const settlePhase = ((t / 5700 + seed * 0.61) % 1);
+  const settleEnv = settlePhase < 0.123
+    ? Math.sin((settlePhase / 0.123) * Math.PI) // a 700ms out-and-back bump
+    : 0;
+  const settleDir = hash01(seed * 13.7 + Math.floor((t / 5700 + seed * 0.61))) > 0.5 ? 1 : -1;
+  const glancePhase = ((t / 8900 + seed * 0.37) % 1);
+  const glanceK = glancePhase < 0.148
+    ? (glancePhase < 0.02 ? glancePhase / 0.02
+       : glancePhase > 0.115 ? 1 - (glancePhase - 0.115) / 0.033
+       : 1)
+    : 0;
+  const glanceDir = hash01(seed * 7.9 + 3.1 + Math.floor(t / 8900 + seed * 0.37)) > 0.5 ? 1 : -1;
+  const weight = Math.sin(t / 4600 + seed * 2.3) * AMP.weightShift * holdK
+    + settleDir * 9 * easeOutCubic(settleEnv);
   const counter = Math.sin(t / 4600 + seed * 2.3) * holdK;
   ctx.translate(weight, 0);
   ctx.rotate(Math.sin(t / 6200 + seed * 0.9) * 0.003);
@@ -1780,6 +1807,11 @@ export function drawStickmanV2(
     ...pose0,
     lAU: pose0.lAU - counter * AMP.shoulderCounterDeg,
     rAU: pose0.rAU + counter * AMP.shoulderCounterDeg,
+    // D3: the glance turn — rides headYaw so the rig's neck-break and
+    // 3/4-view machinery render a real head TURN (±11°, ~1.3s every
+    // ~8.9s), plus a 1.5° torso answer on the lean.
+    headYaw: (pose0.headYaw ?? 0) + glanceDir * 11 * glanceK,
+    lean: (pose0.lean ?? 0) + glanceDir * 1.5 * glanceK,
   };
   // BLUEPRINT Phase 2: the two rotation terms the rig never had —
   // PELVIS TILT (the hip line tilts; the torso grows from the tilted

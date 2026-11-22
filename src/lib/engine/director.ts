@@ -384,10 +384,17 @@ function cameraV2(
   const isJourney = sceneType === 'chartJourney' || sceneType === 'chartTwin';
   let camScale: number;
   if (isStat) {
-    // TRIPOD: locked scale, ONE slow push to the hero number — the push
-    // releases after the number lands (~1.6s), 0.06 of travel, held.
-    const pushT = easeInOutSine(clamp01((gt - 1600) / Math.max(1, groupDur - 1600)));
-    camScale = 1.0 + 0.06 * pushT;
+    // TRIPOD, PUNCTUATED (D5 MARKET-STANDARD FIX — review report D5 [P2],
+    // CAMERA GRAMMAR IS MINIMAL): the old push started at a fixed 1600ms
+    // and crept over the whole group — sampled beats showed "almost no
+    // scale change frame to frame". The operator now answers the EVENT:
+    // the push fires when the hero number lands (~900ms), travels 8.5%
+    // over 1.3s on an easeOutCubic (an operator's push, not a drift),
+    // then LOCKS. And the payoff breathes OUT: the last 900ms of any
+    // non-statement group takes a gentle 1.6% pull-back — the exhale
+    // that makes the next group's whip-settle read as a cut-in.
+    const pushT = easeOutCubic(clamp01((gt - 900) / 1300));
+    camScale = 1.0 + 0.085 * pushT;
   } else if (isStatement) {
     // STATEMENT: dead still for 500ms, then the dolly releases into it.
     const rel = easeInOutSine(clamp01((gt - 500) / Math.max(1, groupDur - 500)));
@@ -416,6 +423,13 @@ function cameraV2(
   // statement's arrival).
   if (sceneType === 'bigText' && gt > 500 && gt < 1200) {
     camScale *= 1 - AMP.anticipation * Math.sin(((gt - 500) / 700) * Math.PI);
+  }
+  // D5 — THE PAYOFF PULL-BACK: the last 900ms of every host/stat/journey
+  // group eases out 1.6% — the camera exhales before the cut. Statement
+  // beats keep their dead-still slam (the emphasis IS the stillness).
+  if (!isStatement && gt > groupDur - 900) {
+    const pay = easeInOutSine(clamp01((gt - (groupDur - 900)) / 900));
+    camScale *= 1 - 0.016 * pay;
   }
   // slow consistent drift, always screen-left-to-right (no beatIndex term)
   // PREMIUM UPGRADE FIX 4 (100-judge critique §5.1): 22/13 → 52/32 — the

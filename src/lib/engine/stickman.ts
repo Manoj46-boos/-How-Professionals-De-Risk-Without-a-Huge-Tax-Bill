@@ -388,8 +388,22 @@ export class Stickman {
             : ['talkA', 'talkB', 'present', 'count2', 'pointR', 'count3', 'talkC'];
         const pick = (id: string): Pose =>
           POSES[list[Math.min(list.length - 1, Math.floor(hashStr(id) * list.length))]];
-        const cyc = pick(opts.sentenceId);
-        const prevPose = pick(opts.prevSentenceId ?? opts.sentenceId);
+        // D2 MARKET-STANDARD FIX (review report D2 [P1] — NO ANTICIPATION
+        // VISIBLE): the hash pick could land the SAME pose for consecutive
+        // sentences (talkA -> talkA) — the spring then blends pose → SAME
+        // pose, the delta is zero, and the anticipation/overshoot machinery
+        // travels nothing: the sampled sequences read "gestures leaving
+        // directly for their target" because half the gestures never
+        // leave at all. The vocabulary now ROTATES on a collision: a
+        // repeated pick advances down the list until the pose differs
+        // (deterministic — same key, same advance, scrub-safe).
+        let pickId = opts.sentenceId;
+        const prevId = opts.prevSentenceId ?? opts.sentenceId;
+        const prevPose = pick(prevId);
+        for (let guard2 = 0; guard2 < list.length && pick(pickId) === prevPose; guard2++) {
+          pickId = `${opts.sentenceId}#${guard2 + 2}`;
+        }
+        const cyc = pick(pickId);
         // AUDIT-2 / 1.6 (report §10.2, M1/M2 + §10.3): ARCS, CASCADE and
         // ANTICIPATION on every sentence gesture —
         //  • ANTICIPATION: the first 150ms blends the pose 30% AWAY from
@@ -429,10 +443,15 @@ export class Stickman {
           }
         }
         const stEff = holdD !== null ? st - (200 - holdD) : st;
-        const anti = stEff < 150 ? Math.sin((stEff / 150) * Math.PI) * 0.45 : 0;
-        const sT = Math.max(0, stEff - 150);
+        // D2: the counter-move RAISES to the visible band — 240ms (7 frames
+        // at 30fps: a read wind-up, not a blink) at 60% of the pose delta
+        // (the 0.45/150ms register sampled as a shiver the eye skipped).
+        // The spring still lands ON the sentence boundary; the anti term
+        // rides the same clock (see sT below).
+        const anti = stEff < 240 ? Math.sin((stEff / 240) * Math.PI) * 0.6 : 0;
+        const sT = Math.max(0, stEff - 240);
         // P1 — the same spring sampled 105ms late: the torso's lean delayed
-        const antiLag = (stEff - 105) < 150 && stEff > 105 ? Math.sin(((stEff - 105) / 150) * Math.PI) * 0.45 : 0;
+        const antiLag = (stEff - 105) < 240 && stEff > 105 ? Math.sin(((stEff - 105) / 240) * Math.PI) * 0.6 : 0;
         const fUpLag = Math.max(0, springTo(0, 1, Math.max(0, sT - 105), 150, 10.5) - antiLag);
         leanDelayed = lerp(prevPose.lean, cyc.lean, fUpLag);
         // PHASE 2 VISUAL AUDIT (Fix 3 — OVERSHOOT IN THE 20-25% HERO BAND):
@@ -691,7 +710,20 @@ export class Stickman {
    *  coupled them ipsilaterally, an anatomy bug the still-frame audits
    *  never caught).
    *  Pure function of phase — scrub-determinism preserved exactly. */
-  static walkPose(phase: number, speed = 1): Pose {
+  static walkPose(phase: number, speed = 1, contrast = 1): Pose {
+    // D1 MARKET-STANDARD FIX (review report D1 [P1] — SQUASH DISSOLVES AT
+    // FEED RIGS): the scale-conditioned walkAmp squash still sampled 2-5px
+    // of displacement at the 0.75-1.1 rigs — under the 320px gate's
+    // perception floor, so walks read as weightless glides. The review's
+    // own prescription governs: "exaggerate pose contrast instead (higher
+    // step, deeper lean) because pixels are cheaper than realism." The
+    // contrast parameter amplifies the KEY TABLE's VERTICAL terms only —
+    // lift (the swing step), root (the contact sink / pass stretch) and
+    // the torso lean swing — while the leg-angle sweep is left untouched:
+    // the keyed walk's plant math (stridePx matched to the stance sweep)
+    // depends on it, and a feed walk that slides its feet is worse than
+    // one that lacks contrast. Callers pass the rig-conditioned boost
+    // (walkIn, below); hero rigs run 1.0 — the certified register.
     const ph = ((phase % 1) + 1) % 1;
     // ── THE KEY TABLE ─────────────────────────────────────────────────
     // One leg's cycle: it LIFTS at 0.00 (toe-off, trailing), swings
@@ -763,8 +795,12 @@ export class Stickman {
     const sL = sample(ph);        // the LEFT leg's cycle
     const sR = sample(ph + 0.5);  // the RIGHT leg, half a cycle behind
     const S = speed;
+    // D1: the contrast pass — vertical key terms only (see the header note).
+    const liftC = sL.lift * S * contrast, liftR = sR.lift * S * contrast;
+    const rootC = sL.root * S * contrast;
+    const leanC = 4 + (sL.lean - 4) * contrast; // the lean swing around its 4° mean
     const lLU = sL.lu, lLL = sL.ll, rLU = sR.lu, rLL = sR.ll;
-    const liftL = sL.lift * S, liftR = sR.lift * S;
+    const liftL = liftC;
     // GROUND-ANCHORED pelvis (unchanged math): rootY = the stance leg's
     // vertical reach; the swing lift keeps the airborne leg out of
     // contention. The keyed `root` rides ON TOP (the DOWN sink past the
@@ -772,7 +808,7 @@ export class Stickman {
     const U = 54, L = 50; // the v2 rig (5.1 heads)
     const reachL = Math.cos(lLU * D2R) * U + Math.cos(lLL * D2R) * L - liftL;
     const reachR = Math.cos(rLU * D2R) * U + Math.cos(rLL * D2R) * L - liftR;
-    const rootY = (U + L) - Math.max(reachL, reachR) + sL.root * S;
+    const rootY = (U + L) - Math.max(reachL, reachR) + rootC;
     // CONTRALATERAL arms — the same-side arm OPPOSES the same-side leg
     // (the analytic cycle coupled them ipsilaterally: an anatomy bug).
     // P1 (Verdict report — ARMS ANSWER THE LEGS): swing amplitude rises to
@@ -793,7 +829,7 @@ export class Stickman {
     return {
       ...base(),
       rootY,
-      lean: sL.lean,
+      lean: leanC, // D1: the contrast-boosted lean swing
       headTilt: sL.chin,
       lLU, lLL, rLU, rLL,
       lAU: lAUw,
@@ -1241,7 +1277,17 @@ export function walkIn(
   const phase = ((to - from) * e) / stridePx;
   let pose: Pose;
   if (walking) {
-    pose = Stickman.walkPose(phase, speed * (1 + cruiseWob));
+    // D1 MARKET-STANDARD FIX: the rig-conditioned POSE CONTRAST boost —
+    // the vertical walk keys (step lift, contact sink, lean swing)
+    // amplify at feed rigs where the squash register dissolves. 1.0 at
+    // hero scales (>= 1.35), up to +42% at the 0.75 floor. The plant
+    // math is untouched (see walkPose's D1 note: vertical terms only).
+    // D1 (the report's bar: "Premium walks show weight at EVERY scale"):
+    // the hero walk ALSO takes a baseline contrast raise (+15% — the
+    // prior round's doubled verticals still sampled under the panel's
+    // weight bar), rising to +53% at the 0.75 feed floor.
+    const walkContrast = 1.15 + Math.max(0, 1.35 - rigScale) * 0.62;
+    pose = Stickman.walkPose(phase, speed * (1 + cruiseWob), walkContrast);
     // PREMIUM UPGRADE M1: WALK ACCELERATION LEAN. The torso leans forward
     // during the first 22% of the walk (acceleration), returns to neutral
     // in the cruise, and leans back -4° in the last 22% (deceleration). A
@@ -1252,7 +1298,10 @@ export function walkIn(
     // far past the entry whip). The launch lean tunes to +5° — intent kept,
     // posture premium.
     if (p < 0.22) {
-      pose = { ...pose, lean: pose.lean + 5 * (1 - p / 0.22) };
+      // D1: the launch lean also rides the feed contrast — a deeper
+      // acceleration lean is the cheapest visible weight at small rigs
+      // (the hero-scale +5° stays; feed rigs reach +9.4°).
+      pose = { ...pose, lean: pose.lean + (5 + Math.max(0, 1.35 - rigScale) * 6.3) * (1 - p / 0.22) };
     } else if (p > 0.78) {
       pose = { ...pose, lean: pose.lean - 4 * ((p - 0.78) / 0.22) };
     }

@@ -37,8 +37,18 @@ export const AMP = {
    *  still; the breath-hold multipliers are sub-perceptual") and
    *  prescribed re-raising the hold-life TO the feed-perception floor.
    *  1.6 local x 2.6 rig = 4.2px screen — at the floor, alive-but-calm
-   *  (boilOff's 4px screen cap still bounds it). */
-  boilPx: 1.6,
+   *  (boilOff's 4px screen cap still bounds it).
+   *  D4 MARKET-STANDARD FIX (review report D4 [P2] — BOIL CAPPED INTO
+   *  INVISIBILITY): the sampled stills showed almost NO line-texture
+   *  difference frame to frame — the hand-drawn read was designed for
+   *  and never landed. The review's bar: "either commit the register the
+   *  panel asked for at hero scales or retire it." COMMITTED: 1.6 -> 2.2
+   *  — the hero rig's (2.6) screen wobble rises 4.2 -> 5.7px, inside the
+   *  6px hero cap and clearly texture-change-per-phase at 1080p; the
+   *  stroke-shared 60% coupling keeps it a CURVE wobble, not a shiver.
+   *  The sub-1.5 clean-vector gate is untouched (half a texture reads
+   *  worse than none — the verdict's own call). */
+  boilPx: 2.2,
   /** Contrapposto idle weight shift, px.
    *  AUDIT-ROUND-3: 15 -> 8 — the hip settle reads without the sway of a
    *  boat.
