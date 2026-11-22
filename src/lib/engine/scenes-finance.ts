@@ -285,6 +285,12 @@ export function crossChartScene(g: SceneCtx): void {
       ctx.fillText('the cost of one decision', W * 0.615 + 235, H * 0.60 + 172);
       ctx.restore();
       impactRing(ctx, W * 0.66 + 235, H * 0.60 + 105, t, 1000);
+      // E4 MARKET-STANDARD FIX (review report E4 [P1] — THE HOOK STAGED AS
+      // A PLAIN CHART): the $100B verdict takes the chapter-card language —
+      // the sparkle burst fires AT the card (the old system only fired on
+      // line-draw completion), the film's opening argument gets the
+      // emphasis register the chapter cards get.
+      sparkles(ctx, W * 0.66 + 400, H * 0.555 + 40, t, 1000, { count: 10, radius: 110 });
     }
   }
   // xclr cycle verdict chips
@@ -328,7 +334,7 @@ export function drawdownChartScene(g: SceneCtx): void {
     const bp = clamp01((t - 300) / 700);
     if (bp > 0) {
       ctx.save();
-      ctx.globalAlpha = bp * 0.16;
+      ctx.globalAlpha = bp * 0.28; // D1: the loss region is a MASS, not a whisper
       ctx.fillStyle = PALETTE.down;
       const px = cx + cw * 0.44;
       ctx.beginPath();
@@ -599,8 +605,10 @@ export function distBarsScene(g: SceneCtx): void {
     ctx.fillStyle = PALETTE.track;
     roundRect(ctx, bx + 330, y, bw - 330, 130, 26);
     ctx.fill();
-    // fill
-    ctx.fillStyle = tone.main;
+    // fill — D4 MARKET-STANDARD FIX (review report D4 [P2]): the verdict
+    // bars print in the VIVID tone at fill scale — the film's strongest
+    // color moment belongs to the frame that carries the number.
+    ctx.fillStyle = tone.vivid ?? tone.main;
     roundRect(ctx, bx + 330, y, (bw - 330) * (r.value / 100), 130, 26);
     ctx.fill();
     // serif numeral right of the fill
@@ -818,6 +826,14 @@ export function napkinScene(g: SceneCtx): void {
     }
   }
   ctx.restore();
+
+  // E3 MARKET-STANDARD FIX (review report E3 [P1] — THE MASCOT IS ABSENT
+  // FROM THE BEATS THAT CARRY THE FACTS): the exit chapters were
+  // figureless — a stick-man channel's retention contract is that the
+  // character carries the argument, and here he was a recurring guest.
+  // The certified side-host register (the B2 staging: the free left band,
+  // gesture cycle aimed INTO the scene's content) joins this drawer.
+  hostSmall(g, 92, 'pointR', 33, g.H * 0.66, 1.3, 0, 'aha', 1.4, 1, true, 0.4);
 }
 
 // ── lockup — the seven-year marriage bar ─────────────────────────────────────
@@ -915,6 +931,14 @@ export function lockupScene(g: SceneCtx): void {
       ctx.restore();
     }
   }
+
+  // E3 MARKET-STANDARD FIX (review report E3 [P1] — THE MASCOT IS ABSENT
+  // FROM THE BEATS THAT CARRY THE FACTS): the exit chapters were
+  // figureless — a stick-man channel's retention contract is that the
+  // character carries the argument, and here he was a recurring guest.
+  // The certified side-host register (the B2 staging: the free left band,
+  // gesture cycle aimed INTO the scene's content) joins this drawer.
+  hostSmall(g, 92, 'pointR', 33, g.H * 0.66, 1.3, 0, 'aha', 1.4, 1, true, 0.4);
 }
 
 // ── planConveyor — the 10b5-1 conveyor belt ──────────────────────────────────
@@ -1034,6 +1058,11 @@ export function planConveyorScene(g: SceneCtx): void {
       ctx.restore();
     }
   }
+  // E3 MARKET-STANDARD FIX (review report E3 [P1] — THE MASCOT IS ABSENT
+  // FROM THE BEATS THAT CARRY THE FACTS): the certified side-host register
+  // (the B2 staging: the free left band, gesture cycle aimed INTO the
+  // scene's content) joins this exit-chapter drawer.
+  hostSmall(g, 92, 'pointR', 33, g.H * 0.66, 1.3, 0, 'aha', 1.4, 1, true, 0.4);
 }
 
 // ── killCard — the wrong-answer card, in the film's dark emerald glass ───────
@@ -1063,6 +1092,19 @@ export function killCardScene(g: SceneCtx): void {
   ctx.fillStyle = '#0E1F19';
   roundRect(ctx, 150, 190, W - 300, cardH, 34);
   ctx.fill();
+  // D4 MARKET-STANDARD FIX (review report D4 [P2] — ONE DARK DRAMATIC
+  // REGISTER, DEPLOYED WITH NO DRAMA): the emerald slab gains its inner
+  // lighting — a radial deepen toward the lower edges so the panel reads
+  // as a lit stage, not a flat rectangle; the gold rule and the red
+  // stakes sit ON the light.
+  {
+    const vg = ctx.createRadialGradient(W / 2, 190 + cardH * 0.32, cardH * 0.18, W / 2, 190 + cardH * 0.42, cardH * 0.95);
+    vg.addColorStop(0, 'rgba(0,0,0,0)');
+    vg.addColorStop(1, 'rgba(3,10,8,0.55)');
+    ctx.fillStyle = vg;
+    roundRect(ctx, 150, 190, W - 300, cardH, 34);
+    ctx.fill();
+  }
   ctx.strokeStyle = rgba(PALETTE.gold, 0.65);
   ctx.lineWidth = 2.5;
   roundRect(ctx, 150, 190, W - 300, cardH, 34);
@@ -1110,6 +1152,10 @@ export function killCardScene(g: SceneCtx): void {
     ctx.restore();
   }
   ctx.restore();
+
+  // E3 REGISTER NOTE (review report E3): the kill card is the ONE frame
+  // family that deliberately runs figureless — its dramatic register is
+  // the emerald slab and the red stakes; the mascot would break it.
 }
 
 // ── poolFund — the exchange fund pool ────────────────────────────────────────
@@ -1238,6 +1284,14 @@ export function poolFundScene(g: SceneCtx): void {
     if (mode === 'not-chosen') label('assets you did not choose, to satisfy a tax definition', poolY + poolR + 80, 'down', 900);
   }
   if (mode === 'contribute') label('100 investors · 100 single stocks · one pool', poolY - poolR - 60, 'ink');
+
+  // E3 MARKET-STANDARD FIX (review report E3 [P1] — THE MASCOT IS ABSENT
+  // FROM THE BEATS THAT CARRY THE FACTS): the exit chapters were
+  // figureless — a stick-man channel's retention contract is that the
+  // character carries the argument, and here he was a recurring guest.
+  // The certified side-host register (the B2 staging: the free left band,
+  // gesture cycle aimed INTO the scene's content) joins this drawer.
+  hostSmall(g, 92, 'pointR', 33, g.H * 0.66, 1.3, 0, 'aha', 1.4, 1, true, 0.4);
 }
 
 // ── driftChart — tracking error drift ────────────────────────────────────────
@@ -1305,6 +1359,14 @@ export function driftChartScene(g: SceneCtx): void {
       ctx.restore();
     }
   }
+
+  // E3 MARKET-STANDARD FIX (review report E3 [P1] — THE MASCOT IS ABSENT
+  // FROM THE BEATS THAT CARRY THE FACTS): the exit chapters were
+  // figureless — a stick-man channel's retention contract is that the
+  // character carries the argument, and here he was a recurring guest.
+  // The certified side-host register (the B2 staging: the free left band,
+  // gesture cycle aimed INTO the scene's content) joins this drawer.
+  hostSmall(g, 92, 'pointR', 33, g.H * 0.66, 1.3, 0, 'aha', 1.4, 1, true, 0.4);
 }
 
 // ── explodeGrid — direct indexing ────────────────────────────────────────────
@@ -1376,6 +1438,11 @@ export function explodeGridScene(g: SceneCtx): void {
   if (mode === 'offset') chipLine('THE LOSSES OFFSET THE GAINS FROM SELLING YOUR POSITION', 'up');
   if (mode === 'wash') chipLine('31 DAYS — OR THE LOSS IS DISALLOWED', 'down');
   if (mode === 'alpha') chipLine('HUNDREDS OF NAMES · YEAR-ROUND · "TAX ALPHA"', 'up');
+  // E3 MARKET-STANDARD FIX (review report E3 [P1] — THE MASCOT IS ABSENT
+  // FROM THE BEATS THAT CARRY THE FACTS): the certified side-host register
+  // (the B2 staging: the free left band, gesture cycle aimed INTO the
+  // scene's content) joins this exit-chapter drawer.
+  hostSmall(g, 92, 'pointR', 33, g.H * 0.66, 1.3, 0, 'aha', 1.4, 1, true, 0.4);
 }
 
 // ── payoffDiagram — the Cuban collar ─────────────────────────────────────────
@@ -1448,6 +1515,14 @@ export function payoffDiagramScene(g: SceneCtx): void {
   // stands in the free right column (the chart spans x 190-1410), his
   // gesture cycle pointing back INTO the payoff bands.
   hostSmall(g, 1706, 'pointL', 34, g.H * 0.66, 1.35, 0, 'aha', 1.4, 1, true, 0.4);
+
+  // E3 MARKET-STANDARD FIX (review report E3 [P1] — THE MASCOT IS ABSENT
+  // FROM THE BEATS THAT CARRY THE FACTS): the exit chapters were
+  // figureless — a stick-man channel's retention contract is that the
+  // character carries the argument, and here he was a recurring guest.
+  // The certified side-host register (the B2 staging: the free left band,
+  // gesture cycle aimed INTO the scene's content) joins this drawer.
+  hostSmall(g, 92, 'pointR', 33, g.H * 0.66, 1.3, 0, 'aha', 1.4, 1, true, 0.4);
 }
 
 // ── taxMine — the collar tax minefield ───────────────────────────────────────
@@ -1526,6 +1601,14 @@ export function taxMineScene(g: SceneCtx): void {
     ctx.fill();
     ctx.restore();
   }
+
+  // E3 MARKET-STANDARD FIX (review report E3 [P1] — THE MASCOT IS ABSENT
+  // FROM THE BEATS THAT CARRY THE FACTS): the exit chapters were
+  // figureless — a stick-man channel's retention contract is that the
+  // character carries the argument, and here he was a recurring guest.
+  // The certified side-host register (the B2 staging: the free left band,
+  // gesture cycle aimed INTO the scene's content) joins this drawer.
+  hostSmall(g, 92, 'pointR', 33, g.H * 0.66, 1.3, 0, 'aha', 1.4, 1, true, 0.4);
 }
 
 // ── flowCharity — DAF / CRT flow ─────────────────────────────────────────────
@@ -1611,6 +1694,14 @@ export function flowCharityScene(g: SceneCtx): void {
   if (mode === 's7520') note('§7520 RATE ≈ 6% (NOV 2026) — HIGHER RATE, BIGGER DEDUCTION', H * 0.72, 'gold', 300);
   if (mode === 'ordering') note('TAXED IN ORDER: ORDINARY → GAINS → TAX-FREE → PRINCIPAL', H * 0.72, 'gold', 300);
   if (mode === 'remainder') note('WHAT "WINS" MEANS — THE PRINCIPAL YOU NEVER TOUCH', H * 0.72, 'down', 300);
+
+  // E3 MARKET-STANDARD FIX (review report E3 [P1] — THE MASCOT IS ABSENT
+  // FROM THE BEATS THAT CARRY THE FACTS): the exit chapters were
+  // figureless — a stick-man channel's retention contract is that the
+  // character carries the argument, and here he was a recurring guest.
+  // The certified side-host register (the B2 staging: the free left band,
+  // gesture cycle aimed INTO the scene's content) joins this drawer.
+  hostSmall(g, 92, 'pointR', 33, g.H * 0.66, 1.3, 0, 'aha', 1.4, 1, true, 0.4);
 }
 
 // ── ruleChange — the 2026 OBBBA / QSBS rule cards ────────────────────────────
@@ -1702,6 +1793,14 @@ export function ruleChangeScene(g: SceneCtx): void {
     ctx.fillText(ch2[2], 1060, bandY + 86);
     ctx.restore();
   }
+
+  // E3 MARKET-STANDARD FIX (review report E3 [P1] — THE MASCOT IS ABSENT
+  // FROM THE BEATS THAT CARRY THE FACTS): the exit chapters were
+  // figureless — a stick-man channel's retention contract is that the
+  // character carries the argument, and here he was a recurring guest.
+  // The certified side-host register (the B2 staging: the free left band,
+  // gesture cycle aimed INTO the scene's content) joins this drawer.
+  hostSmall(g, 92, 'pointR', 33, g.H * 0.66, 1.3, 0, 'aha', 1.4, 1, true, 0.4);
 }
 
 // ── lsLeverage — the 130/30 structure ────────────────────────────────────────
@@ -1762,6 +1861,14 @@ export function lsLeverageScene(g: SceneCtx): void {
       ctx.restore();
     }
   }
+
+  // E3 MARKET-STANDARD FIX (review report E3 [P1] — THE MASCOT IS ABSENT
+  // FROM THE BEATS THAT CARRY THE FACTS): the exit chapters were
+  // figureless — a stick-man channel's retention contract is that the
+  // character carries the argument, and here he was a recurring guest.
+  // The certified side-host register (the B2 staging: the free left band,
+  // gesture cycle aimed INTO the scene's content) joins this drawer.
+  hostSmall(g, 92, 'pointR', 33, g.H * 0.66, 1.3, 0, 'aha', 1.4, 1, true, 0.4);
 }
 
 // ── appleCase — the JAM case study ───────────────────────────────────────────
@@ -1839,6 +1946,11 @@ export function appleCaseScene(g: SceneCtx): void {
       ctx.restore();
     }
   }
+  // E3 MARKET-STANDARD FIX (review report E3 [P1] — THE MASCOT IS ABSENT
+  // FROM THE BEATS THAT CARRY THE FACTS): the certified side-host register
+  // (the B2 staging: the free left band, gesture cycle aimed INTO the
+  // scene's content) joins this exit-chapter drawer.
+  hostSmall(g, 92, 'pointR', 33, g.H * 0.66, 1.3, 0, 'aha', 1.4, 1, true, 0.4);
 }
 
 // ── decisionTable — THE SAVE ARTIFACT ────────────────────────────────────────
@@ -1953,6 +2065,7 @@ export function decisionTableScene(g: SceneCtx): void {
   hostSmall(g, 92, 'pointR', 36, g.H * 0.66, 1.3, 0, 'aha', 1.4, 1, true, 0.4,
     undefined, undefined, undefined, undefined, undefined,
     resolveProp('decisionTable', 'holdCard', true) ? 'holdCard' : undefined);
+
 }
 
 // ── sequenceStack — the layered answer ───────────────────────────────────────
@@ -1994,6 +2107,14 @@ export function sequenceStackScene(g: SceneCtx): void {
     ctx.restore();
     y += 136;
   }
+
+  // E3 MARKET-STANDARD FIX (review report E3 [P1] — THE MASCOT IS ABSENT
+  // FROM THE BEATS THAT CARRY THE FACTS): the exit chapters were
+  // figureless — a stick-man channel's retention contract is that the
+  // character carries the argument, and here he was a recurring guest.
+  // The certified side-host register (the B2 staging: the free left band,
+  // gesture cycle aimed INTO the scene's content) joins this drawer.
+  hostSmall(g, 92, 'pointR', 33, g.H * 0.66, 1.3, 0, 'aha', 1.4, 1, true, 0.4);
 }
 
 // [[MORE]]

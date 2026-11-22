@@ -47,9 +47,19 @@ const STAGE_TABLE: Record<FrameFamily, {
   floorAlpha: number;    // the desk surface's darkening
   floorLines: number;    // perspective lines on the desk surface
 }> = {
-  host:      { horizonY: 0.70, mullions: 4, mullionAlpha: 0.042, floorAlpha: 0.055, floorLines: 4 },
-  data:      { horizonY: 0.72, mullions: 3, mullionAlpha: 0.030, floorAlpha: 0.045, floorLines: 3 },
-  statement: { horizonY: 0.74, mullions: 2, mullionAlpha: 0.055, floorAlpha: 0.050, floorLines: 3 },
+  // D2 MARKET-STANDARD FIX (review report D2 [P1] — WHISPER-ALPHA MULLION
+  // STRIPES AS ENCODING ARTIFACTS): the 2-4 vertical wall bands drew at
+  // 0.030-0.055 alpha — plainly visible as dirty stripes behind the
+  // headlines in the evidence figures, resolving at feed scale as
+  // compression banding, not architecture. The codebase's own C4 verdict
+  // deleted ghost panels for exactly this class; the stage system
+  // re-introduced it at a LOWER alpha — worse than committing or cutting.
+  // The report's binary governs: CUT. mullionAlpha is 0 in every family;
+  // the committed room architecture is the horizon, the desk planes and
+  // the floor lines (all at committed alphas), and the field stays clean.
+  host:      { horizonY: 0.70, mullions: 4, mullionAlpha: 0, floorAlpha: 0.055, floorLines: 4 },
+  data:      { horizonY: 0.72, mullions: 3, mullionAlpha: 0, floorAlpha: 0.045, floorLines: 3 },
+  statement: { horizonY: 0.74, mullions: 2, mullionAlpha: 0, floorAlpha: 0.050, floorLines: 3 },
 };
 
 /**

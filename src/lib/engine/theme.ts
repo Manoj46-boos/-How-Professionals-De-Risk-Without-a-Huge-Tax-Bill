@@ -95,26 +95,31 @@ export const PALETTE: Palette = {
   // cream, -8 lum) and bgBottom #D7E5DF -> #C9DAD4 (-9 lum). Target mean
   // luminance 200-210 with RMS 40+ per frame — the report's own gate.
   bgTop: '#F1E7CF',
-  // PHASE-0: bgBottom deepens #D7E5DF -> #C9DAD4 — the ground gradient
-  // strengthens further; the figure's floor gains mass.
-  bgBottom: '#DECDA6',
-  // PHASE-0: bgSoft deepens #EAF1ED -> #DFE9E4 — the haze bands and neutral
-  // plates ride this value; they follow the new register down.
-  bgSoft: '#E9DEC4',
-  // AUDIT-PHASE-1: ink deepens #2E4A43 -> #1F3328 — deeper ink raises
-  // perceived ink-mass weight without changing the hue family. Still
-  // slate-teal, still AAA contrast, just visibly heavier.
-  ink: '#232E27',
-  inkSoft: '#4C564E',
-  inkFaint: '#6E7870',
-  card: '#FBF5E6',
+  // D1 MARKET-STANDARD FIX (review report D1 [P0] — THE FILM FAILS ITS OWN
+  // PUBLISHED CONTRAST GATE): the measured baseline on the evidence frames
+  // is frame SD 30.1-45.0 outside the dark register (the engine's own bar:
+  // RMS 40+, mean 180-215) — champagne-on-champagne with pale sage data
+  // ink, the read the code's own audit convicted. The register deepens at
+  // BOTH ends of the value ladder: the dark masses (ink/inkSoft/grid/
+  // track) drop 12-20 lum so text and data ink carry, the ground gradient
+  // and the soft plates deepen ~8-10 lum, and the plate multiply rises
+  // 0.32 -> 0.40. bgTop HOLDS — the light frames' mean anchor — so the
+  // spread grows from both directions without falling out of the band.
+  bgBottom: '#D3BE8B',
+  bgSoft: '#E0D0A9',
+  ink: '#141B16',
+  inkSoft: '#2F3831',
+  inkFaint: '#4E5850',
+  card: '#FDF9EF',
   cardBorder: '#D8CBA3',
   // v8: the three neutral ROLES the brown hexes used to fill. One source
   // of truth; scenes must use these, never hand-hexed greys.
   shadow: '#6E6350',   // was #8C8474 everywhere (warm taupe) — cool slate now
-  grid: '#B7AA85',      // was #B9B4A6 (warm khaki) — chart grids, hairlines
-  track: '#CBBE9C',     // was #C8C2B2 (warm greige) — bar tracks, inactive fills
-  sage: '#8A9B7C',      // PHASE 2: visible sage — pie remainder, muted swatches
+  grid: '#A5966C',      // chart grids, hairlines — one step past the wash (D1)
+  track: '#BBA97F',     // bar tracks, inactive fills (D1: off the champagne)
+  sage: '#6F8259',      // D1: the PALE SAGE DATA INK defect — the muted register
+                        // drops out of the wash band; pie remainders, muted
+                        // swatches and the comparison lines now read
   goldNumeral: '#9A7414', // PHASE 2: chapter numeral — one register deeper than goldDisplay
   gold: '#C9A227',
   goldDeep: '#8F6E12',
@@ -142,9 +147,9 @@ export const PALETTE: Palette = {
   //   downSoft #FAE7E1 -> #F2DAD2 (mood rooms' coral field — gentlest
   //                                step: coral rooms already ran lowest)
   // Target: every scene frame lands 200-215 mean luminance, RMS 30+.
-  goldWash: '#F0E2BC',
+  goldWash: '#E2CD96',
   up: '#0E5C43',
-  upSoft: '#CBE0D0',
+  upSoft: '#BDD2C2',
   down: '#8E2F3C',
   // U25 (review report U25 — THE WASH IS TWO REGISTERS WITH MEANING): the
   // C2 consolidation (sage = data/analysis, cream-gold = statement) stands;
@@ -152,11 +157,11 @@ export const PALETTE: Palette = {
   // terracotta, so wherever the soft-down register touches a frame (the
   // down-tone badges in textfx) it reads as deliberate clay, never as a
   // staining pink wash.
-  downSoft: '#E6C9AC',
+  downSoft: '#DFC09E',
   // v10 (panel COLOR-3): the vivid data-ink ramp — strokes only, never text
   upVivid: '#0F7E58',
   downVivid: '#B23B47',
-  inkDeep: '#1C2620',
+  inkDeep: '#121914',
   muted: '#BFB498',
   chipBg: '#FBF5E6',
   white: '#FFFFFF',
@@ -769,7 +774,10 @@ export function scenePlate(
   // ~0.48 (0.95 × 0.5) to 0.30 (0.95 × 0.32) — the rooms lighten one step;
   // the vivid mixing above carries the color instead of the grey weight.
   ctx.globalCompositeOperation = 'multiply';
-  ctx.fillStyle = rgba(soft, strength * 0.32);
+  // D1: the multiply register returns one step — 0.32 -> 0.40 (effective
+  // ~0.33 at the 0.82 plate) — the tonal field reads again under the
+  // transcode instead of a slightly greener white.
+  ctx.fillStyle = rgba(soft, strength * 0.40);
   ctx.fillRect(0, 0, W, H);
   ctx.globalCompositeOperation = 'source-over';
   // PHASE-2 (report §11 Phase 2): THE VIVID CHAPTER WASH — a direct wash of

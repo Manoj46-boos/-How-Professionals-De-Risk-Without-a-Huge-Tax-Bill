@@ -115,14 +115,25 @@ export const AMP = {
    *  AUDIT-ROUND-3: 5 -> 3 — the object breathes; it does not sway. */
   kWobbleDeg: 3,
   kWobblePeriodMs: 2600,
-  /** Scene push (single-subject scenes) — breathing zoom travel.
-   *  AUDIT-ROUND-3: 0.34 -> 0.22 — the camera settles between gestures;
-   *  constant breathing read as drift. */
-  scenePush: 0.22,
-  /** bigText dolly.
-   *  AUDIT-ROUND-3: 0.34 -> 0.24 — slams keep scale; statements stop
-   *  hyperventilating. */
-  bigTextDolly: 0.24,
+  /** Scene push (single-subject scenes) — the breathing zoom travel.
+   *  E2 MARKET-STANDARD FIX (review report E2 [P1] — THE LIVING REGISTER
+   *  IS BELOW ITS OWN PERCEPTION FLOOR), ENVELOPE-RESOLVED: the frames'
+   *  certified content runs to x=1840 (the ledger cards' right edge) —
+   *  around the frame centre that bounds the ambient zoom at 1.068
+   *  ((1840−960)×z ≤ 940). A monotone climb past it CROPS the frame
+   *  content — the arithmetic reason every audit round kept cutting this
+   *  value down (0.34 → 0.22) into sub-perceptual territory. The fix is
+   *  the SHAPE, not a bigger number: the camera pushes to the safe peak
+   *  inside the first half of the group and HOLDS (a breathe, not a
+   *  climb) — the per-second travel DOUBLES against the old monotone
+   *  ramp while every certified edge stays inside the frame. The felt
+   *  motion above this register rides the drift (52/32) and the event
+   *  pushes (D5 tripod, U20 number push, the reaction beats). */
+  scenePush: 0.10,
+  /** bigText dolly — same E2 envelope resolution (0.40 → 0.12): the
+   *  statement headlines run to x≈1790, bounding the dolly peak at 1.06;
+   *  the release eases into the safe peak in the first half and holds. */
+  bigTextDolly: 0.12,
   /** Anticipation recoil before bigText — kept (the wind-up must be felt).
    *  100-JUDGE DOSSIER (P3 — motion contrast, the deferred half): 0.06 →
    *  0.12 — the recoil is the HERO gesture's wind-up and must travel 2×
@@ -168,13 +179,16 @@ export const AMP = {
   /** Reaction window, ms. */
   reactionWindowMs: 1600,
   /** The whip-truck on scene entry.
-   *  AUDIT-ROUND-3: 90 -> 40 — an operator settles the frame; it should
-   *  not sting on every entrance. */
-  whipPx: 40,
+   *  E2 MARKET-STANDARD FIX (review report E2 [P1]): 40px sits under the
+   *  40px entry register the module's own feed floors need to feel — the
+   *  settle returns to the operator band (40 -> 70px: ~23px at the 320px
+   *  gate, an unmistakable entrance, still 1.3x the ambient drift). */
+  whipPx: 70,
   /** Hard-cut scale punch on scene changes.
-   *  AUDIT-ROUND-3: 0.08 -> 0.03 — cuts land with weight at 3%; at 8%
-   *  every cut popped. */
-  cutPunch: 0.03,
+   *  E2 MARKET-STANDARD FIX (review report E2 [P1]): 3% is under the cut
+   *  perception floor at feed scale; the punch lands at 5% — weight
+   *  without the 8% pop the earlier audit convicted. */
+  cutPunch: 0.05,
 };
 
 /**

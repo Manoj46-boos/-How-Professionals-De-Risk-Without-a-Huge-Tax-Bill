@@ -117,6 +117,7 @@ const SHOTS = [
   ['co-deal', 0, 2200, 'srcCite-ledger'], // C8 evidence: the source ledger fill
   ['e4-collar', 0, 2200, 'payoffDiagram-floor'],
   ['e4-path', 0, 2600, 'payoffDiagram-path'],
+  ['e4-mine', 1, 2200, 'taxMine'], // E3 evidence: the staged presenter on the mine scene
   ['e5-crt', 0, 2600, 'flowCharity-crt'],
   ['e5-valur', 0, 2600, 'barsCompare-valur'],
   ['e6-ls', 2, 2200, 'lsLeverage-ratios'],

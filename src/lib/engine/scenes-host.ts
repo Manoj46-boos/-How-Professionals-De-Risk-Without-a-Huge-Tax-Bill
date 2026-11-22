@@ -1310,7 +1310,9 @@ export function splitNumbersScene(g: SceneCtx): void {
   paintBg(ctx, W, H, t, g.chapterTone);
   // P1-2 (report §12.2): every scene sits in a room — full-bleed tone plate.
   scenePlate(ctx, W, H, g.chapterTone ?? 'up', 0.95, chapterFamily(g.chapterIdx));
-  bokehField(ctx, W, H, t, { intensity: 0.9, seed: 12 });
+  // D3: the whisper-alpha bokeh pass is cut here (10 discs at 0.085 —
+  // under the engine's own static-perception floor; none of it survives
+  // the transcode, all of it cost per-frame time and hazed the plates).
   const mode = (s.mode as string) || 'left';
 
   const panelW = W * 0.38;
@@ -1699,7 +1701,9 @@ export function divergeKScene(g: SceneCtx): void {
   paintBg(ctx, W, H, t, g.chapterTone);
   // P1-2 (report §12.2): every scene sits in a room — full-bleed tone plate.
   scenePlate(ctx, W, H, g.chapterTone ?? 'up', 0.95, chapterFamily(g.chapterIdx));
-  bokehField(ctx, W, H, t, { intensity: 1.45, seed: 21, gold: 0.6 });
+  // D3: the whisper-alpha bokeh pass is cut here (10 discs at 0.085 —
+  // under the engine's own static-perception floor; none of it survives
+  // the transcode, all of it cost per-frame time and hazed the plates).
   lightRays(ctx, W, H, t, { alpha: 0.8 });
 
   const kx = W * 0.58;
@@ -2373,7 +2377,9 @@ export function channelIntroScene(g: SceneCtx): void {
   paintBg(ctx, W, H, t, g.chapterTone);
   // P1-2 (report §12.2): every scene sits in a room — full-bleed tone plate.
   scenePlate(ctx, W, H, g.chapterTone ?? 'up', 0.95, chapterFamily(g.chapterIdx));
-  bokehField(ctx, W, H, t, { intensity: 1.3, seed: 33, gold: 0.6 });
+  // D3: the whisper-alpha bokeh pass is cut here (10 discs at 0.085 —
+  // under the engine's own static-perception floor; none of it survives
+  // the transcode, all of it cost per-frame time and hazed the plates).
   const cx = W / 2;
   const cy = H * 0.4;
 
@@ -2453,7 +2459,9 @@ export function recapSplitScene(g: SceneCtx): void {
   paintBg(ctx, W, H, t, g.chapterTone);
   // P1-2 (report §12.2): every scene sits in a room — full-bleed tone plate.
   scenePlate(ctx, W, H, g.chapterTone ?? 'up', 0.95, chapterFamily(g.chapterIdx));
-  bokehField(ctx, W, H, t, { intensity: 1.05, seed: 44 });
+  // D3: the whisper-alpha bokeh pass is cut here (10 discs at 0.085 —
+  // under the engine's own static-perception floor; none of it survives
+  // the transcode, all of it cost per-frame time and hazed the plates).
   const pw = W * 0.36;
   const ph = H * 0.34;
   const py = H * 0.24;
@@ -2725,7 +2733,9 @@ export function paradoxResolveScene(g: SceneCtx): void {
   paintBg(ctx, W, H, t, g.chapterTone);
   // P1-2 (report §12.2): every scene sits in a room — full-bleed tone plate.
   scenePlate(ctx, W, H, g.chapterTone ?? 'up', 0.95, chapterFamily(g.chapterIdx));
-  bokehField(ctx, W, H, t, { intensity: 1.2, seed: 55, gold: 0.55 });
+  // D3: the whisper-alpha bokeh pass is cut here (10 discs at 0.085 —
+  // under the engine's own static-perception floor; none of it survives
+  // the transcode, all of it cost per-frame time and hazed the plates).
   const cx = W / 2;
   // the word "PARADOX" appears, then strikes through
   // P3 hero register: the strike flinches the frame at HERO.shakePx — the

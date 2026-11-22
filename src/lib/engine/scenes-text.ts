@@ -47,7 +47,7 @@ export function bigTextScene(g: SceneCtx): void {
   // frame as a ghost UI panel top-right and a stray hairline through the
   // composition; the 0.1-alpha K-motif field added a second ghost outline.
   // A statement beat is typography + room tone — furniture OFF, kMotifs OFF.
-  scenePlate(ctx, W, H, g.chapterTone ?? 'up', 0.88, null, { furniture: false });
+  scenePlate(ctx, W, H, g.chapterTone ?? 'up', 0.92, null, { furniture: false });
   softBloom(ctx, W, H, t, 180); // v2: warm 12% bloom, not a white strobe (PATCH 5)
   // AUDIT-ROUND-3 iter-2 (Fix 4 — STATEMENT ATMOSPHERE): the re-review
   // read the statement room as "a flat gradient void with no atmosphere,

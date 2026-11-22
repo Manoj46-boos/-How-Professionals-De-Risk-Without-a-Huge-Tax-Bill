@@ -120,6 +120,17 @@ export const REACTIONS: Record<string, ReactionSpec> = {
   // recedes while the host comes forward), so the wide reading columns
   // no longer fight the push — see the scene drawers' reaction staging.
   'c7-paradox': { atFrac: 0.3, durMs: AMP.reactionWindowMs, amp: AMP.reactionAmp.paradox, px: 350, py: 550 },
+  // E4 MARKET-STANDARD FIX (review report E4 [P1] — THE COLD OPEN STAGES
+  // ITS MONEY MOMENT AS A PLAIN CHART): the film's HOOK earns the
+  // reaction grammar — the take fires at the $100B verdict window and the
+  // camera answers with a CENTERED push (amp 0.09 — the envelope math
+  // keeps the right-column ledger inside the frame at peak zoom; the
+  // panning close-ups the twist/paradox pivots use belong to scenes that
+  // re-stage their content for the window). The crossChart hostSmall
+  // inherits the take automatically (it fires at every hostSmall site
+  // with a REACTIONS window), so the opening argument finally gets the
+  // character beat.
+  'co-cross': { atFrac: 0.52, durMs: AMP.reactionWindowMs, amp: 0.09, px: 960, py: 540 },
   // P0-3 (audit Table 2): the twist reaction pivots ON the re-staged host
   // (x=1650, head breaking the 493 wall) — px 1700 keeps his whole envelope
   // inside the frame through the full 0.55 push (right edge 1842 → 1909).

@@ -402,8 +402,12 @@ function cameraV2(
     camScale = 1.0 + 0.085 * pushT;
   } else if (isStatement) {
     // STATEMENT: dead still for 500ms, then the dolly releases into it.
-    const rel = easeInOutSine(clamp01((gt - 500) / Math.max(1, groupDur - 500)));
-    camScale = 0.94 + (AMP.bigTextDolly + 0.04) * rel;
+    // E2: the release eases into the SAFE PEAK inside the first half of
+    // the group and HOLDS (a breathe, not a monotone climb — the climb
+    // cropped the headline edges at the old amplitudes; the envelope
+    // bounds the statement zoom at 1.06, see AMP.bigTextDolly).
+    const rel = easeInOutSine(clamp01(((gt - 500) * 2) / Math.max(1, groupDur - 500)));
+    camScale = 0.94 + (AMP.bigTextDolly + 0.04) * Math.min(1, rel);
   } else {
     const target = sceneType === 'bigText' ? AMP.bigTextDolly : isComparison ? -0.036 : AMP.scenePush;
     // PHASE-3 (report §11 Phase 3): the camera base was probed as a presenting-
@@ -417,7 +421,11 @@ function cameraV2(
     // fallback governs the remainder ("take the area from the empty left
     // third; the composition has headroom to give").
     const zBase = sceneType === 'bigText' ? 0.90 : isComparison ? 1.0 : 0.93;
-    camScale = zBase + target * easeInOutSine(p);
+    // E2: the ambient push BREATHESES — eases to the safe peak inside the
+    // first half of the group and holds (peak z = 0.93 + 0.10 = 1.03;
+    // every certified edge inside the frame, per-second travel doubled
+    // against the old monotone ramp).
+    camScale = zBase + target * easeInOutSine(Math.min(1, p * 2));
   }
   // P1-2: anticipation pull-back before bigText — recoil up to 3.2% during
   // the first 700ms, releasing straight into the dolly.
@@ -1216,39 +1224,14 @@ export function drawFrame(
   // (pill + fixed furniture + frame edges — guard v2, PANEL-10)
   if (collisionGuard.enabled) collectViolations();
 
-  // v8 finishing: grain (film texture, not noise) and a bright vignette.
-  // AUDIT-ROUND-2 (fix 25 — GRAIN REGISTER): the one-size 0.85 grain on
-  // character frames fought the small type (the panel: "grain stops
-  // fighting small type" was the demand; D4: the overlay-composite 0.85
-  // was "barely perceptible" after transcode yet still textured over the
-  // reading surfaces). THREE registers now: character/host frames 0.6
-  // (0.85 → 0.6 — present on the figure, off the type), data-dense frames
-  // 0.5 (charts/cards — texture the plate, spare the labels), statement
-  // frames stay 0.3 (clean serif plates, unchanged).
-  {
-    // PREMIUM UPGRADE V6: GRAIN HALVED. Premium film grain runs at 0.15-0.25
-    // — felt, not seen. The old 0.3-0.6 textured the figure's limbs and the
-    // small type, fighting the reading surfaces. Halved across all tiers.
-    // PHASE 3 VISUAL AUDIT (Fix 4 — THE TEXTURE PASS): "grain and bokeh
-    // raised to transcode-visible on figure frames only." The V6 halving
-    // over-corrected for the transcode: at 0.3 the host-family grain
-    // measured under the codec's noise floor at the 320px feed — the
-    // texture died in delivery. FIGURE frames return to 0.55 (the
-    // transcode-visible register, present ON the figure where the ink
-    // mass carries it), while the data (0.25) and statement (0.15)
-    // registers stay put — the report's "on figure frames only": the
-    // reading surfaces stay clean.
-    const sceneType = beat.beat.scene.type;
-    const grainAlpha =
-      sceneType === 'bigText' || sceneType === 'stampCard' ? 0.15
-      : ['host', 'divergeK', 'channelIntro', 'recapSplit', 'paradoxResolve',
-         'ownerWorker', 'endScreen', 'commentPrompt', 'takeaways'].includes(sceneType) ? 0.55
-      : 0.25;
-    // U20 (review report U20): ALL camera-driven grain alpha caps at 0.25
-    // — a fast camera state must never let the grain swim or strobe at
-    // the transcode.
-    drawGrain(ctx, W, H, Math.min(grainAlpha, 0.25), t);
-  }
+  // D3 MARKET-STANDARD FIX (review report D3 [P2] — SUB-PERCEPTUAL
+  // DECORATION): the grain overlay is CUT. Three cycling tiles measured at
+  // one to two luminance levels — under the codec's noise floor by the
+  // engine's own audits, invisible after the transcode, costing per-frame
+  // time and adding a faint haze to every plate. The furniture whitelist
+  // rule ("delete what cannot clear the 320 gate, do not fade it")
+  // finally applied to this layer. The vignette below carries the frame's
+  // finishing weight alone.
   // B15 (MINT MONOTONY): the mint rooms carry the mud complaint — the
   // vignette's edge ring over the sage wash grey-greened the lower third.
   // Mint chapters run a lighter edge (0.30 -> 0.22); the gold/coral rooms

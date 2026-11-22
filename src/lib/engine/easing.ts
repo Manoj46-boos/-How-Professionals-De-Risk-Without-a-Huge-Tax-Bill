@@ -137,7 +137,13 @@ export function hash01(n: number): number {
  * existing entrance machinery, just later.
  */
 export function seamArrival(sceneKey: string, groupDur: number, demoteMs: number): number {
-  if (!(groupDur >= 9500)) return demoteMs;
+  // E1 MARKET-STANDARD FIX (review report E1 [P0] — LONG STATIC HOLDS ARE
+  // THE DEFAULT): the old 9.5s threshold meant the seam second-arrival
+  // only fired for groups >= 9.5s — "across a 40-minute film the viewer's
+  // eye receives a visible event roughly every ten-plus seconds in the
+  // worst stretches". Chart groups run 6-12s; the seam register now
+  // covers them: every group >= 6s earns the half-hold second arrival.
+  if (!(groupDur >= 6000)) return demoteMs;
   let h = 0;
   for (let i = 0; i < sceneKey.length; i++) h += sceneKey.charCodeAt(i) * (i + 7);
   return (0.5 + 0.06 * hash01(h)) * groupDur;
