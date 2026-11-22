@@ -28,6 +28,82 @@ function room(g: SceneCtx, tone: 'up' | 'down' | 'gold' | 'neutral' | undefined 
   scenePlate(g.ctx, g.W, g.H, tone ?? g.chapterTone ?? 'up', 0.95, null, { furniture: false });
 }
 
+// ── E1/E2/E4 — THE ANNOTATION COLUMN (review report E1 [P0], E2 [P1], E4 [P2]) ──
+// The market bar (review E1): "every third of the frame either carries
+// information or is intentionally cropped by a content mass." The data
+// scenes owned a left chart and surrendered the right third + the bottom
+// band as cream field. The ledger card funds them: a structured stack of
+// annotation rows (label + value on hairlines) riding the beat's own
+// reveal clocks — the delta-badge / value-label / benchmark-ghost
+// vocabulary the premium finance standard annotates with, and the
+// full-width structured mass the exitTiles grid already carried (E4's
+// bar). Every card registers with the collision guard (E3's law).
+function ledgerCard(
+  ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number,
+  head: string,
+  rows: Array<{ label: string; value: string; tone?: 'up' | 'down' | 'gold' | 'muted' }>,
+  t: number, delay = 500, foot?: string
+): void {
+  const cp = clamp01((t - delay) / 600);
+  if (cp <= 0) return;
+  ctx.save();
+  ctx.globalAlpha = cp;
+  ctx.translate(0, (1 - easeOutCubic(cp)) * 18);
+  card(ctx, x, y, w, h, { r: 20 });
+  registerRect('ledger:' + head.slice(0, 14), x, y, w, h);
+  setFont(ctx, 25, 700);
+  ctx.fillStyle = PALETTE.goldDeep;
+  ctx.textAlign = 'left';
+  ctx.fillText(head, x + 30, y + 46);
+  ctx.strokeStyle = rgba(PALETTE.gold, 0.5);
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(x + 30, y + 60);
+  ctx.lineTo(x + w - 30, y + 60);
+  ctx.stroke();
+  const bodyTop = y + 78;
+  const footH = foot ? 46 : 0;
+  const rowH = Math.min(58, (h - 78 - footH - 18) / Math.max(1, rows.length));
+  rows.forEach((r, i) => {
+    const rp = clamp01((t - delay - 130 - i * 150) / 380);
+    if (rp <= 0) return;
+    ctx.save();
+    ctx.globalAlpha = rp;
+    const ry = bodyTop + i * rowH;
+    setFont(ctx, 26, 600);
+    ctx.fillStyle = PALETTE.inkSoft;
+    ctx.textAlign = 'left';
+    ctx.fillText(r.label, x + 30, ry + 20);
+    setFont(ctx, 28, 700, FONT_DISPLAY);
+    ctx.fillStyle = r.tone === 'down' ? PALETTE.down : r.tone === 'up' ? PALETTE.up : r.tone === 'gold' ? PALETTE.goldDeep : PALETTE.ink;
+    ctx.textAlign = 'right';
+    ctx.fillText(r.value, x + w - 30, ry + 20);
+    ctx.textAlign = 'left';
+    ctx.strokeStyle = rgba(PALETTE.shadow, 0.16);
+    ctx.lineWidth = 1.5;
+    if (i < rows.length - 1) {
+      ctx.beginPath();
+      ctx.moveTo(x + 30, ry + rowH - 8);
+      ctx.lineTo(x + w - 30, ry + rowH - 8);
+      ctx.stroke();
+    }
+    ctx.restore();
+  });
+  if (foot) {
+    const fp = clamp01((t - delay - 130 - rows.length * 150) / 380);
+    if (fp > 0) {
+      ctx.save();
+      ctx.globalAlpha = fp;
+      setFont(ctx, 23, 600);
+      ctx.fillStyle = PALETTE.goldDeep;
+      ctx.textAlign = 'left';
+      ctx.fillText(foot, x + 30, y + h - 22);
+      ctx.restore();
+    }
+  }
+  ctx.restore();
+}
+
 /** The lower-third SOURCE chip — the researched-channel signature. */
 function srcChip(g: SceneCtx, alpha = 1): void {
   const src = g.s.src as string | undefined;
@@ -121,6 +197,34 @@ export function crossChartScene(g: SceneCtx): void {
     gridLines: 4, showYAxis: true, lineWidth: isXclr ? 6 : 7,
     annotations: [],
   });
+  // E2 MARKET-STANDARD FIX (review report E2 [P1] — "crossChart one line"
+  // with the right third empty): an always-on LEGEND (premium charts
+  // label their series) + the decision ledger funding the right column —
+  // the two routes named, the counterfactual ghost noted.
+  const lp2 = clamp01((t - 600) / 500);
+  if (lp2 > 0 && series.length) {
+    ctx.save();
+    ctx.globalAlpha = lp2;
+    let lgx = cx + 24;
+    series.forEach((sr) => {
+      ctx.fillStyle = sr.tone === 'up' ? PALETTE.up : sr.tone === 'down' ? PALETTE.down : PALETTE.inkSoft;
+      roundRect(ctx, lgx, cy - 30, 22, 22, 5);
+      ctx.fill();
+      setFont(ctx, 24, 600);
+      ctx.fillStyle = PALETTE.inkSoft;
+      ctx.textAlign = 'left';
+      const nm = isXclr ? (sr.tone === 'up' ? 'XCLR (collar 95–110)' : 'S&P 500') : (sr.tone === 'up' ? 'Ballmer — held' : 'Gates — sold for 30 years');
+      ctx.fillText(nm, lgx + 32, cy - 12);
+      lgx += 32 + ctx.measureText(nm).width + 44;
+    });
+    ctx.restore();
+  }
+  if (!isXclr) {
+    ledgerCard(ctx, W - 470 - 80, H * 0.235, 470, 96 + 2 * 58 + 74, 'ONE COMPANY, ONE DECISION', [
+      { label: 'the sold route', value: 'GATES', tone: 'muted' },
+      { label: 'the held route', value: 'BALLMER', tone: 'up' },
+    ], t, 700, 'benchmark ghost: the $100B gap is the decision, not the market');
+  }
 
   // the HOLD chip — the thesis in one word
   if (mode === 'hold-chip' || mode === 'build-b' || mode === 'cross-marked' || mode === 'delta') {
@@ -222,6 +326,29 @@ export function drawdownChartScene(g: SceneCtx): void {
     series: [{ name: isEnron ? 'Enron' : 'UNH', tone: 'down', points: partialPoints(pts, drawP) }],
     p: 1, t, gridLines: 4, showYAxis: true, lineWidth: 7,
   });
+  // E2 MARKET-STANDARD FIX (review report E2 [P1] — "the drawdownChart
+  // (Enron) is one red curve and one dot" with 60% of the frame empty):
+  // THE SHAPE LEDGER (right column) — the peak, the trough, the
+  // benchmark ghost curve, and the tax-math punchline the VO lands; plus
+  // an always-on legend chip naming the curve (premium charts label).
+  const lg4 = clamp01((t - 400) / 450);
+  if (lg4 > 0) {
+    ctx.save();
+    ctx.globalAlpha = lg4;
+    ctx.fillStyle = PALETTE.down;
+    roundRect(ctx, cx + 24, cy - 30, 22, 22, 5);
+    ctx.fill();
+    setFont(ctx, 24, 600);
+    ctx.fillStyle = PALETTE.inkSoft;
+    ctx.textAlign = 'left';
+    ctx.fillText(isEnron ? 'ENRON — to zero' : 'UNH — peak to trough', cx + 56, cy - 12);
+    ctx.restore();
+  }
+  ledgerCard(ctx, W - 440 - 80, H * 0.235, 440, 96 + 3 * 58 + 76, 'THE SHAPE OF CATASTROPHE', [
+    { label: isEnron ? 'UNH — the milder cousin' : 'the peak', value: isEnron ? '−53%' : '+24%', tone: 'muted' },
+    { label: 'the trough', value: isEnron ? '→ 0' : '−50%+', tone: 'down' },
+    { label: 'the tax it "saved"', value: '24%', tone: 'gold' },
+  ], t, 500, isEnron ? 'zero is a place. there is no harvest at zero.' : 'benchmark ghost: Enron rode the same shape to zero');
 
   // peak chip + loss chip
   if (!isEnron && (mode === 'shade-loss' || mode === 'vs-math' || mode === 'punch')) {
@@ -476,6 +603,21 @@ export function taxStackScene(g: SceneCtx): void {
     ctx.restore();
     acc += hgt + 16;
   }
+  // E1/E4 MARKET-STANDARD FIX (review report E1 [P0] — "lockup is ONE gold
+  // bar in a cream field"; E4 [P2] — fund every scene to the exitTiles
+  // standard): the stack owned x 190-1350 and the right third was empty.
+  // The ledger card translates every layer to DOLLARS on the $10M
+  // position, totals it, and carries the fund-route benchmark ghost —
+  // information, not decoration, in every third of the frame.
+  const lw = 430, lx = W - lw - 80, ly = H * 0.235;
+  ledgerCard(ctx, lx, ly, lw, 96 + show * 58 + 76, 'THE LEDGER — ON $10M', [
+    ...([
+      { label: 'Federal LTCG · 20%', value: '$2.00M', tone: 'down' as const },
+      { label: 'NIIT · 3.8%', value: '$380K', tone: 'down' as const },
+      { label: 'California · 13.3%', value: '$1.33M', tone: 'down' as const },
+    ].slice(0, show)),
+    { label: 'TOTAL AT SALE', value: ['$2.00M', '$2.38M', '$3.71M'][show - 1], tone: 'gold' as const },
+  ], t, 520, 'the fund route defers every line of it');
   if (mode === 'row-2') {
     const cp = clamp01((t - 1200) / 600);
     if (cp > 0) {
@@ -591,24 +733,57 @@ export function lockupScene(g: SceneCtx): void {
     ctx.restore();
   }
   ctx.restore();
+  // E1/E4 MARKET-STANDARD FIX (review report E1 [P0] — "lockup is ONE gold
+  // bar in a cream field"): two structured masses join the track —
+  //  1. THE CLIFF STEPS: under the year ticks, seven mini-cards state the
+  //     vesting truth the bar only implies (0% liquid for six years, 100%
+  //     at the seventh) — the cliff the VO narrates, now drawn as data.
+  //  2. THE CATCH CARD (right column): the early-exit clause + the
+  //     benchmark ghost (sell-anytime route), so the right third carries
+  //     information. The 'marriage' line moves INTO the card — it was a
+  //     bare sentence floating in the empty bottom half.
+  const stepY = by + bh + 66;
+  const stepW = (bw - 6 * 12) / 7;
+  for (let yr2 = 1; yr2 <= 7; yr2++) {
+    const sp2 = clamp01((t - 800 - yr2 * 90) / 400);
+    if (sp2 <= 0) continue;
+    ctx.save();
+    ctx.globalAlpha = sp2;
+    const sx2 = bx + (yr2 - 1) * (stepW + 12);
+    const vested = yr2 === 7;
+    ctx.fillStyle = vested ? rgba(PALETTE.gold, 0.85) : rgba(PALETTE.card, 0.9);
+    roundRect(ctx, sx2, stepY, stepW, 108, 14);
+    ctx.fill();
+    if (vested) {
+      ctx.strokeStyle = rgba(PALETTE.goldDeep, 0.7);
+      ctx.lineWidth = 2.5;
+      roundRect(ctx, sx2, stepY, stepW, 108, 14);
+      ctx.stroke();
+    }
+    registerRect('lockup:step' + yr2, sx2, stepY, stepW, 108);
+    setFont(ctx, 25, 700, FONT_DISPLAY);
+    ctx.fillStyle = vested ? PALETTE.white : PALETTE.inkSoft;
+    ctx.textAlign = 'center';
+    ctx.fillText(vested ? '100%' : '0%', sx2 + stepW / 2, stepY + 46);
+    setFont(ctx, 17, 600);
+    ctx.fillStyle = vested ? rgba(PALETTE.white, 0.9) : PALETTE.inkSoft;
+    ctx.fillText(vested ? 'VESTED' : 'LIQUID', sx2 + stepW / 2, stepY + 78);
+    ctx.restore();
+  }
+  const catchHead = mode === 'marriage' ? 'NOT A PARKING SPOT —' : 'THE CATCH';
+  const catchRows = mode === 'marriage'
+    ? [{ label: 'seven years, or the deal unwinds', value: '7 YRS', tone: 'gold' as const }]
+    : [{ label: 'leave early → stock comes back', value: '+1–2%', tone: 'down' as const },
+       { label: 'exit fees on the way out', value: '2 LAYERS', tone: 'down' as const }];
+  ledgerCard(ctx, W - 470 - 80, H * 0.235, 470, 128 + catchRows.length * 58 + (mode === 'marriage' ? 40 : 20),
+    catchHead, catchRows, t, 700,
+    mode === 'marriage' ? 'A marriage. With a pre-nup you cannot sign.' : 'benchmark ghost: the sell-anytime route pays all of these');
   if (mode === 'early') {
     const ep = clamp01((t - 700) / 600);
     if (ep > 0) {
       ctx.save();
       ctx.globalAlpha = ep;
       chip(ctx, 'LEAVE EARLY → your stock comes back + 1\u20132% exit fees', bx + 40, by - 70, { size: 32, bg: rgba(PALETTE.down, 0.14), fg: PALETTE.down, border: rgba(PALETTE.down, 0.5) });
-      ctx.restore();
-    }
-  }
-  if (mode === 'marriage') {
-    const mp = clamp01((t - 300) / 600);
-    if (mp > 0) {
-      ctx.save();
-      ctx.globalAlpha = mp;
-      setFont(ctx, 64, 700, FONT_DISPLAY);
-      ctx.fillStyle = PALETTE.ink;
-      ctx.textAlign = 'left';
-      ctx.fillText('Not a parking spot. A marriage.', bx, H * 0.66);
       ctx.restore();
     }
   }
@@ -906,6 +1081,30 @@ export function driftChartScene(g: SceneCtx): void {
     ],
     p: 1, t, gridLines: 4, showYAxis: true, lineWidth: 6,
   });
+  // E2 MARKET-STANDARD FIX (review report E2 [P1] — "driftChart is two
+  // thin lines"): THE GAP LEDGER (right column) — endpoint value labels
+  // for both series, the delta badge, and the compounding benchmark note;
+  // the premium-chart annotation vocabulary, on the beat's own clocks.
+  const lw3 = 400, lx3 = W - lw3 - 80, ly3 = H * 0.235;
+  ledgerCard(ctx, lx3, ly3, lw3, 96 + 3 * 58 + 74, 'THE GAP — AT YEAR 7', [
+    { label: 'the index — endpoint', value: '103.4', tone: 'muted' },
+    { label: 'the basket — endpoint', value: '96.1', tone: 'down' },
+    { label: 'tracking error', value: '−7.3 PTS', tone: 'gold' },
+  ], t, 500, '1.6% a year — and it compounds for seven years');
+  // endpoint value labels ride the chart's right edge (the E2 vocabulary:
+  // "value labels at the endpoint")
+  const ep3 = clamp01((t - 2100) / 500);
+  if (ep3 > 0) {
+    ctx.save();
+    ctx.globalAlpha = ep3;
+    setFont(ctx, 26, 700, FONT_DISPLAY);
+    ctx.textAlign = 'left';
+    ctx.fillStyle = PALETTE.inkSoft;
+    ctx.fillText('103.4', 190 + (W - 700) + 14, 300 + H * 0.42 * (1 - (103.4 - 95) / (104 - 95)));
+    ctx.fillStyle = PALETTE.down;
+    ctx.fillText('96.1', 190 + (W - 700) + 14, 300 + H * 0.42 * (1 - (96.1 - 95) / (104 - 95)));
+    ctx.restore();
+  }
   if (mode === 'compounds' || mode === 'punch') {
     const dp = clamp01((t - 500) / 600);
     if (dp > 0) {
@@ -1092,16 +1291,56 @@ export function taxMineScene(g: SceneCtx): void {
   if (mode === 's1259') mineCard('§1259 — CONSTRUCTIVE SALE', 'hedge away substantially all risk = treated as sold. Tax now, on the entire gain.', 300);
   if (mode === 'band') mineCard('NO OFFICIAL SAFE HARBOR', 'practitioners want a 15%+ band between floor and ceiling — a rule of thumb, not law. Facts-and-circumstances; audit risk.', 300);
   if (mode === 's1092' || mode === 'whipsaw') mineCard('§1092 — THE WHIPSAW', 'the call premium is taxable now; the put loss is deferred — you can owe tax and be barred from the matching deduction.', 300);
-  if (mode === 'whipsaw') {
-    const wp = clamp01((t - 900) / 550);
-    if (wp > 0) {
-      ctx.save();
-      ctx.globalAlpha = wp;
-      chip(ctx, 'PRACTITIONERS CALL IT THE WHIPSAW', 190, H * 0.62, { size: 34, bg: rgba(PALETTE.down, 0.14), fg: PALETTE.down, border: rgba(PALETTE.down, 0.5) });
-      ctx.restore();
-    }
-  }
   if (mode === 'otc') mineCard('THE OTC WORKAROUND', 'one combined contract mitigates the whipsaw — and adds dealer counterparty risk that OCC-cleared listed options do not carry.', 300);
+  // E1/E4 MARKET-STANDARD FIX (review report E1 [P0] — "taxMine at mid-beat
+  // is one card in a pink field"): THE MINEFIELD MAP — the four hazards as
+  // a full-width row of mini-cards under the active rule's card, the
+  // active one gold-highlighted, the rest muted. The frame becomes a MAP
+  // of the minefield instead of one floating card; the map row replaces
+  // the floating 'whipsaw' chip (the highlight carries it).
+  const hazards: Array<[string, string]> = [
+    ['§1259', 'CONSTRUCTIVE SALE'],
+    ['§1092', 'THE WHIPSAW'],
+    ['NO SAFE', 'HARBOR'],
+    ['OTC', 'COUNTERPARTY'],
+  ];
+  const activeIdx = mode === 's1259' ? 0 : mode === 'band' ? 2 : mode === 's1092' || mode === 'whipsaw' ? 1 : 3;
+  const hzY = H * 0.545, hzH = 118, hzW = (W - 380 - 3 * 20) / 4;
+  for (let i = 0; i < hazards.length; i++) {
+    const hp2 = clamp01((t - 700 - i * 130) / 420);
+    if (hp2 <= 0) continue;
+    ctx.save();
+    ctx.globalAlpha = hp2;
+    const hx2 = 190 + i * (hzW + 20);
+    const active = i === activeIdx;
+    ctx.fillStyle = active ? rgba(PALETTE.down, 0.22) : rgba(PALETTE.card, 0.85);
+    roundRect(ctx, hx2, hzY, hzW, hzH, 16);
+    ctx.fill();
+    if (active) {
+      ctx.strokeStyle = rgba(PALETTE.gold, 0.85);
+      ctx.lineWidth = 3;
+      roundRect(ctx, hx2, hzY, hzW, hzH, 16);
+      ctx.stroke();
+    }
+    registerRect('taxMine:hz' + i, hx2, hzY, hzW, hzH);
+    setFont(ctx, 30, 700, FONT_DISPLAY);
+    ctx.fillStyle = active ? PALETTE.ink : PALETTE.inkSoft;
+    ctx.textAlign = 'left';
+    ctx.fillText(hazards[i][0], hx2 + 26, hzY + 48);
+    setFont(ctx, 19, 600);
+    ctx.fillStyle = active ? PALETTE.down : PALETTE.inkSoft;
+    ctx.fillText(hazards[i][1], hx2 + 26, hzY + 86);
+    // the mine glyph — a small oxblood diamond on every card
+    ctx.fillStyle = active ? PALETTE.down : rgba(PALETTE.down, 0.4);
+    ctx.beginPath();
+    ctx.moveTo(hx2 + hzW - 40, hzY + 30);
+    ctx.lineTo(hx2 + hzW - 24, hzY + 52);
+    ctx.lineTo(hx2 + hzW - 40, hzY + 74);
+    ctx.lineTo(hx2 + hzW - 56, hzY + 52);
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+  }
 }
 
 // ── flowCharity — DAF / CRT flow ─────────────────────────────────────────────
@@ -1222,6 +1461,62 @@ export function ruleChangeScene(g: SceneCtx): void {
     ctx.restore();
     y += 210;
   }
+  // E1/E4 MARKET-STANDARD FIX (review report E1 [P0] — "ruleChange is ONE
+  // card"): THE WHAT-CHANGED BAND — a full-width old→new pair under the
+  // rule card: the old regime muted, the new regime gold-washed, an arrow
+  // between. The frame reads BEFORE → AFTER instead of one floating card.
+  const change: Record<string, [string, string, string]> = {
+    floor: ['THE OLD RULE', '60% of AGI — the old ceiling', '0.5% of AGI — the new floor'],
+    cap: ['THE OLD RULE', '37\u00a2 — the old top rate', '35\u00a2 — the new cap'],
+    limits: ['THE OLD RULE', 'no asset-class limit', '30% of AGI · 5-yr carryforward'],
+    qsbs: ['THE OLD TIERS', '$10M / 5 yrs / 100%', '$15M cap · tiered 50/75/100%'],
+    'qsbs-2': ['THE OLD CAP', '$10M per issuer', '$15M per issuer · $75M asset test'],
+  };
+  const ch2 = change[mode] || change.floor;
+  const bp2 = clamp01((t - 900) / 600);
+  if (bp2 > 0) {
+    ctx.save();
+    ctx.globalAlpha = bp2;
+    const bandY = H * 0.615, bandH = 116;
+    ctx.fillStyle = rgba(PALETTE.card, 0.85);
+    roundRect(ctx, 190, bandY, 640, bandH, 16);
+    ctx.fill();
+    registerRect('ruleChange:old', 190, bandY, 640, bandH);
+    setFont(ctx, 20, 700);
+    ctx.fillStyle = PALETTE.inkSoft;
+    ctx.textAlign = 'left';
+    ctx.fillText(ch2[0], 220, bandY + 40);
+    setFont(ctx, 30, 700, FONT_DISPLAY);
+    ctx.fillStyle = PALETTE.inkSoft;
+    ctx.fillText(ch2[1], 220, bandY + 86);
+    // the arrow
+    ctx.strokeStyle = rgba(PALETTE.goldDeep, 0.9);
+    ctx.lineWidth = 5;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(870, bandY + bandH / 2);
+    ctx.lineTo(990, bandY + bandH / 2);
+    ctx.moveTo(968, bandY + bandH / 2 - 16);
+    ctx.lineTo(990, bandY + bandH / 2);
+    ctx.lineTo(968, bandY + bandH / 2 + 16);
+    ctx.stroke();
+    ctx.fillStyle = rgba(PALETTE.gold, 0.16);
+    roundRect(ctx, 1030, bandY, 700, bandH, 16);
+    ctx.fill();
+    ctx.strokeStyle = rgba(PALETTE.gold, 0.75);
+    ctx.lineWidth = 2.5;
+    roundRect(ctx, 1030, bandY, 700, bandH, 16);
+    ctx.stroke();
+    registerRect('ruleChange:new', 1030, bandY, 700, bandH);
+    setFont(ctx, 20, 700);
+    ctx.fillStyle = PALETTE.goldDeep;
+    ctx.textAlign = 'left';
+    ctx.fillText('OBBBA 2026', 1060, bandY + 40);
+    setFont(ctx, 30, 700, FONT_DISPLAY);
+    ctx.fillStyle = PALETTE.ink;
+    ctx.fillText(ch2[2], 1060, bandY + 86);
+    ctx.restore();
+  }
 }
 
 // ── lsLeverage — the 130/30 structure ────────────────────────────────────────
@@ -1305,12 +1600,46 @@ export function appleCaseScene(g: SceneCtx): void {
     ],
     p: 1, t, gridLines: 4, showYAxis: true, lineWidth: 6,
   });
+  // E2 MARKET-STANDARD FIX (review report E2 [P1] — "one line and a dot
+  // with 60% of the frame empty"): the case-study ledger — the two
+  // series named, the endpoint delta, and the lesson the VO draws; the
+  // legend names both curves (premium-chart vocabulary).
+  const lg5 = clamp01((t - 500) / 450);
+  if (lg5 > 0) {
+    ctx.save();
+    ctx.globalAlpha = lg5;
+    let ax5 = 190 + 24;
+    const names5: Array<[string, string]> = [['gains budget — sell 5%/yr', PALETTE.inkSoft], ['LS 200/100', PALETTE.up]];
+    names5.forEach(([nm, col]) => {
+      ctx.fillStyle = col;
+      roundRect(ctx, ax5, 270, 22, 22, 5);
+      ctx.fill();
+      setFont(ctx, 24, 600);
+      ctx.fillStyle = PALETTE.inkSoft;
+      ctx.textAlign = 'left';
+      ctx.fillText(nm, ax5 + 32, 288);
+      ax5 += 32 + ctx.measureText(nm).width + 44;
+    });
+    ctx.restore();
+  }
+  // E3 note: this beat rides the chapter HERO camera (the worst-case
+  // envelope is x1.06 push + full drift) — the ledger hugs the chart
+  // gutter at 350px so the envelope keeps it inside the frame edge.
+  ledgerCard(ctx, 1436, H * 0.235, 350, 96 + 3 * 58 + 76, 'THE CASE, IN THREE LINES', [
+    { label: 'still-holder, yr 10', value: '80%', tone: 'muted' },
+    { label: 'laddered seller', value: '~1%', tone: 'up' },
+    { label: 'the decision gap', value: '79 PTS', tone: 'gold' },
+  ], t, 600, 'time in a concentrated position is a position in hope');
   if (mode === 'fast') {
     const cp = clamp01((t - 600) / 500);
     if (cp > 0) {
       ctx.save();
       ctx.globalAlpha = cp;
-      chip(ctx, 'APPLE AT ~1% WITHIN TWO YEARS — WITH HINDSIGHT, A CALAMITY', 190, H * 0.78, { size: 32, bg: rgba(PALETTE.down, 0.13), fg: PALETTE.down, border: rgba(PALETTE.down, 0.5) });
+      // E3: the stamp sat at H*0.78 (842) — its left half poked out from
+      // behind the caption pill (guard: chip depth 62px). Raised to H*0.72
+      // and registered.
+      chip(ctx, 'APPLE AT ~1% WITHIN TWO YEARS — WITH HINDSIGHT, A CALAMITY', 190, H * 0.72, { size: 32, bg: rgba(PALETTE.down, 0.13), fg: PALETTE.down, border: rgba(PALETTE.down, 0.5) });
+      registerRect('appleCase:stamp', 190, H * 0.72 - 30, 900, 56);
       ctx.restore();
     }
   } else {
@@ -1318,7 +1647,8 @@ export function appleCaseScene(g: SceneCtx): void {
     if (cp > 0) {
       ctx.save();
       ctx.globalAlpha = cp;
-      chip(ctx, 'STILL 80% APPLE AFTER TEN YEARS', 190, H * 0.78, { size: 32, bg: rgba(PALETTE.down, 0.13), fg: PALETTE.down, border: rgba(PALETTE.down, 0.5) });
+      chip(ctx, 'STILL 80% APPLE AFTER TEN YEARS', 190, H * 0.72, { size: 32, bg: rgba(PALETTE.down, 0.13), fg: PALETTE.down, border: rgba(PALETTE.down, 0.5) });
+      registerRect('appleCase:stamp', 190, H * 0.72 - 30, 620, 56);
       ctx.restore();
     }
   }
@@ -1408,7 +1738,14 @@ export function sequenceStackScene(g: SceneCtx): void {
     ['$1M', 'DONOR-ADVISED FUND — if charitably inclined', PALETTE.goldDeep],
     ['$1M', 'COLLAR — the upside you cannot let go of', PALETTE.muted ?? PALETTE.inkSoft],
   ];
-  let y = H * 0.30;
+  // E3 MARKET-STANDARD FIX (review report E3 [P0] — LAYERING COLLISIONS):
+  // four rows at a 158px pitch from H*0.30 put row 4 at y 798..926 — the
+  // caption pill plated its top 69px (the guard: card@280,798 depth 69px).
+  // The stack compresses into the 260-820 band: pitch 158 -> 136, cards
+  // 128 -> 118, start H*0.30 -> H*0.272. Row 4 now bottoms at ~815, clear
+  // of the 2-row pill envelope, and every row registers with the collision
+  // guard so this call path can never silently regress again.
+  let y = H * 0.272;
   for (let i = 0; i < layers.length; i++) {
     const lp = clamp01((t - 350 - i * 380) / 550);
     if (lp <= 0) continue;
@@ -1416,16 +1753,17 @@ export function sequenceStackScene(g: SceneCtx): void {
     ctx.globalAlpha = lp;
     const w = W * 0.62 - i * 60;
     const x = 190 + i * 30;
-    gildedCard(ctx, x, y, w, 128, i === 0 ? rgba(PALETTE.gold, 0.3) : undefined);
-    setFont(ctx, 44, 700, FONT_DISPLAY);
+    gildedCard(ctx, x, y, w, 118, i === 0 ? rgba(PALETTE.gold, 0.3) : undefined);
+    registerRect('sequenceStack:row' + i, x, y, w, 118);
+    setFont(ctx, 42, 700, FONT_DISPLAY);
     ctx.fillStyle = layers[i][2];
     ctx.textAlign = 'left';
-    ctx.fillText(layers[i][0], x + 40, y + 78);
-    setFont(ctx, 30, 600);
+    ctx.fillText(layers[i][0], x + 40, y + 72);
+    setFont(ctx, 29, 600);
     ctx.fillStyle = PALETTE.inkSoft;
-    ctx.fillText(layers[i][1], x + 240, y + 74);
+    ctx.fillText(layers[i][1], x + 240, y + 68);
     ctx.restore();
-    y += 158;
+    y += 136;
   }
 }
 

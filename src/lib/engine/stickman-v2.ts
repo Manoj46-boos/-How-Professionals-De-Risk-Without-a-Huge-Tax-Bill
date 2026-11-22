@@ -1867,8 +1867,18 @@ export function drawStickmanV2(
   // (AMP.shoeLeverPx) — the ±40° toe roll finally has a lever arm you can
   // SEE at any host scale (the old 29px read as a paddle at 320px).
   const shoeWedge = (f: { ex: number; ey: number }, col: string, rotDeg = 0): void => {
+    // E3 MARKET-STANDARD FIX (review report E3 [P0] — LAYERING COLLISIONS,
+    // the decayCurves sample): the toe roll rotates the wedge about the
+    // ankle, and at the roll extremes the toe box / heel counter dip BELOW
+    // the sole plane — at the editorial rig that is ~9px of shoe ink
+    // inside the caption-pill band (the guard measured 14px of envelope
+    // depth). The fix keeps the certified roll angles and lifts the shoe
+    // by exactly the dip: the foot rolls ON the ground, never through it
+    // (an ankle rises a hair at push-off — anatomically correct).
+    const sR = Math.sin(rotDeg * D2R), cR = Math.cos(rotDeg * D2R);
+    const dip = Math.max(0, 24 * sR + 4.6 * cR - 7.6, -8.2 * sR + 7 * cR - 7.6);
     ctx.save();
-    ctx.translate(f.ex, f.ey - 4);
+    ctx.translate(f.ex, f.ey - 4 - dip);
     ctx.rotate(rotDeg * D2R);
     ctx.fillStyle = col;
     ctx.beginPath();

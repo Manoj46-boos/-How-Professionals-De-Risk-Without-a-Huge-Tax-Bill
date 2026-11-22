@@ -602,6 +602,64 @@ export function hostSceneV2(g: SceneCtx): void {
   [W * 0.36, W * 0.62].forEach((x) => {
     ctx.beginPath(); ctx.moveTo(x, 120); ctx.lineTo(x, H - 160); ctx.stroke();
   });
+  // E1 MARKET-STANDARD FIX (review report E1 [P0] — HOST BEATS: "the
+  // bottom-left quadrant is empty floor in all nine samples; the right
+  // third often holds only the ghost panel"): the market bar — "every
+  // third either carries information or is intentionally cropped by a
+  // content mass". Two set-design masses join the editorial room:
+  //  1. THE CHAPTER SLUG (bottom-left): a quiet chip — hairline, roman
+  //     numeral, label — anchoring the empty quadrant with the film's own
+  //     structural context (documentary-standard). No competing gold.
+  //  2. THE FLOOR RULE (bottom-left): a pale baseline under the host's
+  //     stage with short tick marks — the quadrant reads as an
+  //     intentional stage floor, not dead cream.
+  //  3. THE RIGHT-THIRD PANEL: the ghost column gains a faint top rule
+  //     and a second hairline — structure instead of a stain.
+  const roman = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X'][Math.min(9, g.chapterIdx)] ?? 'I';
+  {
+    const slugY = 796;
+    const slugP = clamp01(g.sceneT / 600);
+    if (slugP > 0) {
+      ctx.save();
+      ctx.globalAlpha = 0.85 * slugP;
+      ctx.strokeStyle = rgba(PALETTE.ink, 0.3);
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(80, slugY - 22);
+      ctx.lineTo(80, slugY + 22);
+      ctx.stroke();
+      setFont(ctx, 20, 700);
+      ctx.fillStyle = PALETTE.inkSoft;
+      ctx.textAlign = 'left';
+      ctx.fillText('CHAPTER ' + roman, 100, slugY + 8);
+      ctx.strokeStyle = rgba(PALETTE.shadow, 0.22);
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(80, 838);
+      ctx.lineTo(220, 838);
+      ctx.moveTo(256, 838);
+      ctx.lineTo(320, 838);
+      ctx.stroke();
+      ctx.restore();
+      registerRect('hostV2:chapterslug', 80, slugY - 22, 190, 44);
+    }
+  }
+  {
+    const rp2 = clamp01(g.sceneT / 700);
+    if (rp2 > 0) {
+      ctx.save();
+      ctx.globalAlpha = 0.5 * rp2;
+      ctx.strokeStyle = rgba(PALETTE.shadow, 0.16);
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(W - 220, 120);
+      ctx.lineTo(W - 220, H - 160);
+      ctx.moveTo(W - 120, 150);
+      ctx.lineTo(W - 120, H - 200);
+      ctx.stroke();
+      ctx.restore();
+    }
+  }
 
   // ── host at the left third, walking in then presenting ──
   const entrance = g.s.entrance as string | undefined;
@@ -689,6 +747,15 @@ export function hostSceneV2(g: SceneCtx): void {
   let hx = hxTarget;
   let pose: import('./stickman').Pose;
   let walkPhase: number | undefined;
+  // E3 MARKET-STANDARD FIX (review report E3 [P0] — hb-2/hb-5/hb-8, the
+  // head-through-header class): at the certified 2.65 the WALKING host's
+  // head band reaches y≈46, and the exit camera's worst-case envelope
+  // (×1.06 about center) pushes the dome into the header lockup — the
+  // guard's apex band measured 14px of depth. A walk contracts a body
+  // slightly (the stride crouch); the draw scale eases 2.65 → 2.578
+  // (-2.7%) across the walk windows and back — continuous, scrub-safe,
+  // and the standing beats keep the certified presence register.
+  let walkShrinkK = 0;
   if (entrance === 'walk' && t < 1600) {
     // AUDIT-3 / §1.2: entrance walk 900 → 1600ms (see drawHost) with the
     // arrival settle into the presenting gesture.
@@ -721,6 +788,7 @@ export function hostSceneV2(g: SceneCtx): void {
       hx = r.x;
       pose = r.walking ? r.pose : arrive;
       if (r.walking) walkPhase = r.phase;
+      walkShrinkK = r.walking ? clamp01(1 - (t - 1300) / 300) : 0;
     } else {
       hx = hxTarget;
       pose = arrive;
@@ -745,6 +813,7 @@ export function hostSceneV2(g: SceneCtx): void {
     const moveT = active ? st - active.at : st;
     const inWindow = active ? st < active.at + 950 : st < 900;
     if (Math.abs(toX - fromX) > W * 0.015 && inWindow && Math.min(fromX, toX) >= 70) {
+      // E3: sentence walks shrink on the same clock (see walkShrinkK above)
       const arrive = Stickman.poseAt(t, {
         gesture: (g.s.gesture ?? 'present'),
         speaking: g.speaking,
@@ -764,6 +833,7 @@ export function hostSceneV2(g: SceneCtx): void {
         ? r.pose
         : arrive;
       if (r.walking) walkPhase = r.phase;
+      walkShrinkK = r.walking ? clamp01(1 - moveT / 950) : 0;
     } else {
       hx = toX;
       pose = Stickman.poseAt(t, {
@@ -889,7 +959,7 @@ export function hostSceneV2(g: SceneCtx): void {
     // PANEL ACCEPTANCE (audit FIX 1): ground H*0.585 → HOST_GROUND (0.62) —
     // at the 0.585 ground the 2.4× host's head topped out at 56px headroom
     // (5%); the shared 0.62 ground restores the ~9% the probe gate wants.
-    ctx, hx, HOST_GROUND(H), HOST_SCALE, t,
+    ctx, hx, HOST_GROUND(H), HOST_SCALE * (1 - 0.027 * walkShrinkK), t,
     { pose, alpha: 0.85 + 0.15 * clamp01(g.sceneT / 180), look: 0.8, scarf: true, nod: nodP, talk, smear: smr, walkPhase, squash: walkPhase !== undefined ? walkStrike(walkPhase) : 0, parallax: true, parallaxAmt: 0.55, // P2-4: hero moment — clear space, deep differential
       // PANEL ACCEPTANCE (audit FIX 2): full-body envelope — see drawHost.
       hostBody: true,
@@ -921,7 +991,13 @@ export function hostSceneV2(g: SceneCtx): void {
       // object every frame (pointAt keeps enforcing the text clearance for
       // the card-holding arm as well).
       prop: verbRule ? ('holdCard' as const) : undefined,
-      pointAt: { x: hx2, y: 158, w: W - hx2 - 180, h: 462, enforce: true },
+      // E3 MARKET-STANDARD FIX (review report E3 [P0] — hb-2/hb-5/hb-8):
+      // the enforce band began at y 158 — BELOW the chapter chip (the
+      // "the both-sides beat" chip rides y 96-140), so the raised exhibit
+      // card crossed the chip band from above exactly like the mitten once
+      // crossed the kicker. The band now covers the chip row too: any
+      // raised hand/card solves to the boundary instead of plating it.
+      pointAt: { x: hx2, y: 96, w: W - hx2 - 180, h: 524, enforce: true },
     },
     11
   );
