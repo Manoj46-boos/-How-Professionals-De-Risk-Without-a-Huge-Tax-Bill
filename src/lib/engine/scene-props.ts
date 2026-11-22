@@ -43,7 +43,7 @@ export const SCENE_PROPS: Record<string, string[]> = {
   ownerWorker: ['left', 'right'],
   fundSplit: ['stats', 'callbackChip'],
   oddsSpread: ['source', 'markers', 'kicker', 'closer'],
-  bigText: ['lines'],
+  bigText: ['lines', 'endFurniture'], // endFurniture: C10 — the closing beat's end-screen furniture
   stampCard: ['stamp', 'sub', 'expression'],
   quoteCard: ['kicker', 'lines', 'icon', 'soft', 'hostGesture'],
   takeaways: ['focus', 'title', 'points'],

@@ -67,7 +67,7 @@ function ledgerCard(
   ctx.lineTo(x + w - 30, y + 60);
   ctx.stroke();
   const bodyTop = y + 78;
-  const footH = foot ? 46 : 0;
+  const footH = foot ? 64 : 0; // C3: room for the wrapped second foot line
   const rowH = Math.min(58, (h - 78 - footH - 18) / Math.max(1, rows.length));
   rows.forEach((r, i) => {
     const rp = clamp01((t - delay - 130 - i * 150) / 380);
@@ -99,10 +99,15 @@ function ledgerCard(
     if (fp > 0) {
       ctx.save();
       ctx.globalAlpha = fp;
+      // C3 MARKET-STANDARD FIX (review report C3 [P0] — the ledger note
+      // clipped mid-word at the card edge and again at the frame edge):
+      // the foot rides fitText with the wrap path and a width guard —
+      // "the fund route defers every line of it" can no longer print past
+      // the plate. A two-line foot lifts its first line so both sit
+      // INSIDE the card (the reserved footH makes the rows make room).
       setFont(ctx, 24, 600);
-      ctx.fillStyle = PALETTE.goldDeep;
-      ctx.textAlign = 'left';
-      ctx.fillText(foot, x + 30, y + h - 22);
+      const footLines = ctx.measureText(foot).width > w - 60 ? 2 : 1;
+      fitText(ctx, foot, x + 30, y + h - (footLines === 2 ? 52 : 24), w - 60, 24, 600, FONT_UI, PALETTE.goldDeep);
       ctx.restore();
     }
   }
@@ -506,12 +511,15 @@ export function srcCiteScene(g: SceneCtx): void {
   const bw = Math.min(W * 0.78, 1420);
   const bx = (W - bw) / 2;
   const by = H * 0.36;
-  gildedCard(ctx, bx, by, bw, 300, rgba(PALETTE.gold, 0.28));
+  // C8: the card grows to hold the wrapped source line (C3's wrap path
+  // can carry it to a second line) + the detail and kicker rows.
+  gildedCard(ctx, bx, by, bw, 344, rgba(PALETTE.gold, 0.28));
   // the ingot seal
   drawK(ctx, bx + 110, by + 150, 44, 4, PALETTE.gold);
   setFont(ctx, 52, 700, FONT_DISPLAY);
   ctx.fillStyle = PALETTE.ink;
   ctx.textAlign = 'left';
+  const srcLines = ctx.measureText(source).width > bw - 320 ? 2 : 1;
   fitText(ctx, source, bx + 220, by + 128, bw - 320, 52, 700);
   // F5 (review report F5 [P1] — SRC CITE REPEATS ITS OWN SENTENCE): the
   // co-deal beat's detail prop says "every claim carries its source on
@@ -528,12 +536,30 @@ export function srcCiteScene(g: SceneCtx): void {
   let overlap = 0;
   dt.forEach((tk) => { if (gt.has(tk)) overlap++; });
   const sameSentence = detail.length > 0 && overlap / Math.max(1, dt.size) >= 0.7;
+  // C8: the rows below the source step DOWN when the source wrapped —
+  // no row of the ledger ever prints through another.
+  const detailY = by + (srcLines === 2 ? 248 : 200);
   setFont(ctx, 36, 400);
   ctx.fillStyle = PALETTE.inkSoft;
-  if (!sameSentence) ctx.fillText(detail, bx + 220, by + 200);
+  if (!sameSentence) ctx.fillText(detail, bx + 220, detailY);
   setFont(ctx, 30, 600);
   ctx.fillStyle = PALETTE.goldDeep;
-  ctx.fillText(goldLine, bx + 220, by + (sameSentence ? 200 : 254));
+  ctx.fillText(goldLine, bx + 220, detailY + (sameSentence ? 0 : 56));
+  // C8 MARKET-STANDARD FIX (review report C8 [P1] — THE SOURCE BEAT IS
+  // ~75% EMPTY CANVAS): the citation card stops floating in beige — the
+  // beat becomes the source ledger: a kicker above the card and the
+  // three source pillars below it. The vertical bands all carry a job.
+  setFont(ctx, 30, 700);
+  ctx.fillStyle = PALETTE.goldDeep;
+  ctx.textAlign = 'center';
+  ctx.fillText('THE DATA DESK — SOURCE LEDGER', W / 2, by - 52);
+  ctx.textAlign = 'left';
+  const pillars = ['IRC §1(h) · §1411', 'CA FTB / NY DTF TOP RATES', 'J.P. MORGAN GUIDE TO THE MARKETS'];
+  let px8 = W / 2 - 1290 / 2;
+  for (const p of pillars) {
+    chip(ctx, p, px8, H * 0.745, { size: 26, bg: PALETTE.white, fg: PALETTE.inkSoft, border: rgba(PALETTE.gold, 0.45) });
+    px8 += 440;
+  }
   ctx.restore();
 }
 
@@ -556,7 +582,11 @@ export function distBarsScene(g: SceneCtx): void {
     const r = rows[i];
     const bp = clamp01((t - 300 - i * 350) / 800);
     if (bp <= 0) continue;
-    const y = H * 0.30 + i * 170;
+    // C8 MARKET-STANDARD FIX (review report C8 [P1] — THE DISTRIBUTION
+    // FRAME IS ~60% EMPTY): the bar band scales into the frame — taller
+    // bars (104 → 130), heavier numerals (84 → 104), the band seated
+    // higher (0.28H, pitch 160 keeps the stack clear of the caption zone).
+    const y = H * 0.28 + i * 160;
     const tone = TONE(r.tone);
     ctx.save();
     ctx.globalAlpha = bp;
@@ -567,19 +597,19 @@ export function distBarsScene(g: SceneCtx): void {
     ctx.fillText(r.label, bx + 330, y - 18);
     // track
     ctx.fillStyle = PALETTE.track;
-    roundRect(ctx, bx + 330, y, bw - 330, 104, 24);
+    roundRect(ctx, bx + 330, y, bw - 330, 130, 26);
     ctx.fill();
     // fill
     ctx.fillStyle = tone.main;
-    roundRect(ctx, bx + 330, y, (bw - 330) * (r.value / 100), 104, 24);
+    roundRect(ctx, bx + 330, y, (bw - 330) * (r.value / 100), 130, 26);
     ctx.fill();
     // serif numeral right of the fill
-    setFont(ctx, 84, 700, FONT_DISPLAY);
+    setFont(ctx, 104, 700, FONT_DISPLAY);
     ctx.fillStyle = PALETTE.ink;
     ctx.textAlign = 'left';
-    ctx.fillText(r.big, bx + 330 + (bw - 330) * (r.value / 100) + 30, y + 74);
+    ctx.fillText(r.big, bx + 330 + (bw - 330) * (r.value / 100) + 30, y + 92);
     ctx.restore();
-    if (bp >= 1 && i === showCount - 1) impactRing(ctx, bx + 330 + (bw - 330) * (r.value / 100), y + 52, t, 300 + i * 350 + 800);
+    if (bp >= 1 && i === showCount - 1) impactRing(ctx, bx + 330 + (bw - 330) * (r.value / 100), y + 65, t, 300 + i * 350 + 800);
   }
   if (mode === 'intro') {
     const ip = clamp01((t - 300) / 600);
@@ -716,7 +746,10 @@ export function napkinScene(g: SceneCtx): void {
   const formula = (s.formula as string[]) || [];
   const note = s.note as string | undefined;
   const ap = clamp01(t / 600);
-  const bw = 1240, bh = 380;
+  // C8 MARKET-STANDARD FIX (review report C8 [P1] — THE NAPKIN BEAT IS
+  // ~50% EMPTY): the card gains the vertical air it deserves (380 → 420)
+  // and the method chip rides under it — the lower band carries a job.
+  const bw = 1240, bh = 420;
   const bx = (W - bw) / 2, by = H * 0.28;
   ctx.save();
   ctx.globalAlpha = ap;
@@ -1012,15 +1045,27 @@ export function killCardScene(g: SceneCtx): void {
   const mode = (s.mode as string) || 'item-1';
   const title = (s.title as string) || 'The kill conditions';
   const ap = clamp01(t / 450);
+  const items = [
+    'WRONG ANSWER IF — you think it shelters the tax',
+    'WRONG ANSWER IF — you need money back early / the principal',
+    'WRONG ANSWER IF — the fee or the leverage eats the benefit',
+    'WRONG ANSWER IF — you cannot live with the schedule',
+  ];
+  const n = mode === 'item-1' ? 2 : items.length;
+  // C6 MARKET-STANDARD FIX (review report C6 [P1] — THE HALF-EMPTY SLAB):
+  // the card's height is CONTENT-DRIVEN — head zone + the item stack that
+  // will actually play + tail pad — instead of a fixed 60% slab the
+  // item-1 beat filled to barely a third ("the render stopped early").
+  const cardH = 336 + (n - 1) * 86;
   // the obsidian-emerald panel — the film's one dramatic register
   ctx.save();
   ctx.globalAlpha = ap;
   ctx.fillStyle = '#0E1F19';
-  roundRect(ctx, 150, 190, W - 300, H * 0.60, 34);
+  roundRect(ctx, 150, 190, W - 300, cardH, 34);
   ctx.fill();
   ctx.strokeStyle = rgba(PALETTE.gold, 0.65);
   ctx.lineWidth = 2.5;
-  roundRect(ctx, 150, 190, W - 300, H * 0.60, 34);
+  roundRect(ctx, 150, 190, W - 300, cardH, 34);
   ctx.stroke();
   // the seal
   drawK(ctx, 260, 320, 40, 4, PALETTE.gold);
@@ -1034,21 +1079,27 @@ export function killCardScene(g: SceneCtx): void {
   ctx.moveTo(340, 380);
   ctx.lineTo(W - 340, 380);
   ctx.stroke();
-  const items = [
-    'WRONG ANSWER IF — you think it shelters the tax',
-    'WRONG ANSWER IF — you need money back early / the principal',
-    'WRONG ANSWER IF — the fee or the leverage eats the benefit',
-    'WRONG ANSWER IF — you cannot live with the schedule',
-  ];
-  const n = mode === 'item-1' ? 2 : items.length;
   for (let i = 0; i < n; i++) {
     const ip = clamp01((t - 550 - i * 380) / 500);
     if (ip <= 0) continue;
     ctx.save();
     ctx.globalAlpha = ip;
+    // C6: the WRONG ANSWER stakes carry the film's red — a red item
+    // keyline plus the red "WRONG ANSWER IF —" prefix; the stakes text
+    // itself stays cream. On the dark emerald the prefix prints in the
+    // lightened down tone (the base #8E2F3C has no contrast on #0E1F19).
+    ctx.strokeStyle = '#D26A77';
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.moveTo(302, 470 + i * 86 - 30);
+    ctx.lineTo(302, 470 + i * 86 + 12);
+    ctx.stroke();
+    setFont(ctx, 42, 700);
+    ctx.fillStyle = '#D26A77';
+    ctx.fillText('WRONG ANSWER IF —', 340, 470 + i * 86);
     setFont(ctx, 42, 600);
     ctx.fillStyle = i % 2 === 0 ? '#E8D9B0' : 'rgba(241,231,207,0.75)';
-    ctx.fillText(items[i], 340, 470 + i * 86);
+    ctx.fillText(items[i].slice(17), 340 + ctx.measureText('WRONG ANSWER IF — ').width, 470 + i * 86);
     // the gold tick
     ctx.strokeStyle = PALETTE.gold;
     ctx.lineWidth = 3.5;
@@ -1068,7 +1119,11 @@ export function poolFundScene(g: SceneCtx): void {
   title(g, (s.title as string) || 'The exchange fund');
   srcChip(g);
   const mode = (s.mode as string) || 'contribute';
-  const poolX = W * 0.40, poolY = H * 0.52, poolR = 190;
+  // C7 MARKET-STANDARD FIX (review report C7 [P1] — THE DIAGRAM FLOATS
+  // TINY): the pool radius scales to the beat it exists to sell — 190 →
+  // 245 (+29% linear, the diagram now owns the left two-thirds) and the
+  // center shifts left to open the right column for the trade ledger.
+  const poolX = W * 0.385, poolY = H * 0.52, poolR = 245;
   const ap = clamp01(t / 500);
 
   // the pool — a gilded ring
@@ -1088,23 +1143,41 @@ export function poolFundScene(g: SceneCtx): void {
   const iP = clamp01((t - 600) / 600);
   if (iP > 0) drawK(ctx, poolX, poolY, 56, 5, PALETTE.gold, iP);
 
-  // the contributors — 10 single-stock dots flying in, then slices out
+  // the contributors — C7 MARKET-STANDARD FIX (review report C7 [P1] —
+  // THE DIAGRAM CONTRADICTS ITS OWN CAPTION): the caption sells "one pool,
+  // one hundred single stocks" and the diagram drew TEN dots ("your stock"
+  // read as one of eleven — a finance-literate audience reads count
+  // mismatches instantly). The pool now carries ONE HUNDRED stock dots in
+  // a golden-angle spiral packing (the inner hole keeps the ingot heart
+  // readable), staggered arrival; 'your stock' — the teal dot with the
+  // gold owner's ring — reads as one OF THE HUNDRED.
   const contribP = clamp01((t - 300) / 1600);
-  for (let i = 0; i < 10; i++) {
-    const ang = (i / 10) * Math.PI * 2 + 0.35;
-    const ox = poolX + Math.cos(ang) * 560;
-    const oy = poolY + Math.sin(ang) * 330;
+  const N = 100;
+  const GA = Math.PI * (3 - Math.sqrt(5));
+  for (let i = 0; i < N; i++) {
+    const rr = 95 + (poolR * 0.82 - 95) * Math.sqrt((i + 0.5) / N);
+    const ang = i * GA + 0.35;
+    const ox = poolX + Math.cos(ang) * 640;
+    const oy = poolY + Math.sin(ang) * 360;
     const p = easeInOutCubic(contribP);
-    const x = lerp(ox, poolX + Math.cos(ang) * poolR * 0.7, p);
-    const y = lerp(oy, poolY + Math.sin(ang) * poolR * 0.7, p);
-    const dP = clamp01((t - 300 - i * 120) / 500);
+    const x = lerp(ox, poolX + Math.cos(ang) * rr, p);
+    const y = lerp(oy, poolY + Math.sin(ang) * rr, p);
+    const dP = clamp01((t - 300 - (i % 25) * 48) / 500);
     if (dP <= 0) continue;
     ctx.save();
     ctx.globalAlpha = dP;
     ctx.fillStyle = i === 0 ? PALETTE.up : PALETTE.inkSoft;
     ctx.beginPath();
-    ctx.arc(x, y, 16, 0, Math.PI * 2);
+    ctx.arc(x, y, i === 0 ? 15 : 11, 0, Math.PI * 2);
     ctx.fill();
+    if (i === 0) {
+      // your stock — the one position the viewer actually owns, ringed
+      ctx.strokeStyle = PALETTE.gold;
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.arc(x, y, 21, 0, Math.PI * 2);
+      ctx.stroke();
+    }
     ctx.restore();
   }
   // the out-slices
@@ -1124,6 +1197,14 @@ export function poolFundScene(g: SceneCtx): void {
       ctx.restore();
     }
   }
+  // C7/C8: the trade ledger owns the right column — the beat's facts
+  // (the count, the give-up, the basis) on the ledger card the data rooms
+  // share; the right field stops being empty canvas.
+  ledgerCard(ctx, W - 470 - 80, H * 0.235, 470, 96 + 3 * 58 + 74, 'THE TRADE — AT A GLANCE', [
+    { label: 'your position', value: '1 of 100', tone: 'gold' },
+    { label: 'the give-up', value: '20% illiquid', tone: 'down' },
+    { label: 'your basis', value: 'carried over', tone: 'muted' },
+  ], t, 600, 'a contribution is not a sale — §721');
   const label = (txt: string, y: number, tone: 'gold' | 'ink' | 'down' = 'ink', delay = 400) => {
     const lp = clamp01((t - delay) / 500);
     if (lp > 0) {
@@ -1816,11 +1897,13 @@ export function decisionTableScene(g: SceneCtx): void {
     const y = rowY0 + r * (ghost ? 82 : rowH);
     ctx.save();
     ctx.globalAlpha = rp;
-    if (r % 2 === 0) {
-      ctx.fillStyle = rgba(PALETTE.card, 0.9);
-      roundRect(ctx, colX[0] - 16, y - 6, colX[3] + colW[3] - colX[0] + 32, (ghost ? 82 : rowH) - 14, 16);
-      ctx.fill();
-    }
+    // C4 MARKET-STANDARD FIX (review report C4 [P1] — THE BARE ROW): the
+    // zebra banded by SKIPPING rows — rows one and three carried plates,
+    // row two shipped bare (read as a dropped element, not a design).
+    // Every row now carries its plate; the banding reads through alpha.
+    ctx.fillStyle = rgba(PALETTE.card, r % 2 === 0 ? 0.9 : 0.55);
+    roundRect(ctx, colX[0] - 16, y - 6, colX[3] + colW[3] - colX[0] + 32, (ghost ? 82 : rowH) - 14, 16);
+    ctx.fill();
     setFont(ctx, 32, 700, FONT_DISPLAY);
     ctx.fillStyle = PALETTE.goldDeep;
     ctx.fillText(ROWS[r][0], colX[0], y + 40);
@@ -1833,13 +1916,20 @@ export function decisionTableScene(g: SceneCtx): void {
       }
       registerRect('decisionTable:ghostRow' + r, colX[0] - 16, y - 6, colX[3] + colW[3] - colX[0] + 32, (ghost ? 82 : rowH) - 14);
     } else {
-      setFont(ctx, 29, 600);
-      ctx.fillStyle = PALETTE.ink;
-      ctx.fillText(ROWS[r][1], colX[1], y + 36);
-      ctx.fillStyle = PALETTE.inkSoft;
-      ctx.fillText(ROWS[r][2], colX[2], y + 36);
-      ctx.fillStyle = PALETTE.down;
-      ctx.fillText(ROWS[r][3], colX[3], y + 36);
+      // C4 MARKET-STANDARD FIX (review report C4 [P1] — THE COLUMN
+      // COLLISION): the cells printed at fixed x anchors without measuring
+      // their own column's extent — row three's third column ran INTO the
+      // fourth ("fee gapNo gains"), row two's nearly touched. Each detail
+      // cell now wraps WITHIN its column width (two measured lines max,
+      // 34px pitch — inside the 100px row band).
+      const cell = (txt: string, cx: number, cw: number, col: string): void => {
+        const lines = wrapText(ctx, txt, cw - 24, 29, 600).slice(0, 2);
+        ctx.fillStyle = col;
+        lines.forEach((ln, i) => ctx.fillText(ln, cx, y + 36 + i * 34));
+      };
+      cell(ROWS[r][1], colX[1], colW[1], PALETTE.ink);
+      cell(ROWS[r][2], colX[2], colW[2], PALETTE.inkSoft);
+      cell(ROWS[r][3], colX[3], colW[3], PALETTE.down);
     }
     ctx.restore();
   }

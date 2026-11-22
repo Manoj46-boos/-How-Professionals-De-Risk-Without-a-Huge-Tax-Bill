@@ -2007,6 +2007,11 @@ export const SCRIPT: ChapterSpec[] = [
         scene: P('bigText', 'fw-close', {
           lines: ['The goal was never', 'to pay zero tax.'],
           lines2: ['It was to stop letting the tax', 'decide your future.'],
+          // C10 (review report C10 [P2] — A QUOTE CARD WITH NO END-SCREEN
+          // FUNCTION): this is the film's LAST frame; the quiet end
+          // furniture (recap rail, subscribe chip, next-video plate)
+          // enters after the quote lands.
+          endFurniture: true,
         }),
       },
     ],

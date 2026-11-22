@@ -393,6 +393,37 @@ export function fitText(
   }
   if (ctx.measureText(text).width > maxW && s <= TYPE_FLOOR) {
     typeFloorWarn(`fitText("${text.slice(0, 24)}…")`, s);
+    // C3 MARKET-STANDARD FIX (review report C3 [P0] — TEXT OFF ITS PLATE
+    // AND OFF THE FRAME): at the type floor the helper used to give up and
+    // draw the overflow — clipped sentences on the film's most-replayed
+    // beats ("…defers every line of i"). The wrap-to-second-line path:
+    // the text breaks at spaces onto a second line (and a third if it
+    // must), every line width-guarded, a line that still cannot fit
+    // (one enormous word) ellipsized. The caller's y anchors line 1; the
+    // extra lines extend DOWNWARD at 1.34× the settled size.
+    const lh = Math.round(s * 1.34);
+    const words = text.split(/\s+/);
+    const lines: string[] = [];
+    let cur = '';
+    for (const wd of words) {
+      const cand = cur ? cur + ' ' + wd : wd;
+      if (!cur || ctx.measureText(cand).width <= maxW) cur = cand;
+      else { lines.push(cur); cur = wd; }
+    }
+    if (cur) lines.push(cur);
+    for (let i = 0; i < lines.length; i++) {
+      let ln = lines[i];
+      if (ctx.measureText(ln).width > maxW) {
+        while (ln.length > 1 && ctx.measureText(ln + '…').width > maxW) ln = ln.slice(0, -1);
+        lines[i] = ln + '…';
+      }
+    }
+    ctx.fillStyle = fill;
+    lines.forEach((ln, i) => {
+      ctx.fillText(ln, x, y + i * lh);
+      registerRect(`fitText:${text.slice(0, 18)}:${i}`, x, y + i * lh - s, ctx.measureText(ln).width, s * 1.2);
+    });
+    return s;
   }
   ctx.fillStyle = fill;
   ctx.fillText(text, x, y);

@@ -4,8 +4,8 @@
  */
 
 import { clamp01, easeInOutSine, easeOutBack, easeOutCubic, easeOutQuad } from './easing';
-import { PALETTE, TONE, card, rgba, roundRect, setFont, paintBg, scenePlate, glowBlob, FONT_DISPLAY, FONT_UI, CAPTION_ZONE_TOP } from './theme';
-import { bokehField, lightRays, softBloom, sparkles, drawK3D, kMotifs, floatCoins, impactRing, microShake, camState } from './effects';
+import { PALETTE, TONE, card, chip, rgba, roundRect, setFont, paintBg, scenePlate, glowBlob, FONT_DISPLAY, FONT_UI, CAPTION_ZONE_TOP } from './theme';
+import { bokehField, lightRays, softBloom, sparkles, drawK, drawK3D, kMotifs, floatCoins, impactRing, microShake, camState } from './effects';
 import { SceneCtx, declareOnScreenHeadline } from './scene-context';
 import { reactionAt } from './scene-context';
 import { Stickman, POSES, blendPose, take } from './stickman';
@@ -254,6 +254,72 @@ export function bigTextScene(g: SceneCtx): void {
   // headline, punchline, gold underline, impact grammar — nothing else.
   // (retired) count host: drawStickmanV2(ctx, 1310, H * 0.681, 1.5, ...,
   //   { pose 'count2', contact { x: 1250, y: 624, hand: 'fist' } }, 31);
+
+  // C10 MARKET-STANDARD FIX (review report C10 [P2] — A QUOTE CARD WITH
+  // NO END-SCREEN FUNCTION): this beat is the film's LAST frame — the
+  // cheapest subscribe/next-click surface the channel owns, spent on two
+  // lines over empty canvas. The quiet end furniture — the chapter recap
+  // rail, the subscribe chip, the next-video plate — enters AFTER the
+  // quote lands, in the free band under the underline; the statement
+  // stays the hero, the frame gains its function. (The dedicated
+  // endScreen beat two beats earlier carries the full furniture set.)
+  if (s.endFurniture) {
+    const ep = clamp01((t - 1900) / 700);
+    if (ep > 0) {
+      ctx.save();
+      ctx.globalAlpha = ep * 0.95;
+      // the chapter recap rail — the six exits, one measured row
+      const railItems = ['1 10b5-1', '2 EXCHANGE FUND', '3 DIRECT INDEXING', '4 COLLARS', '5 CRT / DAF', '6 LEVERED L/S'];
+      setFont(ctx, 22, 600);
+      const gap2 = 22;
+      const widths = railItems.map((tx) => ctx.measureText(tx).width + 44);
+      const railW = widths.reduce((a, b) => a + b, 0) + gap2 * (railItems.length - 1);
+      let rx = (W - railW) / 2;
+      railItems.forEach((tx, i) => {
+        chip(ctx, tx, rx, H * 0.625, { size: 22, bg: PALETTE.white, fg: PALETTE.inkSoft, border: rgba(PALETTE.gold, 0.4) });
+        rx += widths[i] + gap2;
+      });
+      // the subscribe chip + the next-video plate
+      const sbW = 330, nvW = 660, gap3 = 30;
+      const rowX = (W - (sbW + gap3 + nvW)) / 2;
+      const rowY = H * 0.68, rowH2 = 56;
+      ctx.fillStyle = rgba(PALETTE.shadow, 0.14);
+      roundRect(ctx, rowX - 5, rowY + 10, sbW, rowH2, 16);
+      ctx.fill();
+      ctx.fillStyle = PALETTE.gold;
+      roundRect(ctx, rowX, rowY, sbW, rowH2, 16);
+      ctx.fill();
+      // the K avatar — the reduced mark at this size (C9)
+      drawK(ctx, rowX + 46, rowY + rowH2 / 2, 15, 3, PALETTE.gold);
+      setFont(ctx, 30, 700);
+      ctx.fillStyle = PALETTE.ink;
+      ctx.textAlign = 'left';
+      ctx.fillText('SUBSCRIBE', rowX + 90, rowY + rowH2 / 2 + 10);
+      const nvX = rowX + sbW + gap3;
+      ctx.fillStyle = rgba(PALETTE.shadow, 0.14);
+      roundRect(ctx, nvX - 5, rowY + 10, nvW, rowH2, 16);
+      ctx.fill();
+      ctx.fillStyle = PALETTE.white;
+      roundRect(ctx, nvX, rowY, nvW, rowH2, 16);
+      ctx.fill();
+      ctx.strokeStyle = rgba(PALETTE.gold, 0.5);
+      ctx.lineWidth = 2.5;
+      roundRect(ctx, nvX, rowY, nvW, rowH2, 16);
+      ctx.stroke();
+      const nvTitle = (g.nextVideoTitle as string) || 'THE NEXT DEEP DIVE — SAME DESK, SAME RECEIPTS';
+      setFont(ctx, 25, 700);
+      ctx.fillStyle = PALETTE.goldDeep;
+      ctx.fillText('NEXT —', nvX + 26, rowY + rowH2 / 2 + 9);
+      setFont(ctx, 25, 600);
+      ctx.fillStyle = PALETTE.ink;
+      const nxW2 = nvW - 124;
+      let nvT = nvTitle.toUpperCase();
+      while (ctx.measureText(nvT).width > nxW2 && nvT.length > 8) nvT = nvT.slice(0, -2);
+      if (nvT !== nvTitle.toUpperCase()) nvT += '…';
+      ctx.fillText(nvT, nvX + 104, rowY + rowH2 / 2 + 9);
+      ctx.restore();
+    }
+  }
 }
 
 // ── stampCard: "RECORD HIGHS — ACCURATE" ─────────────────────────────────────
@@ -1103,7 +1169,10 @@ export function endScreenScene(g: SceneCtx): void {
   // WATCH NEXT moves directly under it as its caption; the channel lockup
   // rises to the top band; and a subscribe strip occupies the below-pill
   // gap so every vertical band of the frame carries a job.
-  const ap = clamp01(t / 800);
+  // C8 (review report C8 [P1] — THE END SCREEN ~70% EMPTY): the furniture
+  // clocks pull in — the teaser card lands at 500ms, the subscribe strip
+  // at 1400ms — so the closing beat's sampled frames carry the function.
+  const ap = clamp01(t / 500);
   const nx = W * 0.06;
   const ny = H * 0.25;
   ctx.save();
@@ -1330,7 +1399,7 @@ export function endScreenScene(g: SceneCtx): void {
   // A quiet channel-mark + subscribe line occupies it without fighting the
   // pill or YouTube's right-zone elements.
   {
-    const sp = clamp01((t - 2200) / 700);
+    const sp = clamp01((t - 1400) / 700);
     if (sp > 0) {
       ctx.save();
       ctx.globalAlpha = sp * 0.95;

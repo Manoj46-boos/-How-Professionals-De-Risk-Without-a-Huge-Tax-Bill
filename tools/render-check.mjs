@@ -221,20 +221,35 @@ function render(name, tMs) {
     for (const v of ovv) console.error(`     ${v.sceneKey}/${v.label}: ${v.reason}`);
   }
   // the value sample: dark share (luma < 70 — the ink mass) and bright
-  // share (gold hue, or the cream data surfaces) over a 4px sample grid
+  // share (gold hue, or the cream data surfaces) over a 4px sample grid.
+  // C8: + the EMPTY-CANVAS measure — the paper tone is the frame's own
+  // corner average (the corners are always bare room); a pixel counts as
+  // CONTENT when it departs from that tone by more than the grain
+  // tolerance. The share feeds the family's fillFloorPct gate.
   const img = ctx.getImageData(0, 0, W, H).data;
-  let dark = 0, bright = 0, total = 0;
+  let cr = 0, cg = 0, cb = 0, cn = 0;
+  for (const [sx, sy] of [[10, 10], [W - 11, 10], [10, H - 11], [W - 11, H - 11]]) {
+    for (let dy = -6; dy <= 6; dy += 3) {
+      for (let dx = -6; dx <= 6; dx += 3) {
+        const o = ((sy + dy) * W + (sx + dx)) * 4;
+        cr += img[o]; cg += img[o + 1]; cb += img[o + 2]; cn++;
+      }
+    }
+  }
+  cr /= cn; cg /= cn; cb /= cn;
+  let dark = 0, bright = 0, content = 0, total = 0;
   for (let py = 0; py < H; py += 4) {
     for (let px2 = 0; px2 < W; px2 += 4) {
       const o = (py * W + px2) * 4;
       const r = img[o], gch = img[o + 1], b = img[o + 2];
       const luma = 0.2126 * r + 0.7152 * gch + 0.0722 * b;
-      if (luma < 70) dark++;
+      if (luma < 70) { dark++; content++; }
       else if ((r > 180 && gch > 120 && gch < 200 && b < 140) || (r > 232 && gch > 228 && b > 216)) bright++;
+      if (Math.abs(r - cr) + Math.abs(gch - cg) + Math.abs(b - cb) > 72) content++;
       total++;
     }
   }
-  const sample = { darkPct: (dark / total) * 100, brightPct: (bright / total) * 100 };
+  const sample = { darkPct: (dark / total) * 100, brightPct: (bright / total) * 100, contentPct: (content / total) * 100 };
   const vvv = composition.valueMassViolations(sample, ocx.family);
   VALUE_EVIDENCE.push({ name, family: ocx.family, ...sample });
   if (vvv.length) {

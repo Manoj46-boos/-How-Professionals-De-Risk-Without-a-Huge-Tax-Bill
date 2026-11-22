@@ -66,13 +66,14 @@ export function familyOf(sceneType: string): FrameFamily {
  */
 export const FAMILY_TEMPLATE: Record<
   FrameFamily,
-  { darkMass: string; brightMass: string; figureFloorPct: number; heroFloorPct: number }
+  { darkMass: string; brightMass: string; figureFloorPct: number; heroFloorPct: number; fillFloorPct: number }
 > = {
   host: {
     darkMass: 'figure ink (the INK register — the presenter is the dark mass)',
     brightMass: 'one gold hero accent (scarf / K / gold prop) — never gold confetti',
     figureFloorPct: AREA_FLOORS.hostFigurePct,
     heroFloorPct: 0,
+    fillFloorPct: 26,
   },
   data: {
     darkMass: 'chart ink + the hero numeral',
@@ -88,12 +89,18 @@ export const FAMILY_TEMPLATE: Record<
     // the Data Desk presenter beside their charts (scenes-finance.ts).
     figureFloorPct: 3,
     heroFloorPct: AREA_FLOORS.dataHeroPct,
+    // C8 MARKET-STANDARD FIX (review report C8 [P1] — 50-75% DEAD CANVAS):
+    // the fill floor — the sampled frame's non-paper pixel share. Empty
+    // canvas was never asserted, so beats routinely under-used the frame;
+    // now the template declares how much of the frame must WORK.
+    fillFloorPct: 30,
   },
   statement: {
     darkMass: 'the display headline (inkDeep serif)',
     brightMass: 'the gold kicker line',
     figureFloorPct: 0,
     heroFloorPct: AREA_FLOORS.dataHeroPct,
+    fillFloorPct: 20,
   },
 };
 
@@ -251,6 +258,10 @@ export interface ValueSample {
   darkPct: number;
   /** % of frame pixels in the bright-mass (gold) band */
   brightPct: number;
+  /** C8: % of frame pixels that are NOT the bare paper tone (the frame's
+   *  own corner average) — the empty-canvas measure. Optional: the gate
+   *  fires only when the sampler provides it. */
+  contentPct?: number;
 }
 
 /**
@@ -280,6 +291,15 @@ export function valueMassViolations(sample: ValueSample, family: FrameFamily): s
   }
   if (sample.brightPct < band.bright[0]) {
     out.push(`NO bright mass (${sample.brightPct.toFixed(2)}% < ${band.bright[0]}%) — the frame has no value accent (${FAMILY_TEMPLATE[family].brightMass})`);
+  }
+  // C8 MARKET-STANDARD FIX (review report C8 [P1] — 50-75% DEAD CANVAS):
+  // the EMPTY-CANVAS gate. The occupancy floors gate registered figures
+  // and hero objects; empty canvas was never asserted, so beats shipped
+  // three-quarters bare. The sampled frame's non-paper pixel share must
+  // clear the family's fill floor.
+  const fillFloor = FAMILY_TEMPLATE[family].fillFloorPct;
+  if (sample.contentPct !== undefined && sample.contentPct < fillFloor) {
+    out.push(`EMPTY CANVAS (${(100 - sample.contentPct).toFixed(0)}% of the frame reads as bare paper, floor ${fillFloor}% content) — the beat under-uses the frame at feed scale (composition template: ${FAMILY_TEMPLATE[family].darkMass})`);
   }
   return out;
 }

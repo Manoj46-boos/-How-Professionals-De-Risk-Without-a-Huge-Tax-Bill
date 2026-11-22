@@ -117,14 +117,21 @@ export function drawCaptions(
     winStart = Math.max(0, lastSpoken - 1);
     winEnd = Math.min(len, winStart + maxWords);
   }
-  const continued = winStart > 0;
-  // P0-6 (audit Table 2 — "kill the truncation read"): the ellipsis
+  const continued = winStart > 0;  // P0-6 (audit Table 2 — "kill the truncation read"): the ellipsis
   // CHARACTER is gone — three panels read it as "caption cut mid-sentence
   // looks like a rendering bug". Continuation now announces itself with
   // the DESIGNED mark (drawContMark above): drawn chevrons, brand-quiet —
   // a deliberate device, not a font truncating a string.
   const MARK_W = 0; // PHASE 2: the arrow reserve retires with the arrows
-  const ellW = continued ? MARK_W : 0;
+  // C5 MARKET-STANDARD FIX (review report C5 [P1] — CAPTIONS OPEN MID-
+  // SENTENCE IN LOWERCASE): the window's HEAD-continuation device. The
+  // sliding window joins a sentence already in progress (winStart > 0);
+  // the designed mark only announced the right-edge tail, so every window
+  // entry read as a half-sentence ("percent suffered what they call…").
+  // A dim leading ellipsis — text, not chrome (the P0-6 chevron pair was
+  // retired as player chrome) — opens the window as grammar: "…the tax
+  // code, contributing…". Its width is reserved in the row math.
+  const ellW = continued ? ctx.measureText('…').width * 0.9 + spaceW : 0;
   // trails starts from the window math and is RE-AFFIRMED after any
   // display-side tail drop below ("never drop clause tails"): a clause
   // tail that goes unrendered for width still announces continuation.
@@ -314,6 +321,14 @@ export function drawCaptions(
     const rowW = measure(row) + (ri === 0 ? ellW : 0) + (last ? trlW : 0);
     let x = W / 2 - rowW / 2;
     const y = py + 22 + ri * rowH + fontSize / 2;
+    // C5: the head-continuation mark — a dim ellipsis opens a window that
+    // joins mid-sentence. Fill alpha carries the dimming (the pill's own
+    // fade alpha stays untouched).
+    if (ri === 0 && continued) {
+      ctx.fillStyle = rgba('#4F5D59', 0.55);
+      ctx.fillText('…', x, y);
+      x += ellW;
+    }
     for (const w of row) {
       const spoken = tMs >= w.t;
       const activeW = spoken && tMs <= w.t + w.d + 90;

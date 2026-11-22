@@ -112,6 +112,9 @@ const SHOTS = [
   ['e2-lock', 0, 2600, 'lockup'],
   ['e3-explode', 2, 2600, 'explodeGrid-harvest'],
   ['e3-napkin', 0, 2600, 'napkin'],
+  ['fw-end', 0, 2600, 'endScreen'], // C8/C10 evidence: the end screen's furniture clocks
+  ['fw-close', 0, 2600, 'close-quote'], // C10 evidence: the closing beat's end furniture
+  ['co-deal', 0, 2200, 'srcCite-ledger'], // C8 evidence: the source ledger fill
   ['e4-collar', 0, 2200, 'payoffDiagram-floor'],
   ['e4-path', 0, 2600, 'payoffDiagram-path'],
   ['e5-crt', 0, 2600, 'flowCharity-crt'],

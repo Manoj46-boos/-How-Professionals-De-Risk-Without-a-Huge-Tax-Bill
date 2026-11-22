@@ -1412,8 +1412,13 @@ export function drawK(
     ctx.fillStyle = color;
   }
   ctx.fill();
-  // the LIT FACET — one bright top band (the light from the upper right)
-  if (gs > 0.5) {
+  // C9 MARKET-STANDARD FIX (review report C9 [P2] — THE BLOB): broadcast
+  // reduced-mark rule. Below a 26px half-width the lit facet and the
+  // outline hairline collapse into a smear (the header watermark draws
+  // the mark at s=15); the mark REDUCES to the solid struck trapezoid
+  // with ONE highlight line at its top edge — the bug glyph — instead of
+  // the full faceted mark.
+  if (gs > 0.5 && s >= 26) {
     ctx.beginPath();
     ctx.moveTo(x - topW, y - hh);
     ctx.lineTo(x + topW, y - hh);
@@ -1423,11 +1428,22 @@ export function drawK(
     ctx.fillStyle = 'rgba(255,244,196,0.5)';
     ctx.fill();
   }
-  // crisp edge
-  ctx.strokeStyle = typeof color === 'string' ? hexLerp(color, '#241A05', 0.45) : color;
-  ctx.lineWidth = Math.max(1.2, lineWidth * 0.22);
-  ctx.lineJoin = 'round';
-  ctx.stroke();
+  if (s < 26) {
+    // the reduced mark: one crisp highlight line along the top edge
+    ctx.strokeStyle = 'rgba(255,244,196,0.75)';
+    ctx.lineWidth = Math.max(1.4, s * 0.09);
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(x - topW + 1.5, y - hh + 1);
+    ctx.lineTo(x + topW - 1.5, y - hh + 1);
+    ctx.stroke();
+  } else {
+    // crisp edge (full-size mark only — the hairline is the smear source)
+    ctx.strokeStyle = typeof color === 'string' ? hexLerp(color, '#241A05', 0.45) : color;
+    ctx.lineWidth = Math.max(1.2, lineWidth * 0.22);
+    ctx.lineJoin = 'round';
+    ctx.stroke();
+  }
   ctx.restore();
 }
 
