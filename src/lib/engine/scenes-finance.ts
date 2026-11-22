@@ -325,6 +325,14 @@ export function drawdownChartScene(g: SceneCtx): void {
     x: cx, y: cy, w: cw, h: ch,
     series: [{ name: isEnron ? 'Enron' : 'UNH', tone: 'down', points: partialPoints(pts, drawP) }],
     p: 1, t, gridLines: 4, showYAxis: true, lineWidth: 7,
+    // U24 (review report U24 — EVERY HERO CHART CARRIES THE STANDARD SET):
+    // the endpoint value, the delta badge and the axis dates — the Enron
+    // curve is no longer "one line + one dot".
+    endpointLabel: isEnron ? '→ 0' : '−50%',
+    deltaBadge: { value: isEnron ? '−100%' : '−53%', tone: 'down' },
+    xLabels: isEnron
+      ? [{ at: 0, label: 'Dec 1999', anchor: 'start' as const }, { at: 1, label: 'Nov 2001', anchor: 'end' as const }]
+      : undefined,
   });
   // E2 MARKET-STANDARD FIX (review report E2 [P1] — "the drawdownChart
   // (Enron) is one red curve and one dot" with 60% of the frame empty):
@@ -1129,6 +1137,9 @@ export function driftChartScene(g: SceneCtx): void {
       { name: 'the basket — cannot sell', tone: 'down', points: partialPoints(ptsFund, clamp01(t / 2200)) },
     ],
     p: 1, t, gridLines: 4, showYAxis: true, lineWidth: 6,
+    // U24: the drift chart's own delta badge — the gap, on the plot.
+    endpointLabel: '96.1',
+    deltaBadge: { value: '−7.3 PTS', tone: 'down' },
   });
   // E2 MARKET-STANDARD FIX (review report E2 [P1] — "driftChart is two
   // thin lines"): THE GAP LEDGER (right column) — endpoint value labels
@@ -1648,6 +1659,8 @@ export function appleCaseScene(g: SceneCtx): void {
       { name: 'LS 200/100', tone: 'up', points: partialPoints(FAST, fastP) },
     ],
     p: 1, t, gridLines: 4, showYAxis: true, lineWidth: 6,
+    // U24: the case-study's delta badge — the leveraged route's endpoint.
+    deltaBadge: { value: '−99%', tone: 'down' },
   });
   // E2 MARKET-STANDARD FIX (review report E2 [P1] — "one line and a dot
   // with 60% of the frame empty"): the case-study ledger — the two

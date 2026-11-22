@@ -452,12 +452,16 @@ export class Stickman {
         const sT = Math.max(0, stEff - 240);
         // P1 — the same spring sampled 105ms late: the torso's lean delayed
         const antiLag = (stEff - 105) < 240 && stEff > 105 ? Math.sin(((stEff - 105) / 240) * Math.PI) * 0.6 : 0;
-        const fUpLag = Math.max(0, springTo(0, 1, Math.max(0, sT - 105), 150, 10.5) - antiLag);
+        const fUpLag = Math.max(0, springTo(0, 1, Math.max(0, sT - 105), 150, 15.8) - antiLag);
         leanDelayed = lerp(prevPose.lean, cyc.lean, fUpLag);
-        // PHASE 2 VISUAL AUDIT (Fix 3 — OVERSHOOT IN THE 20-25% HERO BAND):
-        // damping 11 → 10.5 (ζ = 0.4287 → 22.5% overshoot, the middle of
-        // the report's band); stiffness 150 (settle unchanged).
-        const fUp = Math.max(0, springTo(0, 1, sT, 150, 10.5) - anti);
+        // PHASE 2 VISUAL AUDIT (Fix 3): the hero band carried 22.5% first
+        // overshoot (damping 10.5) — a visible bounce-past on every accent.
+        // U17 (review report U17 — OVERSHOOT 6-8% THEN SETTLE): the spring
+        // retunes to ζ = 0.647 (damping 15.8, stiffness 150 kept) — a 7%
+        // overshoot, one tasteful pass of the target, then the settle; the
+        // re-grip clock's pattern generalized. The 105ms lag channel rides
+        // the same tuning so torso and arm stay locked.
+        const fUp = Math.max(0, springTo(0, 1, sT, 150, 15.8) - anti);
         // AUDIT-ROUND-2 (fix 14): elbow cascade 70 → 90ms behind the
         // shoulder — a wave that visibly travels DOWN the limb at phone
         // scale (70ms downsampled to a snap at 320px).
@@ -532,10 +536,18 @@ export class Stickman {
         // stutter-pause. The hold is now a LOAD: the torso leans and the
         // free arm pulls opposite the strike direction, growing toward the
         // onset (closed form in holdD — pure function of t, scrub-safe).
+        // U17 (review report U17 — ANTICIPATION ON EVERY ACCENT STRIKE):
+        // the counter-move tightens to the report's 80-120ms window and
+        // its 4-6 DEGREE arm-back band: the load now peaks at 55% of the
+        // 9° pull (= 4.95°, the middle of the band) inside the last
+        // 120ms, with the softer 200ms torso-load riding beneath — the
+        // wind-up reads as a coiled strike, not a shiver.
         if (holdD !== null) {
           const dArmR2 = Math.abs(cyc.rAU - prevPose.rAU) + Math.abs(cyc.rAL - prevPose.rAL);
           const away = (dArmR2 >= Math.abs(cyc.lAU - prevPose.lAU) + Math.abs(cyc.lAL - prevPose.lAL)) ? -1 : 1;
-          const loadK = clamp01((200 - holdD) / 200) * 0.35;
+          const loadSoft = clamp01((200 - holdD) / 200) * 0.22;
+          const loadSnap = holdD <= 120 ? clamp01((120 - holdD) / 120) * 0.55 : 0;
+          const loadK = loadSoft + loadSnap;
           pose = {
             ...pose,
             lean: pose.lean + away * 5 * loadK,

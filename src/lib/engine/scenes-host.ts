@@ -14,7 +14,6 @@ import { SceneCtx, declareOnScreenHeadline } from './scene-context';
 import { pivotTakeStart, stageMoves, stageRestIdx, stageStartIdx } from './pivots';
 import { CARD_TEXT_PAD_BOTTOM } from './collision';
 import { reactionAt, reactionStart } from './scene-context';
-import { sourceTag, wrapText } from './charts';
 import { registerRect, registerText, declareHostContact } from './collision';
 // PHASE 1 (100-Judge audit Table 6): the HOST_SCALE rule + the figure
 // registry — companion rig derives from the tier law, the harness asserts it.
@@ -22,6 +21,7 @@ import { registerFigure, hostScaleRig } from './scale-law';
 // PHASE 3 COMPOSITION: the data-beat hero registration (Fix 1).
 import { registerHeroObject, scaleForFigureArea } from './composition';
 import { resolveProp } from './scene-props';
+import { sparkPanel, sourceTag, wrapText } from './charts';
 
 // BLUEPRINT Phase 1 (report Table 7 — "the plant must LAND"): the contact
 // strike pulse that drives the squash-on-landing transform. Fires at each
@@ -994,6 +994,11 @@ export function hostSceneV2(g: SceneCtx): void {
   const regExpr = (g.s.expression === 'focus' || g.s.expression === 'shock')
     ? (g.s.expression as 'focus' | 'shock')
     : rEnv > 0.15 ? ('shock' as const) : undefined;
+  // U13 (review report U13 — THE CONTACT TARGET IS A CHIP): on number beats
+  // the near hand parks ON the kicker chip — the chip is the DESIGNED touch
+  // surface, so its rows are declared to the guard (the same grammar the
+  // splitNum panels use): hand-vs-text exempts them.
+  if (numberNamed) declareHostContact('hostV2:kicker', 'hostV2:kickerTxt', 'hostV2:spark');
   drawStickmanV2(
     // PANEL ACCEPTANCE (audit FIX 1): ground H*0.585 → HOST_GROUND (0.62) —
     // at the 0.585 ground the 2.4× host's head topped out at 56px headroom
@@ -1084,6 +1089,30 @@ export function hostSceneV2(g: SceneCtx): void {
     ctx.textAlign = 'left';
     ctx.fillText(kick, hx2 + 24, 202);
     ctx.restore();
+  }
+  // U22 (review report U22 — THE GHOST PANEL BECOMES REAL MINI-CONTENT):
+  // the right third no longer carries bare hairlines — a live sparkline of
+  // the series the narration references rides the kicker row: ink path,
+  // draw-on, end dot, and the chapter's cited value in gold. One component
+  // (charts.sparkPanel), registered as content for the collision guard.
+  {
+    const sparkLabel = g.s.sparkLabel as string | undefined;
+    const sparkValue = g.s.sparkValue as string | undefined;
+    if (sparkLabel && sparkValue) {
+      const sx = hx2 + kw + 72;
+      const sw = Math.min(330, W - 180 - sx);
+      if (sw >= 220) {
+        const sp = clamp01((t - 500) / 900);
+        registerRect('hostV2:spark', sx, 168, sw, 52);
+        sparkPanel(ctx, sx, 168, sw, 52, {
+          seed: Math.abs(hashStr(g.s.sceneKey ?? 'host')) % 1000,
+          label: sparkLabel,
+          value: sparkValue,
+          down: g.s.sparkDown === true,
+          p: sp,
+        });
+      }
+    }
   }
 
   // serif headline (line 2 in gold)

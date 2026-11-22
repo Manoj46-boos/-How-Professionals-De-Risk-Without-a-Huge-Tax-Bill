@@ -1263,7 +1263,13 @@ export function endScreenScene(g: SceneCtx): void {
   // WATCH NEXT chip below. Envelope: head top ≈ 340 (subscribe box ends
   // 174), feet band ≈ 712 (chip band ends 775, one-row pill ≈ 990) — all
   // clear; the guard sweep re-arbitrates the final envelope.
-  drawStickmanV2(ctx, W * 0.44, H * 0.645, 1.62, t, { pose, alpha: clamp01((t - 800) / 600), look: -0.75, parallax: true, parallaxAmt: 0.45, contact: { x: 820, y: 505, hand: 'fist' } }, 37);
+  // U27 (review report U27 — STAGE THE HOST INTO THE CTA): the figure is
+  // already a co-star (1.62 rig — 34% of frame height, verified by the B5
+  // envelope) with the fist grip ON the next-week card. The last piece is
+  // the eye line: the host now faces the CAMERA (look -0.3, near-front —
+  // the conversion-frame gaze) while the hand keeps the card and the
+  // pointL pose still sells the WATCH NEXT chip below.
+  drawStickmanV2(ctx, W * 0.44, H * 0.645, 1.62, t, { pose, alpha: clamp01((t - 800) / 600), look: -0.3, parallax: true, parallaxAmt: 0.45, contact: { x: 820, y: 505, hand: 'fist' } }, 37);
 
   // ── v8: the WATCH NEXT arrow — the end screen's click mechanism ────────
   // The panel's verdict: "no thumbnail target = the most commercially

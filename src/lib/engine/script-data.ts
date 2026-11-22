@@ -49,7 +49,7 @@ export const SCRIPT: ChapterSpec[] = [
       {
         vo:
           "In July 2024, Steve Ballmer passed Bill Gates on the Bloomberg Billionaires Index.",
-        pauseAfter: 500,
+        pauseAfter: 300,
         voStyle: 'urgent',
         scene: P('crossChart', 'co-cross', {
           opening: true,
@@ -60,19 +60,8 @@ export const SCRIPT: ChapterSpec[] = [
       },
       {
         vo:
-          'Not because Ballmer is the better investor. Because he did almost nothing.',
-        pauseAfter: 650,
-        voStyle: 'reveal',
-        scene: P('crossChart', 'co-cross', {
-          title: 'July 1, 2024 — Bloomberg Billionaires Index',
-          mode: 'hold-chip',
-          src: 'Bloomberg Billionaires Index, July 1, 2024',
-        }),
-      },
-      {
-        vo:
-          'More than ninety percent of his fortune — north of a hundred and fifty billion dollars — sat in Microsoft stock he barely ever sold.',
-        pauseAfter: 600,
+          'One company. Two decisions: hold, or sell.',
+        pauseAfter: 300,
         scene: P('crossChart', 'co-cross', {
           title: 'July 1, 2024 — Bloomberg Billionaires Index',
           mode: 'build-b',
@@ -81,8 +70,8 @@ export const SCRIPT: ChapterSpec[] = [
       },
       {
         vo:
-          'Gates, meanwhile, spent thirty years selling Microsoft down through a family office, diversifying into everything from farmland to waste management.',
-        pauseAfter: 700,
+          'Same stock, same day \u2014 a hundred billion apart.',
+        pauseAfter: 300,
         scene: P('crossChart', 'co-cross', {
           title: 'July 1, 2024 — Bloomberg Billionaires Index',
           mode: 'cross-marked',
@@ -91,13 +80,34 @@ export const SCRIPT: ChapterSpec[] = [
       },
       {
         vo:
-          'Same company. Same decision — hold, or sell. Two outcomes, a hundred billion dollars apart.',
-        pauseAfter: 800,
+          'One decision made the difference.',
+        pauseAfter: 300,
         voStyle: 'reveal',
         scene: P('crossChart', 'co-cross', {
           title: 'July 1, 2024 — Bloomberg Billionaires Index',
           mode: 'delta',
           src: 'Bloomberg Billionaires Index, July 1, 2024',
+        }),
+      },
+      {
+        vo:
+          'The tax bill on holding: three-point-seven million.',
+        pauseAfter: 450,
+        scene: P('statCards', 'co-bill', {
+          cards: [
+            { big: '$3.7M', label: 'the tax bill on a $10M position, near-zero basis, California', tag: 'federal LTCG + NIIT + state', tone: 'down' },
+            { big: '$10M', label: 'the concentrated position', tag: 'near-zero basis', tone: 'gold' },
+          ],
+        }),
+      },
+      {
+        vo:
+          'So \u2014 what is that tax buying you?',
+        pauseAfter: 600,
+        voStyle: 'reveal',
+        scene: P('host', 'co-question', {
+          headline: 'What is the tax\nbuying you?',
+          kicker: 'the only question that matters',
         }),
       },
       {
@@ -128,27 +138,6 @@ export const SCRIPT: ChapterSpec[] = [
         voStyle: 'reveal',
         scene: P('bigText', 'co-truth', {
           lines: ['Holding is not a strategy.', 'It is a coin flip you re-make every morning.'],
-        }),
-      },
-      {
-        vo:
-          'And the reason most people keep flipping it is a tax bill they are terrified of — a bill that, on a ten-million-dollar position with near-zero basis in California, is roughly three-point-seven million dollars.',
-        pauseAfter: 800,
-        scene: P('statCards', 'co-bill', {
-          cards: [
-            { big: '$3.7M', label: 'the tax bill on a $10M position, near-zero basis, California', tag: 'federal LTCG + NIIT + state', tone: 'down' },
-            { big: '$10M', label: 'the concentrated position', tag: 'near-zero basis', tone: 'gold' },
-          ],
-        }),
-      },
-      {
-        vo:
-          'So the real question is not \u201chow do I avoid the tax.\u201d It is: what is the tax buying me? And is there a way to buy the same thing — diversification, downside protection, peace of mind — for less?',
-        pauseAfter: 700,
-        voStyle: 'reveal',
-        scene: P('host', 'co-question', {
-          headline: 'What is the tax\nbuying you?',
-          kicker: 'the only question that matters',
         }),
       },
       {
@@ -2091,6 +2080,16 @@ const U16_CYCLE = ['lean', 'countN', 'crossed', 'stepIn', 'sit', 'walk'] as cons
     }
   }
 }
+
+// U33 (review report U33 — THE 10-12 MINUTE FIRST UPLOAD): retention-per-
+// minute beats total length for a new channel. The first-upload edit keeps
+// the film's complete arc in ~11.4 minutes — the cold-open hook, the trap's
+// math (ch1), the collar (the signature exit) and the decision framework —
+// while the full 38-minute cut stays in SCRIPT for later. The render
+// harness defaults to THIS cut (tools/frame-dump swaps SCRIPT to it; the
+// gates still certify the full cut).
+export const FIRST_UPLOAD_CUT: ChapterSpec[] = SCRIPT.filter((ch) =>
+  ['cold-open', 'ch1', 'exit4', 'framework'].includes(ch.id));
 
 export const VIDEO_TITLE = 'How the Rich Sell $10M of Stock Without Paying $3.7M in Taxes';
 

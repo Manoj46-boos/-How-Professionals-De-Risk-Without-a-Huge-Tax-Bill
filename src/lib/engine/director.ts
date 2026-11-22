@@ -5,7 +5,7 @@
  * grain, vignette, and the global light fades.
  */
 
-import { clamp01, easeInQuad, easeInOutSine, easeOutCubic } from './easing';
+import { clamp01, easeInQuad, easeInOutSine, easeOutCubic, window4 } from './easing';
 import { PALETTE, paintBg, rgba, FONT_DISPLAY, FONT_UI, drawRoomRail, drawChapterRoom, getRoomFamily, setRoomFamily, setWashChapter } from './theme';
 import { drawGrain, lightVignette, bokehField, scalePunch, camState, guardCamState, kWipe, fgBokeh, dofPass, chapterAccent } from './effects';
 import { drawParticles, emitterKindFor } from './particles';
@@ -353,7 +353,12 @@ function cameraV2(
    *  the film ENDS on its host; an exit animation on the outro both crops
    *  the full-figure close-up (the lift pushed the apex band past the top
    *  edge, sweep-verified) and animates a cut to nothing. */
-  isFinalGroup = false
+  isFinalGroup = false,
+  /** U20 (review report U20 — CAMERA PUNCTUATION): true when the beat's
+   *  narration names a number — the camera answers the reveal with a
+   *  micro push (x1.06 peak over ~900ms, window4-eased, exactly 1.0
+   *  outside the window). */
+  numberNamed = false
 ): void {
   const p = clamp01(gt / Math.max(1, groupDur));
   // scenes that present a single subject push in; comparison scenes pull out
@@ -438,6 +443,14 @@ function cameraV2(
   // PLAYBOOK D1: STAT rooms and STATEMENT beats run TRIPOD/dead-still —
   // the drift mutes to a whisper there (the number is the event; the
   // camera must not compete with it).
+  // U20 (review report U20 — MICRO PUSH ON EVERY NUMBER REVEAL): the
+  // number lands, the camera steps in — x1.06 peak on a window4 envelope
+  // (700ms in, hold, 300ms out), multiplicative so it composes with the
+  // operator grammar instead of fighting it. Payoff pull-backs already
+  // ship (the stat operator breathes OUT on the last 900ms).
+  if (numberNamed) {
+    camScale *= 1 + 0.06 * window4(gt, 700, 1000, 1300, 1600);
+  }
   const driftK = isStat ? 0.25 : isStatement ? 0.1 : 1;
   let camX = Math.sin(gt / 7300) * 52 * driftK;
   let camY = Math.cos(gt / 9100) * 32 * driftK;
@@ -504,6 +517,13 @@ function cameraV2(
   }
   if (hero && hero.scene === sceneType) {
     const e = easeInOutSine(p);
+    // U20 (review report U20 — ONE DOLLY-WITH-ROTATE PER CHAPTER): the
+    // chapter's hero move now rolls 0.8° WITH the dolly (the panel's r3
+    // readability floor), rising with the move and releasing across the
+    // group's tail so the next cut is level — the cold open's combined
+    // gesture generalized to every chapter.
+    const rollRel = p > 0.86 ? easeInOutSine(clamp01((p - 0.86) / 0.14)) : 0;
+    roll += 0.8 * e * (1 - rollRel) * (Math.PI / 180);
     if (hero.move === 'pullback') camScale -= hero.amt * e;
     else if (hero.move === 'push') camScale += hero.amt * e;
     else if (hero.move === 'truck') {
@@ -878,7 +898,7 @@ export function drawFrame(
   const allGroups = groupsFor(tl);
   const groupIdx = allGroups.indexOf(group);
   cameraV2(ctx, gt, groupDur, beat.beat.scene.type, beat.chapter, groupIdx, beat.beat.scene.sceneKey,
-    groupIdx === allGroups.length - 1);
+    groupIdx === allGroups.length - 1, beat.beat.scene.numberNamed === true);
   // 1-2% scale punch that decays over 160ms right after each hard cut
   // PANEL-12 / P2-3 (report §14.3): bigText and stampCard land the film's
   // loudest words — their punch amplifies 0.035 → 0.05 so the cut itself
@@ -1224,7 +1244,10 @@ export function drawFrame(
       : ['host', 'divergeK', 'channelIntro', 'recapSplit', 'paradoxResolve',
          'ownerWorker', 'endScreen', 'commentPrompt', 'takeaways'].includes(sceneType) ? 0.55
       : 0.25;
-    drawGrain(ctx, W, H, grainAlpha, t);
+    // U20 (review report U20): ALL camera-driven grain alpha caps at 0.25
+    // — a fast camera state must never let the grain swim or strobe at
+    // the transcode.
+    drawGrain(ctx, W, H, Math.min(grainAlpha, 0.25), t);
   }
   // B15 (MINT MONOTONY): the mint rooms carry the mud complaint — the
   // vignette's edge ring over the sage wash grey-greened the lower third.

@@ -232,7 +232,12 @@ function drawMouthV2(
   /** 100-JUDGE AUDIT (Part 8.2): the Preston Blair viseme shape. When
    *  provided, the mouth uses the 9-shape system instead of the 4-shape
    *  envelope. 'X' = rest (no viseme — falls back to envelope). */
-  viseme: Viseme = 'X'
+  viseme: Viseme = 'X',
+  /** U29 (review report U29 — THE FEED FACE REGISTER): the mouth's own
+   *  screen-space floor at feed rigs — 9px of mouth ink (9/scale in local
+   *  units), the feature that vanishes first getting its own floor the
+   *  way the hand glyph tiers. 0 = off (hero rigs). */
+  feedFloor = 0
 ): void {
   // 100-JUDGE REPORT (fix R1 — THE PERMANENT-ALARM GASP): the reaction
   // multiplier ran to 2.0 — at the shock close-up's faceScale the mouth
@@ -255,7 +260,7 @@ function drawMouthV2(
   // more step (17/10 -> 21/12 local) so the report's "wider mouth" clears
   // the twin (~5px of mouth at host rig, was ~4 and vanished with the
   // cavity fill).
-  const wFloor = bigFace ? 21 : 12;
+  const wFloor = Math.max(bigFace ? 21 : 12, feedFloor);
   const mouthCavity = (cx: number, cy: number, rw: number, rh: number): void => {
     ctx.fillStyle = 'rgba(28,22,16,0.5)';
     ctx.beginPath();
@@ -1563,7 +1568,30 @@ export function drawStickmanV2(
   },
   seed = 0
 ): void {
-  const pose0 = r.pose;
+  // U18 + U21 (review report — POSE AMPLITUDE AT FEED RIGS): the audit's
+  // own math showed 18% squash sampling to 2-5px under rig 1.4 — subtle
+  // physics dies in the transcode. Below rig 1.4 the POSE carries the
+  // motion instead: lean depth, head lead and step height amplify 1.4x,
+  // and on a walk the stride angles widen and the body drops 3px — big
+  // shapes survive the 320px transcode; small ones do not. Hero rigs are
+  // untouched (1.0x — the staging already reads).
+  let pose0 = r.pose;
+  {
+    const feedAmp = scale < 1.4 ? 1.4 : 1;
+    const walkAmp = scale < 1.4 && r.walkPhase !== undefined ? 1.35 : 1;
+    if (feedAmp > 1) {
+      pose0 = {
+        ...pose0,
+        lean: pose0.lean * feedAmp,
+        headTilt: pose0.headTilt * feedAmp,
+        lLift: (pose0.lLift ?? 0) * feedAmp * walkAmp,
+        rLift: (pose0.rLift ?? 0) * feedAmp * walkAmp,
+        lLU: (pose0.lLU ?? 0) * walkAmp,
+        rLU: (pose0.rLU ?? 0) * walkAmp,
+        rootY: pose0.rootY + (walkAmp > 1 ? 3 : 0),
+      };
+    }
+  }
   const alpha = r.alpha ?? 1;
   if (alpha <= 0.001) return;
   // PHASE 3 (Composition & value): arm the drawn-bbox tracker — the joint
@@ -2061,31 +2089,12 @@ export function drawStickmanV2(
     ctx.restore();
   }
 
-  // PANEL-12 / P2-5 (report §14.5) — CONTACT DUST on foot-plant. Three
-  // motes per plant, 200ms life, shadow-color at 0.25 alpha, keyed to the
-  // walk phase (pure function of t — the ground participates in the walk).
-  if (r.walkPhase !== undefined) {
-    for (const c of [0, 0.5]) {
-      const age = (((r.walkPhase - c) % 1) + 1) % 1;
-      if (age >= 0.12) continue;
-      const p = age / 0.12;
-      const foot = c === 0 ? nearFoot : farFoot;
-      if (!foot) continue;
-      for (let k = 0; k < 3; k++) {
-        const h = hash01(k * 7.3 + Math.floor(r.walkPhase * 2) * 13.1 + c * 100 + seed);
-        const dir = k === 0 ? -1 : k === 1 ? 1 : 0.3;
-        ctx.fillStyle = rgba(PALETTE.shadow, 0.25 * (1 - p));
-        ctx.beginPath();
-        ctx.arc(
-          foot.ex + dir * (5 + 16 * p) * (0.5 + h * 0.5),
-          foot.ey - 4 - 10 * p * h,
-          4 * (1 - p * 0.45),
-          0, Math.PI * 2
-        );
-        ctx.fill();
-      }
-    }
-  }
+  // PANEL-12 / P2-5 — CONTACT DUST on foot-plant: RETIRED.
+  // U21 (review report U21 — WALK AT EVERY SCALE): the motes sample below
+  // perception at feed rigs and cost clarity at 1080p — the weight of the
+  // step now reads through the amplified stride + body drop (the feed
+  // amplitude block at the top of this draw), not through ground
+  // particles. The keyed walk itself is unchanged.
 
   // PREMIUM UPGRADE C2: TORSO AS SHAPED CAPSULE. The single taper (a spine
   // line that widens) is replaced with a filled path: chest bulge, waist
@@ -3309,7 +3318,13 @@ export function drawStickmanV2(
   // G1: the pupil floor 4.9 -> 8.4 screen px (~2.8px at the twin) — the
   // report's "bigger pupils rather than scaled-down hero features". The
   // 0.88 sclera ratio still governs above the floor.
-  const ivoryPupR = Math.max(3.9, featureFloor(8.4), scleraR * 0.88) * regPupil;
+  // U29: the feed face register — under rig 1.5 the features that vanish
+  // first at 320px get their own floors: the pupil DOUBLES (capped at the
+  // sclera — a filled dark eye, the becker head's high-contrast trick),
+  // the mouth holds 9px of ink, and the brows ride one register lower
+  // (bRaise below scales 0.7). Hero rigs are untouched.
+  const feedFace = scale < 1.5;
+  const ivoryPupR = Math.min(Math.max(3.9, featureFloor(8.4), scleraR * 0.88) * regPupil * (feedFace ? 2 : 1), scleraR * 1.05);
   if (becker) {
     ctx.fillStyle = faceInk;
     ctx.beginPath();
@@ -3408,7 +3423,7 @@ export function drawStickmanV2(
   // the same geometry on every head type (ink, ivory, becker).
   const browEmo = surprise - concerned;
   const drawBrow = (dir: number): void => {
-    const bRaise = pose.browRaise * AMP.browTravelPx;
+    const bRaise = pose.browRaise * AMP.browTravelPx * (feedFace ? 0.7 : 1); // U29: one register lower at feed
     const bAng = pose.browAngle * D2R;
     const x0 = dir * (8 + eyeDX), x1 = dir * (24 + eyeDX);
     // B4 RE-SPEC (Visual Quality Audit §3.1 — BROWS RIDE THE GLASSES): the
@@ -3540,7 +3555,7 @@ export function drawStickmanV2(
     const mouthTalk = (r.talk ?? 0) > 0.18
       ? (r.talk ?? 0)
       : (surprise > 0.55 ? Math.max(0.86, surprise) : (r.talk ?? 0));
-    drawMouthV2(ctx, eyeDX, pose.smile, mouthTalk, jaw2x, becker ? faceInk : PALETTE.ink, scale > 1.5, vm);
+    drawMouthV2(ctx, eyeDX, pose.smile, mouthTalk, jaw2x, becker ? faceInk : PALETTE.ink, scale > 1.5, vm, feedFace ? 9 / scale : 0);
   }
   // cheek warmth — very subtle (P1-1 'becker': skipped — no interior clutter)
   // 100-JUDGE PANEL REPORT (fix A4): cheek warmth 0.16 → 0.09 — the plush

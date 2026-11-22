@@ -146,7 +146,13 @@ export const PALETTE: Palette = {
   up: '#0E5C43',
   upSoft: '#CBE0D0',
   down: '#8E2F3C',
-  downSoft: '#E7D9C4',
+  // U25 (review report U25 — THE WASH IS TWO REGISTERS WITH MEANING): the
+  // C2 consolidation (sage = data/analysis, cream-gold = statement) stands;
+  // the last pink-family value shifts to WARM CLAY — downSoft now leans
+  // terracotta, so wherever the soft-down register touches a frame (the
+  // down-tone badges in textfx) it reads as deliberate clay, never as a
+  // staining pink wash.
+  downSoft: '#E6C9AC',
   // v10 (panel COLOR-3): the vivid data-ink ramp — strokes only, never text
   upVivid: '#0F7E58',
   downVivid: '#B23B47',
