@@ -80,7 +80,16 @@ const BODY_MASS = '#143829';
  * can name in three seconds, riding the existing one-light ink language.
  * trouser stays the ink register (#2A3432 family) the limbs already draw.
  */
-const OUTFIT = { tee: '#0E2F24', vest: '#D9B24C', trouser: '#22302B' } as const;
+// C3 MARKET-STANDARD FIX (review report C3 [P2] — THE GOLD WORKS
+// OVERTIME): the host frame carried gold as FIVE roles at once — scarf,
+// vest, kicker chip, headline second line, numerals, bar fills, progress
+// dots, the exhibit card — and "when everything is gold, nothing is". The
+// value-structure rule (one bright mass per frame) is restored: the vest
+// drops from vest-gold to the deep ink-teal of the tee family (a two-tone
+// garment read, the figure keeps ONE gold cue — the scarf, its brand
+// badge); the type block's gold serif line becomes the frame's single
+// bright mass (scenes-host). Coral/teal carry the data roles.
+const OUTFIT = { tee: '#0E2F24', vest: '#1C3B33', trouser: '#22302B' } as const;
 /** AUDIT-ROUND-3 iter-2 (ONE INK, ALL FOUR LIMBS): the gold near-arm
  *  sleeve (ARM_MASS) read to the re-review panel as "the near limb
  *  darker/warmer in tone than the far — the mismatched limb shading
@@ -1901,15 +1910,15 @@ export function drawStickmanV2(
     // it), so the sleeve root tucks into the shoulder like real clothing.
     if (!prof) {
       // 100-JUDGE VISUAL AUDIT (Fix 1 — THE STAIN CUFF): the rolled sleeve
-      // band was the vest's own gold a half-step darker (#A8851B) — it read
-      // as a stain ON the vest, not a fold of cloth. The cuff is now DEEP
-      // BRONZE (#6E5210), a full register darker than the shirt: the read is
-      // "gold workshirt, sleeves pushed up", with a clear cuff edge at feed.
+      // band tracks the vest at a full register darker — with the C3 vest
+      // demotion the cuff is deep ink-teal (#12241F) over the #1C3B33 vest:
+      // "ink workshirt, sleeves pushed up", a clear cuff edge at feed, and
+      // the figure carries no second gold mass.
       taper(ctx,
         neckX - 4 + Math.sin(shT) * -4, neckY + 3 + Math.sin(shT) * 9 - (pose.shoulderDrop ?? 0) * 0.6,
         neckX - 4 + Math.sin(shT) * -4 + Math.sin(farAU * D2R) * U_ARM * 0.58,
         neckY + 3 + Math.sin(shT) * 9 - (pose.shoulderDrop ?? 0) * 0.6 + Math.cos(farAU * D2R) * U_ARM * 0.58,
-        INK.armFar[0] + 5, INK.armFar[0] - 1, '#6E5210');
+        INK.armFar[0] + 5, INK.armFar[0] - 1, '#12241F');
     }
       handGlyph(ctx, farHand.ex, farHand.ey, farAL, 15, farInk, scale, pose.lHand, grip); // PHASE-1: the far hand runs the same mitten glyph — one hand language at every scale
     // AUDIT-2 / 0.1: the far shoe steps with its limb (farInk) — depth,
@@ -2514,7 +2523,7 @@ export function drawStickmanV2(
       neckX + 4 + Math.sin(shT) * 4, neckY + 3 - Math.sin(shT) * 9 + shDrop,
       neckX + 4 + Math.sin(shT) * 4 + Math.sin(pose.rAU * D2R) * U_ARM * 0.58,
       neckY + 3 - Math.sin(shT) * 9 + shDrop + Math.cos(pose.rAU * D2R) * U_ARM * 0.58,
-      INK.armNear[0] + 5, INK.armNear[0] - 1, '#6E5210');
+      INK.armNear[0] + 5, INK.armNear[0] - 1, '#12241F');
   }
   // AUDIT-ROUND-3 (Fix 1): the torso rim light block that drew here is
   // RETIRED — see the note above the near arm. One light edge (the

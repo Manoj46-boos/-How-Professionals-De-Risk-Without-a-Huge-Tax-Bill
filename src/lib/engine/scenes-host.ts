@@ -506,14 +506,16 @@ function hostChips(g: SceneCtx, side: 'center' | 'left' | 'right'): void {
       const tw = ctx.measureText(ribbon).width;
       const rx = hx - tw / 2 - 30;
       const ry = H * 0.2;
-      ctx.fillStyle = PALETTE.goldWash;
+      // C3: side-host ribbon joins the kicker demotion — ivory card, ink
+      // border, ink text (one gold census across every chip in the film).
+      ctx.fillStyle = PALETTE.card;
       roundRect(ctx, rx, ry, tw + 60, 58, 29);
       ctx.fill();
       ctx.lineWidth = 2.5;
-      ctx.strokeStyle = PALETTE.gold;
+      ctx.strokeStyle = rgba(PALETTE.ink, 0.34);
       roundRect(ctx, rx, ry, tw + 60, 58, 29);
       ctx.stroke();
-      ctx.fillStyle = PALETTE.goldDeep;
+      ctx.fillStyle = PALETTE.inkSoft;
       ctx.textAlign = 'left';
       ctx.fillText(ribbon, rx + 30, ry + 39);
       ctx.restore();
@@ -945,14 +947,19 @@ export function hostSceneV2(g: SceneCtx): void {
   if (ap > 0) {
     ctx.save();
     ctx.globalAlpha = ap;
-    ctx.fillStyle = PALETTE.goldWash;
+    // C3 MARKET-STANDARD FIX: the kicker chip drops out of the gold census —
+    // ivory card, ink border, ink-soft text. The headline's gold serif line
+    // (below) becomes the frame's ONE bright mass; a gold chip + gold type +
+    // gold scarf + gold exhibit on one frame was the "everything is gold"
+    // dilution the review flagged.
+    ctx.fillStyle = PALETTE.card;
     roundRect(ctx, hx2, 168, kw + 48, 52, 26);
     ctx.fill();
-    ctx.strokeStyle = rgba(PALETTE.gold, 0.8);
+    ctx.strokeStyle = rgba(PALETTE.ink, 0.34);
     ctx.lineWidth = 2;
     roundRect(ctx, hx2, 168, kw + 48, 52, 26);
     ctx.stroke();
-    ctx.fillStyle = PALETTE.goldDeep;
+    ctx.fillStyle = PALETTE.inkSoft;
     ctx.textAlign = 'left';
     ctx.fillText(kick, hx2 + 24, 202);
     ctx.restore();
@@ -1062,19 +1069,25 @@ export function hostSceneV2(g: SceneCtx): void {
     const ladderW = barsN * (barW + 14) + 40;
     const lx0 = fx0 + 60;
     const baseY = fy0 + fh - 26;
+    // C3 MARKET-STANDARD FIX: the exhibit's ladder ran gold bars + gold cap
+    // + gold label — three more gold masses in a frame that already carried
+    // the gold serif line, the gold scarf and (before the demotions) the
+    // gold vest and gold kicker chip. The ladder re-keys to the UP teal
+    // ramp with an ink label: the exhibit reads as DATA, the type block
+    // owns the frame's gold.
     for (let i = 0; i < barsN; i++) {
       const bh = 26 + i * 15;
       const bx2 = lx0 + i * (barW + 14);
-      ctx.fillStyle = i === barsN - 1 ? PALETTE.goldDisplay : rgba(PALETTE.gold, 0.55 + i * 0.07);
+      ctx.fillStyle = i === barsN - 1 ? PALETTE.upVivid : rgba(PALETTE.up, 0.55 + i * 0.07);
       roundRect(ctx, bx2, baseY - bh, barW, bh, 8);
       ctx.fill();
     }
-    // the cap — the ingot mark on the tallest bar
-    drawK(ctx, lx0 + (barsN - 1) * (barW + 14) + barW / 2, baseY - (26 + (barsN - 1) * 15) - 26, 15, 2.5, PALETTE.gold);
+    // the cap — the K mark on the tallest bar
+    drawK(ctx, lx0 + (barsN - 1) * (barW + 14) + barW / 2, baseY - (26 + (barsN - 1) * 15) - 26, 15, 2.5, PALETTE.up);
     // the label — right-aligned inside the card
     setFont(ctx, TYPE_FLOOR, 700);
     ctx.textAlign = 'right';
-    ctx.fillStyle = PALETTE.goldDeep;
+    ctx.fillStyle = PALETTE.ink;
     ctx.fillText('THE SIX EXITS', fx0 + fw - 24, fy0 + 44);
     ctx.restore();
   }
