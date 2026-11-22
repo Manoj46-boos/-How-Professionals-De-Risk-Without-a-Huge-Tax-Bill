@@ -262,6 +262,27 @@ export function lineChart(ctx: CanvasRenderingContext2D, opts: LineChartOpts): v
   const ticks: number[] = [];
   for (let v = v0; v <= yMax + step * 1e-6; v += step) ticks.push(Math.round(v * 1e6) / 1e6);
   if (!ticks.length) ticks.push(Math.round((yMin + yMax) / 2));
+  // F4 (review report F4 [P1] — DUPLICATED ADJACENT TICKS, verified as
+  // 86, 86, 85, 85, 84 on the collar floor chart at two timestamps): on
+  // narrow value ranges the default integer formatter rounds fractional
+  // ticks to the same integer. Two-stage fix:
+  //  1. default formatter only — pick the smallest decimal precision
+  //     (0 / 1 / 2 places) that renders every tick's label DISTINCT;
+  //  2. every formatter — suppress a label identical to the one above it;
+  //     the gridline still draws, the axis just never prints one value
+  //     twice. Named formats (pct / ndx / eci / idx100) keep their
+  //     semantics and only benefit from stage 2.
+  let fmt = label;
+  if (!yFormat) {
+    for (const dp of [0, 1, 2]) {
+      const probe = ticks.map((tv) => tv.toFixed(dp));
+      if (new Set(probe).size === probe.length) {
+        fmt = (tv: number): string => tv.toFixed(dp);
+        break;
+      }
+    }
+  }
+  let lastLabel: string | null = null;
   for (const v of ticks) {
     const gy = y + h - ((v - yMin) / span) * h;
     const isBase = v === ticks[ticks.length - 1];
@@ -278,7 +299,12 @@ export function lineChart(ctx: CanvasRenderingContext2D, opts: LineChartOpts): v
       const axScale = opts.axisScale ?? 1;
       setFont(ctx, Math.round(TYPE_FLOOR * axScale), opts.axisWeight ?? 400);
       ctx.fillStyle = opts.axisColor ?? PALETTE.inkFaint;
-      ctx.fillText(label(v), x - 14 * axScale, gy);
+      // F4 stage 2: no value prints twice in a row (see the block above)
+      const lv = fmt(v);
+      if (lv !== lastLabel) {
+        ctx.fillText(lv, x - 14 * axScale, gy);
+        lastLabel = lv;
+      }
     }
   }
   void gridLines;

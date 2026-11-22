@@ -94,7 +94,7 @@ function ledgerCard(
     if (fp > 0) {
       ctx.save();
       ctx.globalAlpha = fp;
-      setFont(ctx, 23, 600);
+      setFont(ctx, 24, 600);
       ctx.fillStyle = PALETTE.goldDeep;
       ctx.textAlign = 'left';
       ctx.fillText(foot, x + 30, y + h - 22);
@@ -488,12 +488,27 @@ export function srcCiteScene(g: SceneCtx): void {
   ctx.fillStyle = PALETTE.ink;
   ctx.textAlign = 'left';
   fitText(ctx, source, bx + 220, by + 128, bw - 320, 52, 700);
+  // F5 (review report F5 [P1] — SRC CITE REPEATS ITS OWN SENTENCE): the
+  // co-deal beat's detail prop says "every claim carries its source on
+  // screen" and the hardcoded gold kicker says "EVERY NUMBER CARRIES ITS
+  // SOURCE ON SCREEN" — the same sentence with one word swapped, printed
+  // twice on one card (verified at two timestamps, "a template error").
+  // The card's designed element is the gold kicker; when the detail line
+  // is the same sentence (token-overlap ≥ 70%), the detail yields — the
+  // card reads its sentence once.
+  const goldLine = 'EVERY NUMBER CARRIES ITS SOURCE ON SCREEN';
+  const toks = (v: string): Set<string> =>
+    new Set(v.toLowerCase().split(/[^a-z0-9]+/).filter(Boolean));
+  const dt = toks(detail), gt = toks(goldLine);
+  let overlap = 0;
+  dt.forEach((tk) => { if (gt.has(tk)) overlap++; });
+  const sameSentence = detail.length > 0 && overlap / Math.max(1, dt.size) >= 0.7;
   setFont(ctx, 36, 400);
   ctx.fillStyle = PALETTE.inkSoft;
-  ctx.fillText(detail, bx + 220, by + 200);
+  if (!sameSentence) ctx.fillText(detail, bx + 220, by + 200);
   setFont(ctx, 30, 600);
   ctx.fillStyle = PALETTE.goldDeep;
-  ctx.fillText('EVERY NUMBER CARRIES ITS SOURCE ON SCREEN', bx + 220, by + 254);
+  ctx.fillText(goldLine, bx + 220, by + (sameSentence ? 200 : 254));
   ctx.restore();
 }
 
@@ -660,23 +675,57 @@ export function napkinScene(g: SceneCtx): void {
   ctx.save();
   ctx.globalAlpha = ap;
   gildedCard(ctx, bx, by, bw, bh, rgba(PALETTE.gold, 0.3));
-  // the formula line builds word by word
-  let fx = bx + 90;
-  const fy = by + 170;
-  for (let i = 0; i < formula.length; i++) {
-    const wp = clamp01((t - 300 - i * 330) / 400);
-    if (wp <= 0) break;
-    ctx.save();
-    ctx.globalAlpha = wp;
-    const word = formula[i];
+  // F2 (review report F2 [P0] — THE PUNCHLINE NEVER APPEARS): the words
+  // marched left-to-right from a fixed origin with no fit check — on the
+  // $1M-account beat the line ran past the card edge and "$1,700 of usable
+  // losses" (the expression's punchline) was clipped at BOTH sampled
+  // timestamps. The formula now WRAPS: a greedy line packer (each word
+  // measured at its own size), each line shrunk only as far as it needs
+  // (floor 0.62) to fit the card's inner width, baselines stepping down.
+  // The word-by-word reveal clocks are untouched — same sequence, same
+  // timing, scrub-safe.
+  const innerW = bw - 180;
+  const measureWord = (word: string): { w: number; isOp: boolean } => {
     const isOp = word.length <= 2 && /[÷=×+\u2192]/.test(word);
     setFont(ctx, isOp ? 96 : 74, isOp ? 400 : 700, FONT_DISPLAY);
-    ctx.fillStyle = isOp ? PALETTE.goldDeep : PALETTE.ink;
-    ctx.textAlign = 'left';
-    ctx.fillText(word, fx, fy);
-    fx += ctx.measureText(word).width + (isOp ? 44 : 30);
-    ctx.restore();
+    return { w: ctx.measureText(word).width + (isOp ? 44 : 30), isOp };
+  };
+  type NapLine = { words: string[]; widths: number[]; ops: boolean[]; total: number };
+  const lines: NapLine[] = [];
+  let cur: NapLine = { words: [], widths: [], ops: [], total: 0 };
+  for (const word of formula) {
+    const m = measureWord(word);
+    if (cur.words.length && cur.total + m.w > innerW) {
+      lines.push(cur);
+      cur = { words: [], widths: [], ops: [], total: 0 };
+    }
+    cur.words.push(word);
+    cur.widths.push(m.w);
+    cur.ops.push(m.isOp);
+    cur.total += m.w;
   }
+  if (cur.words.length) lines.push(cur);
+  const lineH = 118;
+  let wi = 0;
+  lines.forEach((ln, li) => {
+    const fy = by + 150 + li * lineH;
+    // shrink this line only as far as it needs
+    const k = ln.total > innerW ? Math.max(0.62, innerW / ln.total) : 1;
+    let fx = bx + 90 + (innerW - ln.total * k) / 2;
+    for (let j = 0; j < ln.words.length; j++, wi++) {
+      const wp = clamp01((t - 300 - wi * 330) / 400);
+      if (wp <= 0) continue;
+      ctx.save();
+      ctx.globalAlpha = wp;
+      const isOp = ln.ops[j];
+      setFont(ctx, (isOp ? 96 : 74) * k, isOp ? 400 : 700, FONT_DISPLAY);
+      ctx.fillStyle = isOp ? PALETTE.goldDeep : PALETTE.ink;
+      ctx.textAlign = 'left';
+      ctx.fillText(ln.words[j], fx, fy);
+      fx += ln.widths[j] * k;
+      ctx.restore();
+    }
+  });
   if (note) {
     const np = clamp01((t - 300 + formula.length * 330) / 500);
     if (np > 0) {
@@ -765,7 +814,7 @@ export function lockupScene(g: SceneCtx): void {
     ctx.fillStyle = vested ? PALETTE.white : PALETTE.inkSoft;
     ctx.textAlign = 'center';
     ctx.fillText(vested ? '100%' : '0%', sx2 + stepW / 2, stepY + 46);
-    setFont(ctx, 17, 600);
+    setFont(ctx, 24, 600);
     ctx.fillStyle = vested ? rgba(PALETTE.white, 0.9) : PALETTE.inkSoft;
     ctx.fillText(vested ? 'VESTED' : 'LIQUID', sx2 + stepW / 2, stepY + 78);
     ctx.restore();
@@ -1327,7 +1376,7 @@ export function taxMineScene(g: SceneCtx): void {
     ctx.fillStyle = active ? PALETTE.ink : PALETTE.inkSoft;
     ctx.textAlign = 'left';
     ctx.fillText(hazards[i][0], hx2 + 26, hzY + 48);
-    setFont(ctx, 19, 600);
+    setFont(ctx, 24, 600);
     ctx.fillStyle = active ? PALETTE.down : PALETTE.inkSoft;
     ctx.fillText(hazards[i][1], hx2 + 26, hzY + 86);
     // the mine glyph — a small oxblood diamond on every card
@@ -1482,7 +1531,7 @@ export function ruleChangeScene(g: SceneCtx): void {
     roundRect(ctx, 190, bandY, 640, bandH, 16);
     ctx.fill();
     registerRect('ruleChange:old', 190, bandY, 640, bandH);
-    setFont(ctx, 20, 700);
+    setFont(ctx, 22, 700);
     ctx.fillStyle = PALETTE.inkSoft;
     ctx.textAlign = 'left';
     ctx.fillText(ch2[0], 220, bandY + 40);
@@ -1508,7 +1557,7 @@ export function ruleChangeScene(g: SceneCtx): void {
     roundRect(ctx, 1030, bandY, 700, bandH, 16);
     ctx.stroke();
     registerRect('ruleChange:new', 1030, bandY, 700, bandH);
-    setFont(ctx, 20, 700);
+    setFont(ctx, 22, 700);
     ctx.fillStyle = PALETTE.goldDeep;
     ctx.textAlign = 'left';
     ctx.fillText('OBBBA 2026', 1060, bandY + 40);
@@ -1669,6 +1718,15 @@ export function decisionTableScene(g: SceneCtx): void {
     ['Levered L/S', 'Fast, tax-deferred exit', 'Scale · leverage tolerance', 'Fee- or leverage-averse'],
   ];
   const visible = mode === 'intro' ? 0 : mode === 'full' ? 6 : Number(mode.slice(4));
+  // F3 (review report F3 [P0] — decisionTable NEVER DRAWS ITS HERO): the
+  // 12-second intro beat gated rows to zero — at 60% and 85% of the beat
+  // the frame held only the title and four column labels while the VO
+  // narrates "six tools, six jobs, six kill conditions". The intro now
+  // draws the STRUCTURE: all six rows as a ghost map — the exit names
+  // readable, the detail columns as soft placeholder bars the row-N beats
+  // then fill in. The beat's entire point is on screen from its first
+  // third.
+  const ghost = mode === 'intro';
   const colX = [190, 510, 890, 1300];
   const colW = [310, 370, 400, 420];
   const rowY0 = 290, rowH = 100;
@@ -1692,27 +1750,40 @@ export function decisionTableScene(g: SceneCtx): void {
     ctx.stroke();
     ctx.restore();
   }
-  for (let r = 0; r < visible; r++) {
-    const rp = clamp01((t - 350 - r * 320) / 550);
-    if (rp <= 0) continue;
-    const y = rowY0 + r * rowH;
+  for (let r = 0; r < (ghost ? 6 : visible); r++) {
+    const rpRaw = clamp01((t - 350 - r * 320) / 550);
+    const rp = ghost ? rpRaw * 0.55 : rpRaw;
+    if (rpRaw <= 0) continue;
+    // ghost rows compress (82px pitch) so row 6 bottoms at ~786 — clear of
+    // the caption-pill envelope the guard flagged on the first render
+    const y = rowY0 + r * (ghost ? 82 : rowH);
     ctx.save();
     ctx.globalAlpha = rp;
     if (r % 2 === 0) {
       ctx.fillStyle = rgba(PALETTE.card, 0.9);
-      roundRect(ctx, colX[0] - 16, y - 6, colX[3] + colW[3] - colX[0] + 32, rowH - 14, 16);
+      roundRect(ctx, colX[0] - 16, y - 6, colX[3] + colW[3] - colX[0] + 32, (ghost ? 82 : rowH) - 14, 16);
       ctx.fill();
     }
     setFont(ctx, 32, 700, FONT_DISPLAY);
     ctx.fillStyle = PALETTE.goldDeep;
     ctx.fillText(ROWS[r][0], colX[0], y + 40);
-    setFont(ctx, 29, 600);
-    ctx.fillStyle = PALETTE.ink;
-    ctx.fillText(ROWS[r][1], colX[1], y + 36);
-    ctx.fillStyle = PALETTE.inkSoft;
-    ctx.fillText(ROWS[r][2], colX[2], y + 36);
-    ctx.fillStyle = PALETTE.down;
-    ctx.fillText(ROWS[r][3], colX[3], y + 36);
+    if (ghost) {
+      // the placeholder bars: the row's detail columns await their beats
+      ctx.fillStyle = rgba(PALETTE.ink, 0.14);
+      for (const c of [1, 2, 3]) {
+        roundRect(ctx, colX[c], y + 14, Math.min(colW[c] - 60, 220), 22, 8);
+        ctx.fill();
+      }
+      registerRect('decisionTable:ghostRow' + r, colX[0] - 16, y - 6, colX[3] + colW[3] - colX[0] + 32, (ghost ? 82 : rowH) - 14);
+    } else {
+      setFont(ctx, 29, 600);
+      ctx.fillStyle = PALETTE.ink;
+      ctx.fillText(ROWS[r][1], colX[1], y + 36);
+      ctx.fillStyle = PALETTE.inkSoft;
+      ctx.fillText(ROWS[r][2], colX[2], y + 36);
+      ctx.fillStyle = PALETTE.down;
+      ctx.fillText(ROWS[r][3], colX[3], y + 36);
+    }
     ctx.restore();
   }
   if (mode === 'full') {

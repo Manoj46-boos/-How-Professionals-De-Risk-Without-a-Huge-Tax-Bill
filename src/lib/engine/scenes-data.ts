@@ -1097,12 +1097,18 @@ export function dotGridScene(g: SceneCtx): void {
       const cp = clamp01((t - 2700) / 800);
       const n = Math.max(1, Math.round(10 * easeOutCubic(cp)));
       const count = `${n} of 500`;
-      const caption = s.caption as string;
+      // F1 (review report F1 [P0] — THE LITERAL STRING undefined RENDERS ON
+      // SCREEN): the caption prop is optional and both c1-bess beats shipped
+      // without one — `s.caption as string` put the literal word "undefined"
+      // on the canvas next to the gold count (verified at 60% and 80% of the
+      // beat). A missing label variable must never reach the renderer: the
+      // caption falls back to the empty string and the count centers alone.
+      const caption = (s.caption as string | undefined) ?? '';
       setFont(ctx, 38, 700);
       const cw = ctx.measureText(count).width;
       setFont(ctx, 34, 700);
-      const tw = ctx.measureText(caption).width;
-      const gap = 26;
+      const tw = caption ? ctx.measureText(caption).width : 0;
+      const gap = caption ? 26 : 0;
       const total = cw + gap + tw;
       const x0 = W / 2 - total / 2;
       const y = (1008 / 1080) * H;
@@ -1111,9 +1117,11 @@ export function dotGridScene(g: SceneCtx): void {
       ctx.textAlign = 'left';
       ctx.fillStyle = PALETTE.goldDeep;
       ctx.fillText(count, x0, y);
-      setFont(ctx, 34, 700);
-      ctx.fillStyle = PALETTE.ink;
-      ctx.fillText(caption, x0 + cw + gap, y);
+      if (caption) {
+        setFont(ctx, 34, 700);
+        ctx.fillStyle = PALETTE.ink;
+        ctx.fillText(caption, x0 + cw + gap, y);
+      }
       setFont(ctx, 34, 600);
       ctx.fillStyle = PALETTE.inkFaint;
       ctx.textAlign = 'center';
@@ -1500,7 +1508,9 @@ export function trioConvergeScene(g: SceneCtx): void {
     setFont(ctx, 40, 700);
     ctx.fillStyle = PALETTE.goldDeep;
     ctx.fillText(motto, W / 2, (1000 / 1080) * H);
-    setFont(ctx, 34, 600);
+    // F6: the sub-caption rides the TYPE_FLOOR (40px) — 34px bypassed the
+    // theme's own must-read floor (the report's "and friends" class).
+    setFont(ctx, 40, 600);
     ctx.fillStyle = PALETTE.inkSoft;
     ctx.fillText(s.sub as string, W / 2, (1035 / 1080) * H);
     ctx.restore();

@@ -275,6 +275,10 @@ export const SCRIPT: ChapterSpec[] = [
           title: 'Bessembinder — where the wealth came from, 1926\u20132016',
           total: 100,
           highlight: 4,
+          // F1: the caption prop the scene's count-up block reads — both
+          // beats shipped without it and the literal word "undefined" hit
+          // the canvas. Copy from the beat's own narration.
+          caption: 'names — all the net wealth creation',
           src: 'Bessembinder, \u201cDo Stocks Outperform Treasury Bills?\u201d, JFE 2018',
         }),
       },
@@ -286,6 +290,7 @@ export const SCRIPT: ChapterSpec[] = [
           total: 100,
           highlight: 4,
           mode: 'rest-note',
+          caption: 'matched Treasury bills, collectively',
           src: 'Bessembinder, \u201cDo Stocks Outperform Treasury Bills?\u201d, JFE 2018',
         }),
       },

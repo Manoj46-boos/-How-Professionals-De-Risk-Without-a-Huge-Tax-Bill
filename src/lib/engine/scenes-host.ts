@@ -628,7 +628,7 @@ export function hostSceneV2(g: SceneCtx): void {
       ctx.moveTo(80, slugY - 22);
       ctx.lineTo(80, slugY + 22);
       ctx.stroke();
-      setFont(ctx, 20, 700);
+      setFont(ctx, 22, 700);
       ctx.fillStyle = PALETTE.inkSoft;
       ctx.textAlign = 'left';
       ctx.fillText('CHAPTER ' + roman, 100, slugY + 8);
@@ -1093,15 +1093,29 @@ export function hostSceneV2(g: SceneCtx): void {
     ctx.fillStyle = PALETTE.gold;
     roundRect(ctx, hx2, hairY, 96, 6, 3);
     ctx.fill();
-    setFont(ctx, 34, 400);
+    // F6 (review report F6 [P1] — SUB-CAPTIONS RENDER BELOW THE READABILITY
+    // FLOOR): the editorial sub sat at 34px — under this film's own
+    // TYPE_FLOOR (40px) for must-read text, its x-height ~18-20px at 1080p
+    // (the report's measurement), mush at the 320px twin ("The risk of
+    // holding is enormous and probabilistic", verified). The floor exists
+    // in theme.ts; this call site bypassed it. Raised to the floor: 40px,
+    // wrap budget and line pitch follow.
+    setFont(ctx, 40, 400);
     ctx.fillStyle = PALETTE.inkSoft;
     // PHASE-6 (report Table 2 receipt 1): the derived sub-copy ran off the
     // right frame edge, clipped mid-word, no wrap. Each explicit line now
     // WRAPS to the text column (the same wrapText the cards use); the
     // yield-to-K-fig-panel budget applies to the wrapped lines.
     const colW = W - 96 - hx2;
-    const subLines = sub.split('\n').flatMap((ln) => wrapText(ctx, ln, colW, 34, 400));
-    const maxSub = Math.max(1, Math.floor((596 - (hairY + 72)) / 44));
+    const subLines = sub.split('\n').flatMap((ln) => wrapText(ctx, ln, colW, 40, 400));
+    // F6 budget: pitch 44 (1.1 line-height at the 40px floor) and a rounded
+    // budget — a wrapped sub COMPLETES above the K-fig panel (fy0 604):
+    // two lines from a 2-line headline end at ~571, clear by 33px. The old
+    // floored budget truncated a wrapped sub mid-sentence ("...enormous and"
+    // without its "probabilistic").
+    const colW2 = W - 96 - hx2;
+    void colW2;
+    const maxSub = Math.max(1, Math.round((596 - (hairY + 72)) / 44));
     subLines.slice(0, Math.max(1, maxSub)).forEach((ln, i) => ctx.fillText(ln, hx2, hairY + 72 + i * 44));
     ctx.restore();
   }
