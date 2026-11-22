@@ -48,7 +48,14 @@ export const AMP = {
    *  stroke-shared 60% coupling keeps it a CURVE wobble, not a shiver.
    *  The sub-1.5 clean-vector gate is untouched (half a texture reads
    *  worse than none — the verdict's own call). */
-  boilPx: 2.2,
+  boilPx: 1.2,
+  /* A7 MARKET-STANDARD FIX (review report A7 [P2] — THE AGITATED STILL):
+   * the three boil systems (pose jitter, width texture, head contour) ran
+   * at independent registers and the combined still-frame read was
+   * nervous next to the smooth typography. ONE calm register now: 2.2 →
+   * 1.2 local (≈ 2.5px screen at the hero rig, under the 4-6px caps) —
+   * the head contour rides the SAME boilOff() clock as the body, so the
+   * unification is structural: one amplitude, one clock, every stroke. */
   /** Contrapposto idle weight shift, px.
    *  AUDIT-ROUND-3: 15 -> 8 — the hip settle reads without the sway of a
    *  boat.
@@ -222,12 +229,14 @@ export const HERO = {
  *  (19/30 → 21/32) so the silhouette keeps its dark-mass band with the
  *  limbs out of the way. */
 export const INK = {
-  /** Near arm taper: shoulder → elbow → wrist (B1: 23.6/17.7/13 → 10/8/6). */
-  armNear: [10, 8, 6] as [number, number, number],
+  /** Near arm taper: shoulder → elbow → wrist (B1: 23.6/17.7/13 → 10/8/6;
+   *  A3 fix: 10/8/6 → 11/9/7 — one step off the pipe read, per the review). */
+  armNear: [11, 9, 7] as [number, number, number],
   /** Far arm taper (B1: 17.7/14.2/10.6 → 8/6.5/5). */
   armFar: [8, 6.5, 5] as [number, number, number],
-  /** Near leg taper (B1: 29.5/22.4/16.5 → 13/10/7). */
-  legNear: [13, 10, 7] as [number, number, number],
+  /** Near leg taper (B1: 29.5/22.4/16.5 → 13/10/7;
+   *  A3 fix: 13/10/7 → 14/11/8 — one step off the pipe read, per the review). */
+  legNear: [14, 11, 8] as [number, number, number],
   /** Far leg taper (B1: 23.6/17.7/13 → 10.6/8.5/6.5). */
   legFar: [10.6, 8.5, 6.5] as [number, number, number],
   /** Torso taper: hips → shoulders (B1: 19/30 → 21/32 — the torso, not the
