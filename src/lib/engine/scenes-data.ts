@@ -173,7 +173,11 @@ export function hostSmall(
   // window the caller's presenting cycle owns the figure. Chapter-opener
   // chart call sites pass this; mid-chapter staging keeps the standing
   // entry. Pure f(t), scrub-safe.
-  walkEnter?: number
+  walkEnter?: number,
+  // 2.2 (review report §2.2): which hand carries the prop — 'near' (default,
+  // the presenting hand) or 'far' (the off hand, when the near hand is bound
+  // to a contact target). LAST position — existing call sites are untouched.
+  propSide?: 'near' | 'far'
 ): void {
   // v10 (panel CHAR-1/CHAR-3): the side host CYCLES through a gesture set
   // instead of holding one pose for the whole scene — "two poses: shrug,
@@ -373,7 +377,10 @@ export function hostSmall(
       // P2 (Verdict report — CARRIED-PROP VERBS): the scene's hand prop,
       // ledger-resolved by the call site (holdCard on statCards, coinStack
       // on dotGrid). Drawn at the near hand — held, never floating.
+      // 2.2: propSide routes it to the far hand when the near hand is
+      // bound to the scene's contact target (the grip/touch verbs own it).
       prop,
+      propSide,
       // B6: the split-draw phase — 'far' renders shadow + far limbs only,
       // 'rest' from the near leg onward (the contact solve runs in both).
       phase,

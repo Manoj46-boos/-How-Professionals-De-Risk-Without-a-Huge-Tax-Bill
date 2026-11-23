@@ -241,7 +241,9 @@ export const PROP_LEDGER: Record<string, string[]> = {
   // decisionTable presenter holds the framework card. The props the film
   // owns fire in the beats whose objects they are.
   holdCard: ['statCards', 'taxStack', 'decisionTable'],
-  coinStack: ['dotGrid', 'taxStack'],
+  // 2.2 (review report §2.2): the six-exits reprise beats — the host
+  // balances the coin stack as each exit lights on the framework rail.
+  coinStack: ['dotGrid', 'taxStack', 'host'],
 };
 
 export interface PropUsage {
@@ -290,6 +292,17 @@ const PROP_DRAWS_RUN = new Set<string>();
 
 export function resetPropRunStats(): void {
   PROP_DRAWS_RUN.clear();
+}
+
+/** 2.2 GATE METRIC (review report §2.2 — "make prop-draw count a gate
+ *  metric"): the harness reads this frame's resolved prop requests. */
+export function propUsage(): PropUsage[] {
+  return PROP_USAGE.slice();
+}
+
+/** 2.2 GATE METRIC: the props that actually DREW this frame (per-frame set). */
+export function propDraws(): string[] {
+  return [...PROP_DRAWS];
 }
 
 /** Director/harness reset — per frame, like the rest of the guard state. */

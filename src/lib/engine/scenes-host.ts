@@ -756,6 +756,17 @@ export function hostSceneV2(g: SceneCtx): void {
   // out of reach from every guard-clean block; the held card is the verb
   // the report itself benchmarked.)
   const verbRule = (g.s.verb as string | undefined) === 'card' && stage === 'spot';
+  // 2.2 (review report §2.2 — THE SIX-EXITS BEAT): on a chapter close that
+  // carries reprise: N the host BALANCES THE COIN STACK as each exit lights
+  // — the exit counter ticks while the stack sways on his palm. Ledger-
+  // resolved (scene-props: coinStack now allows the host scenes). The
+  // resolution short-circuits on verb beats: beats that hold the exhibit
+  // card keep the card (a group's merged props can carry reprise onto the
+  // verb beat — resolving an unused prop there would be a dead promise the
+  // prop gate would flag).
+  const repriseN = Number(g.s.reprise ?? 0);
+  const repriseProp = repriseN > 0 && !verbRule && resolveProp('host', 'coinStack', true)
+    ? ('coinStack' as const) : undefined;
   const hxTarget = blockFor(g.sentenceId);
   // PANEL-12 / P1-1: the editorial host uses walkIn() — the old branch
   // eased his POSITION while holding an idle pose, which is the foot-slide
@@ -1041,7 +1052,9 @@ export function hostSceneV2(g: SceneCtx): void {
       // B2: the held exhibit card on verb beats — the hand connects to an
       // object every frame (pointAt keeps enforcing the text clearance for
       // the card-holding arm as well).
-      prop: verbRule ? ('holdCard' as const) : undefined,
+      // 2.2: the reprise beats swap the verb for the coin stack — the exit
+      // counter ticks as the host balances the count on his palm.
+      prop: verbRule ? ('holdCard' as const) : repriseProp,
       // E3 MARKET-STANDARD FIX (review report E3 [P0] — hb-2/hb-5/hb-8):
       // the enforce band began at y 158 — BELOW the chapter chip (the
       // "the both-sides beat" chip rides y 96-140), so the raised exhibit

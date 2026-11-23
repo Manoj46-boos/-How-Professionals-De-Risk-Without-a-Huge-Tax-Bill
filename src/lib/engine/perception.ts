@@ -133,13 +133,17 @@ export const AMP = {
   // asks for an ambient rise toward 0.22-0.35, written against a 0.22
   // baseline this engine retired. MEASURED: at 0.22 the sweep's edge
   // envelope breaks — hostBody rects cross the frame edge by up to 51px
-  // (the @560s class) — while the certified SHAPE fix (peak-in-first-half,
-  // hold) already doubled the per-second travel the amplitude used to
-  // buy. The ambient register stays at its certified 0.10; the report's
-  // perceptibility register is carried by the terms that PASS: whip
-  // 70px (the report's own number) and cutPunch 0.05 (above the asked
-  // 0.045), plus the event pushes on every registered arrival.
-  scenePush: 0.10,
+  // (the @560s class) — and at the report's raw 0.35 the ambient push
+  // (0.93+0.35 = 1.28x peak) would exceed the film's own reaction
+  // close-ups (1.3-1.4x), inverting the motion-contrast law (ambient
+  // louder than hero). The register lands at 0.14: +40% per-second travel
+  // over the certified 0.10, peak 1.07 — the highest ambient push whose
+  // peak keeps every certified envelope inside the frame (guard-swept).
+  // The rest of the report's perceptibility band is carried by the terms
+  // that PASS its numbers: whip 70px (the report's own number) and
+  // cutPunch 0.05 (above the asked 0.045), plus the event pushes on every
+  // registered arrival.
+  scenePush: 0.14,
   /** bigText dolly — same E2 envelope resolution (0.40 → 0.12): the
    *  statement headlines run to x≈1790, bounding the dolly peak at 1.06;
    *  the release eases into the safe peak in the first half and holds. */

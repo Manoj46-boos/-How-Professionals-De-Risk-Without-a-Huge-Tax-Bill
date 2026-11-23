@@ -1429,6 +1429,15 @@ export function drawStickmanV2(
      * on the near palm (the counting beats). Silhouette events, ledger-
      * governed like every other prop. */
     prop?: 'coffee' | 'thumb' | 'holdCard' | 'coinStack';
+    /** 2.2 (review report §2.2 — HELD PROPS ON EVERY STAT BEAT): which hand
+     *  carries the prop. 'near' (default) rides the presenting hand; 'far'
+     *  moves holdCard to the far hand so a scene whose NEAR hand is bound
+     *  to a contact target (the row-plate grip, the verdict touch) can
+     *  still HOLD an object — the hold and the touch stop competing for
+     *  the same hand, and the held card can never plate the content the
+     *  near hand is presenting. same limb math as the briefcase/lunchbox
+     *  far-hand props. */
+    propSide?: 'near' | 'far';
     /** v10.1 (panel 11 re-review): register the FULL-BODY envelope as a
      * 'host' rect for the guard's host-vs-content check. Side hosts /
      * walk hosts set this; diagram characters (ownerWorker figures, the
@@ -2759,10 +2768,18 @@ export function drawStickmanV2(
     // card leans off the forearm (a held object, never a floating decal).
     // White card, gold number band, ink outline: a miniature of the film's
     // stat-card language, drawn at the near hand so the hold is exact.
+    // 2.2 (propSide 'far'): when the scene binds the NEAR hand to a contact
+    // target, the card rides the FAR hand instead — the hold and the touch
+    // split across the two hands, and the card lands on the presenter's
+    // off side, clear of the content the near hand is landing on. Mirrored
+    // lean (the card tips toward the body's near side).
     notePropDraw('holdCard');
+    const farHold = r.propSide === 'far' && farHandRef;
+    const hx0 = farHold ? farHandRef!.ex - 10 : hand.ex + 10;
+    const hy0 = farHold ? farHandRef!.ey - 26 : hand.ey - 26;
     ctx.save();
-    ctx.translate(hand.ex + 10, hand.ey - 26);
-    ctx.rotate(-0.12 + Math.sin(t / 900 + seed) * 0.02);
+    ctx.translate(hx0, hy0);
+    ctx.rotate((farHold ? 0.12 : -0.12) + Math.sin(t / 900 + seed) * 0.02);
     ctx.fillStyle = PALETTE.card;
     roundRect(ctx, -4, -30, 52, 64, 7);
     ctx.fill();
@@ -2781,7 +2798,7 @@ export function drawStickmanV2(
     ctx.restore();
     // the grip bar across the card edge — the fingers wrap the short side
     ctx.fillStyle = ink;
-    roundRect(ctx, hand.ex + 2, hand.ey - 34, 12, 30, 5);
+    roundRect(ctx, (farHold ? farHandRef!.ex - 14 : hand.ex + 2), hy0 - 8, 12, 30, 5);
     ctx.fill();
   }
   if (r.prop === 'coinStack') {

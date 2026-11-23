@@ -14,6 +14,19 @@ import { HERO } from './perception';
 import { drawStickmanV2 } from './stickman-v2';
 import { wrapText } from './charts';
 import { registerRect } from './collision';
+// 4.2 (review report §4.2 — FIGURE COVERAGE AS A GATE): the statement/text
+// beats register their content mass as the frame's hero object — the type
+// block IS the frame's content on these beats, and the coverage gate needs
+// it in the registry (a slammed headline is not a bare slide).
+import { registerHeroObject } from './composition';
+
+/** 4.2: the shared statement-block registration — one call per text scene. */
+function registerStatementMass(g: SceneCtx, wFrac: number, hFrac: number, label: string): void {
+  registerHeroObject(
+    g.beat.scene.sceneKey ?? g.beat.scene.type, label,
+    g.W * wFrac, g.H * hFrac, g.W, g.H,
+  );
+}
 
 function bg(g: SceneCtx, seed: number, gold = 0.4, strength = 0.72, bokeh = 0.85, furniture = true): void {
   paintBg(g.ctx, g.W, g.H, g.t, g.chapterTone);
@@ -37,6 +50,7 @@ function bg(g: SceneCtx, seed: number, gold = 0.4, strength = 0.72, bokeh = 0.85
 // ── bigText: the hard cut ────────────────────────────────────────────────────
 export function bigTextScene(g: SceneCtx): void {
   const { ctx, W, H, t, s } = g;
+  registerStatementMass(g, 0.74, 0.30, 'statement-block'); // 4.2
   paintBg(ctx, W, H, t, g.chapterTone);
   // P1-2 (report §12.2): the hard cut lands in a ROOM, not on a lightbox —
   // the 118px statement reads louder against a tinted field than against
@@ -312,11 +326,16 @@ export function bigTextScene(g: SceneCtx): void {
       ctx.fillText('NEXT —', nvX + 26, rowY + rowH2 / 2 + 9);
       setFont(ctx, 25, 600);
       ctx.fillStyle = PALETTE.ink;
-      const nxW2 = nvW - 124;
+      // 4.4 polish (rendered-evidence conviction): the title drew at nvX+104
+      // — INSIDE the 'NEXT —' label's own width (~85px at 25px/700) — so the
+      // label and the title printed as one run-on string. The title anchors
+      // past the label's measured width + a 14px gap; the truncation budget
+      // shrinks by the same amount.
+      const nxW2 = nvW - 148;
       let nvT = nvTitle.toUpperCase();
       while (ctx.measureText(nvT).width > nxW2 && nvT.length > 8) nvT = nvT.slice(0, -2);
       if (nvT !== nvTitle.toUpperCase()) nvT += '…';
-      ctx.fillText(nvT, nvX + 104, rowY + rowH2 / 2 + 9);
+      ctx.fillText(nvT, nvX + 128, rowY + rowH2 / 2 + 9);
       ctx.restore();
     }
   }
@@ -325,6 +344,7 @@ export function bigTextScene(g: SceneCtx): void {
 // ── stampCard: "RECORD HIGHS — ACCURATE" ─────────────────────────────────────
 export function stampCardScene(g: SceneCtx): void {
   const { ctx, W, H, t, s } = g;
+  registerStatementMass(g, 0.52, 0.44, 'stamp-card'); // 4.2
   // P1-2 + panel re-review: the stamp SLAMS — it gets the deep room (0.88)
   // P2-3: and NO bokeh — the stamp is a statement beat, typography owns
   // the frame alone.
@@ -529,6 +549,7 @@ export function stampCardScene(g: SceneCtx): void {
 // the hairline like a hand on a desk. Editorial furniture, not a box.
 export function quoteCardScene(g: SceneCtx): void {
   const { ctx, W, H, t, s } = g;
+  registerStatementMass(g, 0.60, 0.34, 'quote-block'); // 4.2
   bg(g, 231, 0.4, 0.72, 0.45, false); // P2-3: typography-forward beat — bokeh whisper, not 0.85; PHASE-0: furniture OFF
   const soft = !!s.soft;
   const lines = (s.lines as string[]) || [];
@@ -747,6 +768,7 @@ export function quoteCardScene(g: SceneCtx): void {
 // ── takeaways: numbered cards 1-2-3 ──────────────────────────────────────────
 export function takeawaysScene(g: SceneCtx): void {
   const { ctx, W, H, t, s } = g;
+  registerStatementMass(g, 0.70, 0.24, 'takeaways-row'); // 4.2
   bg(g, 241, 0.5);
   const focus = (s.focus as number) ?? 0;
   // QA-SWEEP: x 110→180, y 150→205 — the raised camera register (scenePush
@@ -1031,6 +1053,7 @@ function sceneTitleLocal(
 // ── commentPrompt: bubbles + the question ────────────────────────────────────
 export function commentPromptScene(g: SceneCtx): void {
   const { ctx, W, H, t, s } = g;
+  registerStatementMass(g, 0.50, 0.20, 'prompt-card'); // 4.2
   bg(g, 251, 0.5);
   const q = s.question as string;
   const ap = clamp01(t / 800);
@@ -1150,6 +1173,7 @@ export function commentPromptScene(g: SceneCtx): void {
 // only (previewMode=true) — never in the final encode.
 export function endScreenScene(g: SceneCtx): void {
   const { ctx, W, H, t, channelName, nextVideoTitle } = g;
+  registerStatementMass(g, 0.62, 0.22, 'end-furniture'); // 4.2
   const showHints = (g as any).previewMode === true; // studio preview only
   paintBg(ctx, W, H, t, g.chapterTone);
   // P1-2 (report §12.2): the farewell lands in the gold room — the last

@@ -244,15 +244,26 @@ export function crossChartScene(g: SceneCtx): void {
   // the presenter physically touches the crossing.
   if (mode === 'cross-marked' || mode === 'delta') {
     // 2.1: the presenter stands IN the data to touch the crossing — the
-    // designed host-over-chart depth beat; the guard is told which rects
-    // the host may overlap (the plot he stands before, the mark chip he
-    // presents).
-    declareHostContact('lineChart:plot@310', 'chip:JULY 2024 — TH');
-    hostSmall(g, cx + cw * 0.88 - 130, 'pointR', 31, g.H * 0.66, 1.3, 0, 'aha', 1.4, 1, true, 0.4,
+    // designed host-over-chart depth beat; the guard is told the plot he
+    // stands before. (The mark chip no longer needs the exemption: it
+    // moved ABOVE the dot, clear of the presenter's envelope — see below.)
+    declareHostContact('lineChart:plot@310');
+    // 4.1 (review report §4.1 — THE COLD OPEN, RESTAGED): on the delta beat
+    // the $100B verdict owns the window — the reaction envelope opens with
+    // it (the take fires ON the number: the 2-frame hold, the brow
+    // overshoot, the gasp), so the film's opening argument lands as a
+    // STAGED EVENT, not a chart with a card on it.
+    const deltaReaction = mode === 'delta' ? clamp01((t - 1100) / 500) : 0;
+    hostSmall(g, cx + cw * 0.88 - 130, 'pointR', 31, g.H * 0.68, 1.3, deltaReaction,
+      mode === 'delta' ? 'shock' : 'aha', 1.4, 1, true, 0.4,
       undefined, undefined, { x: cx + cw * 0.88, y: cy + ch * 0.36, hand: 'palm', easeAt: 900 },
       undefined, undefined, undefined, undefined, 900);
   } else {
-    hostSmall(g, 130, 'pointR', 31, g.H * 0.66, 1.3, 0, 'aha', 1.4, 1, true, 0.4);
+    // 4.1: the cold open's FACE arrives inside the first three seconds —
+    // the walk-in window (sceneT-based, fires once per group) starts the
+    // film with the presenter walking to his mark, not fading in.
+    hostSmall(g, 130, 'pointR', 31, g.H * 0.66, 1.3, 0, 'aha', 1.4, 1, true, 0.4,
+      undefined, undefined, undefined, undefined, undefined, undefined, undefined, 2200);
   }
 
   // the HOLD chip — the thesis in one word
@@ -279,7 +290,12 @@ export function crossChartScene(g: SceneCtx): void {
       ctx.beginPath();
       ctx.arc(xPx, yPx, 26 + Math.sin(t / 300) * 3, 0, Math.PI * 2);
       ctx.stroke();
-      chip(ctx, 'JULY 2024 — THE CROSSING', xPx - 210, yPx + 44, { size: 30, bg: PALETTE.goldWash, fg: PALETTE.goldDeep, border: rgba(PALETTE.gold, 0.6) });
+      // 2.1/B1 FIX (rendered-evidence conviction): the mark chip moved ABOVE
+      // the dot, left of the ledger column — the old below-dot anchor put the
+      // presenter's torso ON the label (his feet planted on the text in the
+      // evidence frame). Above the dot it labels the crossing without
+      // intersecting the presenter, the ledger card or the $100B verdict.
+      chip(ctx, 'JULY 2024 — THE CROSSING', xPx - 330, yPx - 96, { size: 30, bg: PALETTE.goldWash, fg: PALETTE.goldDeep, border: rgba(PALETTE.gold, 0.6) });
       ctx.restore();
     }
   }
@@ -692,7 +708,12 @@ export function taxStackScene(g: SceneCtx): void {
     ctx.save();
     ctx.globalAlpha = bp;
     ctx.fillStyle = rgba(TONE(r.tone).main, 0.85 - i * 0.12);
-    roundRect(ctx, bx, y, bw, hgt, 18);
+    // 3.2 (review report §3.2 — THE EVENT VOCABULARY): every bar landing
+    // pops on landPulse at its doneAt — the plate springs 6% tall for one
+    // decay window as it lands (the pulse existed and was rarely driven;
+    // the bill's rows now join the certified bar-landing grammar).
+    const land = landPulse(t - (350 + i * 400 + 750));
+    roundRect(ctx, bx, y, bw, hgt * (1 + 0.06 * land), 18);
     ctx.fill();
     // the % numeral rides INSIDE when the bar is tall enough, otherwise
     // just right of it; the label sits above-right in the quiet zone
@@ -768,17 +789,28 @@ export function taxStackScene(g: SceneCtx): void {
       undefined, undefined, { x: 196, y: 600, hand: 'palm' }, undefined, undefined,
       resolveProp('taxStack', 'coinStack', true) ? 'coinStack' : undefined);
   } else {
-    // 2.1 (review report §2.1 — THE TOTAL ROW TOUCH): in total mode the
-    // ledger card owns the right column and the host steps to it — the
-    // contact solve lands the fingertip ON the gold TOTAL AT SALE row
-    // (the $3.7M verdict is a number someone touches, not a floating
-    // plate). The card's rows start at ly+96, 58px pitch; the TOTAL row
-    // is the fourth.
-    // the host stands before the gilded verdict card (a designed depth
-    // beat — the guard is told the card he may overlap)
-    declareHostContact('card@580,556');
-    hostSmall(g, lx - 130, 'pointR', 33, g.H * 0.66, 1.3, 0, 'aha', 1.4, 1, true, 0.4,
-      undefined, undefined, { x: lx + 46, y: ly + 96 + 3 * 58 + 29, hand: 'palm', easeAt: 1200 });
+    // 2.1 + 2.2 (review report §§2.1-2.2) — THE VERDICT IS HELD AND TOUCHED,
+    // NEVER OCCLUDED: the rendered evidence convicted the old staging (the
+    // presenter stood BETWEEN the verdict card and the ledger — his head
+    // plated the TOTAL row, the guard was exempted with
+    // declareHostContact('card@580,556')). The new staging: the host stands
+    // LEFT of the $3.7M verdict card, his near hand lands ON the card's
+    // left edge (the fingertip touches the verdict as it lands — the
+    // number someone presents, not a plate he covers), and the LEDGER CARD
+    // rides his FAR hand via the prop system (holdCard, propSide 'far') —
+    // the on-screen ledger is the card he holds. No guard exemption: the
+    // figure's envelope is clear of both cards by construction.
+    const holdVerdict = resolveProp('taxStack', 'holdCard', true);
+    // staging note: x=120 keeps the figure's full envelope left of the bars'
+    // registered left edge (bx=190) — the render pass convicted x=470 (the
+    // head plated the California row's label). The near hand aims at the
+    // verdict from the clear lane; the hold carries the ledger card.
+    hostSmall(g, 120, 'pointR', 33, g.H * 0.66, 1.3, 0, 'aha', 1.4, 1, true, 0.4,
+      undefined, undefined, undefined,
+      undefined, undefined,
+      holdVerdict ? 'holdCard' : undefined,
+      undefined, undefined,
+      holdVerdict ? 'far' : undefined);
   }
 }
 
@@ -1551,8 +1583,14 @@ export function payoffDiagramScene(g: SceneCtx): void {
   // DATA CHAPTERS): the collar's payoff diagram gets its narrator — he
   // stands in the free right column (the chart spans x 190-1410), his
   // gesture cycle pointing back INTO the payoff bands.
+  // 2.1 (review report §2.1 — THE CAP LINE TOUCH): the contact binds to the
+  // line the BEAT is about — the floor line's end on the floor beat, the
+  // cap line's end once the ceiling exists. The old fixed anchor pointed at
+  // the ceiling on every mode: on the floor beat the fingertip hovered in
+  // empty air where the ceiling would later be (the rendered-evidence
+  // conviction — the hand parked ~100px off the only drawn line).
   hostSmall(g, 1550, 'pointL', 34, g.H * 0.66, 1.35, 0, 'aha', 1.4, 1, true, 0.4,
-    undefined, undefined, { x: cx + cw - 10, y: cy + ch - (205 / 260) * ch, hand: 'palm', easeAt: 1300 });
+    undefined, undefined, { x: cx + cw - 10, y: mode === 'floor' ? yOf(85) : yOf(205), hand: 'palm', easeAt: 1300 });
 
   // E3 MARKET-STANDARD FIX (review report E3 [P1] — THE MASCOT IS ABSENT
   // FROM THE BEATS THAT CARRY THE FACTS): the exit chapters were
@@ -2141,9 +2179,26 @@ export function decisionTableScene(g: SceneCtx): void {
   // report B3 [P1] — HOLSTERED VERBS): he HOLDS THE FRAMEWORK CARD (the
   // ledger-resolved holdCard) — the verdict someone walks you through,
   // not a plate that floats.
-  hostSmall(g, 92, 'pointR', 36, g.H * 0.66, 1.3, 0, 'aha', 1.4, 1, true, 0.4,
-    undefined, undefined, undefined, undefined, undefined,
-    resolveProp('decisionTable', 'holdCard', true) ? 'holdCard' : undefined);
+  // B2 + 2.1 + 2.2 (review report §§2.1-2.2) — THE FRAMEWORK'S PRESENTER
+  // TOUCHES THE ROWS HE NARRATES: the rendered evidence convicted the old
+  // staging (the held card rode the near hand INTO the table — it plated
+  // the 'Direct indexing' row label). The re-stage: the host stands at the
+  // frame's left edge clear of the registered table (x 174+), the holdCard
+  // moves to his FAR hand (propSide 'far' — the hold and the touch stop
+  // competing for one hand), and the near hand lands ON the reachable
+  // row's plate edge — the framework someone walks you through, gripped.
+  // The walkEnter window gives the chapter-closer reprise its walk-in.
+  {
+    const holdFramework = resolveProp('decisionTable', 'holdCard', true);
+    const ctY = !ghost && visible > 0 ? rowY0 + (Math.min(visible, 4) - 1) * 100 + 50 : undefined;
+    hostSmall(g, 64, 'pointR', 36, g.H * 0.70, 1.3, 0, 'aha', 1.4, 1, true, 0.4,
+      undefined, undefined,
+      ctY !== undefined ? { x: 184, y: ctY, hand: 'palm', easeAt: 1200 } : undefined,
+      undefined, undefined,
+      holdFramework ? 'holdCard' : undefined,
+      undefined, 1600,
+      holdFramework ? 'far' : undefined);
+  }
 
 }
 

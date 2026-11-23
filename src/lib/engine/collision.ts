@@ -285,7 +285,9 @@ export function collectViolations(): CollisionViolation[] {
       // transition window figure-class rects exempt vs the caption and the
       // top furniture. Every plate/chip/text still flags at every frame,
       // and figures still flag against everything at rest.
-      const transitioning = Math.abs(cam.dy) > 30 || cam.scale > 1.08;
+      // (null-safe: with no camera published there is no transition window —
+      // the stricter at-rest rules apply, which is the conservative default.)
+      const transitioning = cam ? Math.abs(cam.dy) > 30 || cam.scale > 1.08 : false;
       const isFigure = r0.cls === 'host' || r0.id.startsWith('stickman@');
       if (transitioning && isFigure && (ob.kind === 'pill' || ob.kind === undefined)) continue;
       // The crown band (hostBodyApex) can only geometrically overlap the

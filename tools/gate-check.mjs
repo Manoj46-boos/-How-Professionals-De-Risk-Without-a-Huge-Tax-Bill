@@ -68,6 +68,10 @@ const { SCRIPT } = require(path.join(BUILD, 'script-data.js'));
 const { splitSentences } = require(path.join(BUILD, 'easing.js'));
 const { buildTimeline } = require(path.join(BUILD, 'timeline.js'));
 const { drawFrame } = require(path.join(BUILD, 'director.js'));
+// 4.2 + 2.2 GATES (review report §§4.2, 2.2): the occupancy registry (figure
+// or hero content per frame) and the prop ledger (resolved-vs-drawn).
+const { areaRegistry } = require(path.join(BUILD, 'composition.js'));
+const { propUsage, propDraws } = require(path.join(BUILD, 'scene-props.js'));
 
 // the frame-dump estimator manifest (identical word model — the gate only
 // needs REAL pixels, and the real pixels come from the real drawers)
@@ -115,8 +119,29 @@ const MEAN_MAX = 215, RMS_FLOOR = 40, MEAN_MIN = 180;
 const rows = [];
 let fails = 0;
 let washed = 0;
+// 4.2 GATE STATE (review report §4.2 — FIGURE COVERAGE AS A GATE): at least
+// 70% of sampled runtime must carry a REGISTERED figure or hero/content
+// area; bare-slide beats longer than the sample step fail structurally.
+const COVERAGE_FLOOR = 70;
+let coveredCount = 0;
+// 2.2 GATE STATE (review report §2.2 — PROP-DRAW COUNT AS A GATE METRIC):
+// every prop a scene RESOLVED to true this frame must actually DRAW this
+// frame (the renderer reports via notePropDraw). A resolved-but-undrawn
+// prop is a dead staging promise.
+let propOk = 0, propDead = 0;
+const propDeadRows = [];
 for (let t = 2000; t < tl.durationMs; t += STEP) {
   drawFrame(fctx, tl, t, OPTS);
+  // 4.2: the occupancy registry (reset per frame inside drawFrame) — a
+  // figure ('figure') or a registered hero/content mass ('hero') counts
+  // as covered runtime.
+  const areas = areaRegistry();
+  const covered = areas.some((a) => a.kind === 'figure' || a.kind === 'hero');
+  if (covered) coveredCount++;
+  // 2.2: resolved props must draw.
+  const drew = new Set(propDraws());
+  const dead = propUsage().filter((u) => u.requested && u.allowed && !drew.has(u.prop));
+  if (dead.length === 0) propOk++; else { propDead++; propDeadRows.push({ t, dead: dead.map((d) => `${d.sceneKey}:${d.prop}`) }); }
   // the D1 acceptance measures the FULL frame at the render scale
   const fd = fctx.getImageData(0, 0, W, H).data;
   let sum = 0, sum2 = 0;
@@ -150,9 +175,14 @@ for (let t = 2000; t < tl.durationMs; t += STEP) {
   rows.push({ t, gap: Math.round(gap), mean: Math.round(mean), rms: Math.round(rms), ok, washed: washedRow, dark: darkRow });
   console.log(`t=${(t / 1000).toFixed(1)}s  gap ${Math.round(gap)}/255 ${ok ? 'PASS' : 'FAIL'}  |  mean ${mean.toFixed(1)} rms ${rms.toFixed(1)} ${darkRow ? 'DARK-REGISTER' : washedRow ? 'WASHED-FAIL' : 'IN-BAND'}`);
 }
-if (OUT) fs.writeFileSync(OUT, JSON.stringify({ gapFloor: GAP_FLOOR, meanBand: [MEAN_MIN, MEAN_MAX], rmsFloor: RMS_FLOOR, step: STEP, rows, fails, washed }, null, 2));
-const totalFails = fails + washed;
+if (OUT) fs.writeFileSync(OUT, JSON.stringify({ gapFloor: GAP_FLOOR, meanBand: [MEAN_MIN, MEAN_MAX], rmsFloor: RMS_FLOOR, step: STEP, rows, fails, washed, coverage: { coveredCount, total: rows.length, pct: rows.length ? Math.round((coveredCount / rows.length) * 100) : 0, floor: COVERAGE_FLOOR }, props: { ok: propOk, dead: propDead, deadRows: propDeadRows } }, null, 2));
+const coveragePct = rows.length ? Math.round((coveredCount / rows.length) * 100) : 0;
+const coverageOk = coveragePct >= COVERAGE_FLOOR;
+const propsOk = propDead === 0;
+const totalFails = fails + washed + (coverageOk ? 0 : 1) + (propsOk ? 0 : 1);
+console.log(`figure/content coverage: ${coveragePct}% of sampled frames (${coveredCount}/${rows.length}) — floor ${COVERAGE_FLOOR}% ${coverageOk ? 'PASS' : 'FAIL'}`);
+console.log(`prop-draw gate: ${propOk}/${propOk + propDead} checkpoints with all resolved props drawn ${propsOk ? 'PASS' : 'FAIL — ' + propDeadRows.slice(0, 5).map((r) => `t=${(r.t / 1000).toFixed(1)}s ${r.dead.join(', ')}`).join('; ')}`);
 console.log(totalFails === 0
-  ? `\ngate-check: PASS — ${rows.length} checkpoints, gap >= ${GAP_FLOOR}/255 and D1 acceptance (mean <= ${MEAN_MAX}, rms >= ${RMS_FLOOR}) clean`
-  : `\ngate-check: FAIL — gap fails ${fails}/${rows.length}, washed/flat fails ${washed}/${rows.length} (fix the value plan, not the numbers)`);
+  ? `\ngate-check: PASS — ${rows.length} checkpoints, gap >= ${GAP_FLOOR}/255, D1 acceptance clean, coverage >= ${COVERAGE_FLOOR}%, prop ledger clean`
+  : `\ngate-check: FAIL — gap fails ${fails}/${rows.length}, washed/flat fails ${washed}/${rows.length}${coverageOk ? '' : `, coverage ${coveragePct}% < ${COVERAGE_FLOOR}%`}${propsOk ? '' : `, ${propDead} checkpoints with resolved-but-undrawn props`} (fix the value plan, not the numbers)`);
 process.exit(totalFails === 0 ? 0 : 1);

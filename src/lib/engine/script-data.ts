@@ -977,6 +977,7 @@ export const SCRIPT: ChapterSpec[] = [
         scene: P('host', 'e2-right', {
           headline: 'Large, appreciated,\nno liquidity need for seven years —',
           gesture: 'crossed', // 2.3: the lock's refusal pose
+          reprise: 2, // 4.3: the framework rail, row 2 lit
           kicker: 'and the humility to admit you do not know',
         }),
       },
@@ -1222,6 +1223,7 @@ export const SCRIPT: ChapterSpec[] = [
         scene: P('host', 'e3-critique', {
           headline: 'The \u201csophisticated\u201d choice\nis not automatically better',
           gesture: 'leanIn',
+          reprise: 3, // 4.3: the framework rail, row 3 lit
           kicker: 'a segmented ETF basket can match the losses',
         }),
       },
@@ -1471,6 +1473,7 @@ export const SCRIPT: ChapterSpec[] = [
         pauseAfter: 500,
         scene: P('host', 'e5-intro', {
           headline: 'The best math —\nif you were going to give anyway',
+          reprise: 5, // 4.3: the framework rail, row 5 lit
           kicker: 'exit 5 — charitable vehicles',
         }),
       },
