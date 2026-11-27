@@ -343,15 +343,32 @@ export function drawdownChartScene(g: SceneCtx): void {
 
   const cx = 190, cy = 300, cw = W - 700, ch = H * 0.44;
   // the shaded loss region after the peak
+  // B6 RE-SPEC (Frame Quality Review §B6 — THE LOSS IS A SHAPE, NOT A SLAB):
+  // the shade was a full-height rectangle from the peak's x to the chart
+  // edge — a pink wall that ignored the curve it describes. The shade is
+  // now the AREA BETWEEN THE CURVE AND THE PLOT FLOOR from the drawdown's
+  // start: the loss has the shape of the data (curve above, floor below),
+  // the same y mapping lineChart uses (series min/max + 18% pad).
   if (!isEnron && drawP >= 1 && (mode === 'shade-loss' || mode === 'vs-math' || mode === 'punch')) {
     const bp = clamp01((t - 300) / 700);
     if (bp > 0) {
+      const vmin = Math.min(...pts.map((p) => p[1]));
+      const vmax = Math.max(...pts.map((p) => p[1]));
+      const pad = (vmax - vmin) * 0.18 || 1;
+      const yMin = vmin - pad, yMax = vmax + pad;
+      const X = (u: number) => cx + u * cw;
+      const Y = (v: number) => cy + (1 - (v - yMin) / (yMax - yMin)) * ch;
+      const SEG = pts.filter((p) => p[0] >= 0.45);
+      const [u0, v0] = SEG[0];
       ctx.save();
-      ctx.globalAlpha = bp * 0.28; // D1: the loss region is a MASS, not a whisper
+      ctx.globalAlpha = bp * 0.24; // D1: the loss region is a MASS, not a whisper
       ctx.fillStyle = PALETTE.down;
-      const px = cx + cw * 0.44;
       ctx.beginPath();
-      ctx.rect(px, cy, cw * 0.56, ch);
+      ctx.moveTo(X(u0), Y(v0));
+      for (const [u, v] of SEG) ctx.lineTo(X(u), Y(v));
+      ctx.lineTo(X(1), cy + ch);
+      ctx.lineTo(X(u0), cy + ch);
+      ctx.closePath();
       ctx.fill();
       ctx.restore();
     }
@@ -442,9 +459,13 @@ export function drawdownChartScene(g: SceneCtx): void {
 
   // B2 MARKET-STANDARD FIX (review report B2 [P1] — NO PRESENTER IN THE
   // DATA CHAPTERS): the drawdown curve gets its narrator — the shape
-  // ledger owns the right column, so the presenter stands in the quiet
-  // left column, gesture cycle aimed into the curve.
-  hostSmall(g, 92, 'pointR', 35, g.H * 0.66, 1.3, 0, 'aha', 1.4, 1, true, 0.4);
+  // ledger owns the right column, so the presenter stands ON THE DATA
+  // (Frame Quality Review §B1 — ON-THE-DATA pattern): inside the plot's
+  // lower-left, in front of the curve he is narrating, scale 1.5 (the
+  // premium 8-15% frame-area band), the declared plot contact keeping the
+  // depth beat legal for the collision guard.
+  declareHostContact('lineChart:plot@190');
+  hostSmall(g, 420, 'pointR', 35, g.H * 0.66, 1.5, 0, 'aha', 1.4, 1, true, 0.4);
 }
 
 // ── exitTiles — the six gold tiles ───────────────────────────────────────────
@@ -477,8 +498,11 @@ export function exitTilesScene(g: SceneCtx): void {
 
   const spot = mode.startsWith('spot-') ? Number(mode.slice(5)) : 0;
   const cols = 3, rows = 2;
-  const tw = 480, th = 210, gapX = 60, gapY = 66;
-  const x0 = (W - (cols * tw + (cols - 1) * gapX)) / 2;
+  // B7 RE-SPEC (Frame Quality Review §B7): the promise grid now shares the
+  // frame with its narrator — the gap tightens and the grid shifts right
+  // to open a presenter column on the left.
+  const tw = 480, th = 210, gapX = 36, gapY = 66;
+  const x0 = 340;
   const y0 = H * 0.30;
   for (let i = 0; i < 6; i++) {
     const col = i % cols, row = Math.floor(i / cols);
@@ -506,6 +530,10 @@ export function exitTilesScene(g: SceneCtx): void {
     drawK(ctx, x + tw - 46, y + lift + th - 42, 18, 2.5, PALETTE.gold);
     ctx.restore();
   }
+  // B7 RE-SPEC: the six-exit promise gets its narrator — he grips the
+  // first tile's edge (the contact solve) while the grid lands.
+  hostSmall(g, 200, 'present', 45, g.H * 0.66, 1.4, 0, 'aha', 1.4, 1, true, 0.4,
+    undefined, undefined, { x: 345, y: 470, hand: 'palm', easeAt: 400 });
   if (mode === 'save-prompt') {
     const sp = clamp01((t - 400) / 600);
     if (sp > 0) {
@@ -579,6 +607,11 @@ export function srcCiteScene(g: SceneCtx): void {
     chip(ctx, p, px8, H * 0.745, { size: 26, bg: PALETTE.white, fg: PALETTE.inkSoft, border: rgba(PALETTE.gold, 0.45) });
     px8 += 440;
   }
+  // B7 RE-SPEC (Frame Quality Review §B7): the trust beat carries its
+  // narrator — he grips the source ledger's left edge (the contact
+  // solve), the figure the retention contract promises.
+  hostSmall(g, 110, 'present', 44, g.H * 0.66, 1.5, 0, 'aha', 1.4, 1, true, 0.4,
+    undefined, undefined, { x: 258, y: 500, hand: 'palm', easeAt: 400 });
   ctx.restore();
 }
 
@@ -870,7 +903,8 @@ export function napkinScene(g: SceneCtx): void {
   // character carries the argument, and here he was a recurring guest.
   // The certified side-host register (the B2 staging: the free left band,
   // gesture cycle aimed INTO the scene's content) joins this drawer.
-  hostSmall(g, 92, 'pointR', 33, g.H * 0.66, 1.3, 0, 'aha', 1.4, 1, true, 0.4);
+  hostSmall(g, 235, 'pointR', 33, g.H * 0.66, 1.5, 0, 'aha', 1.4, 1, true, 0.4,
+    undefined, undefined, { x: 348, y: 560, hand: 'palm', easeAt: 600 });
 }
 
 // ── lockup — the seven-year marriage bar ─────────────────────────────────────
@@ -975,7 +1009,8 @@ export function lockupScene(g: SceneCtx): void {
   // character carries the argument, and here he was a recurring guest.
   // The certified side-host register (the B2 staging: the free left band,
   // gesture cycle aimed INTO the scene's content) joins this drawer.
-  hostSmall(g, 92, 'pointR', 33, g.H * 0.66, 1.3, 0, 'aha', 1.4, 1, true, 0.4);
+  hostSmall(g, 70, 'pointR', 33, g.H * 0.66, 1.4, 0, 'aha', 1.4, 1, true, 0.4,
+    undefined, undefined, { x: 198, y: 468, hand: 'palm', easeAt: 600 });
 }
 
 // ── planConveyor — the 10b5-1 conveyor belt ──────────────────────────────────
@@ -1099,7 +1134,7 @@ export function planConveyorScene(g: SceneCtx): void {
   // FROM THE BEATS THAT CARRY THE FACTS): the certified side-host register
   // (the B2 staging: the free left band, gesture cycle aimed INTO the
   // scene's content) joins this exit-chapter drawer.
-  hostSmall(g, 92, 'pointR', 33, g.H * 0.66, 1.3, 0, 'aha', 1.4, 1, true, 0.4);
+  hostSmall(g, 60, 'pointR', 33, g.H * 0.66, 1.4, 0, 'aha', 1.4, 1, true, 0.4);
 }
 
 // ── killCard — the wrong-answer card, in the film's dark emerald glass ───────
@@ -1300,12 +1335,12 @@ export function poolFundScene(g: SceneCtx): void {
       ctx.restore();
     }
   };
-  if (mode === 's721') label('§721 — A CONTRIBUTION IS NOT A SALE', poolY - poolR - 60, 'gold');
-  if (mode === 'swapped') label('SINGLE-STOCK RISK → BROAD-MARKET RISK, ONE TRANSACTION', poolY - poolR - 60, 'ink', 300);
-  if (mode === 'redeem') label('REDEEM → A DIVERSIFIED BASKET, YOUR ORIGINAL LOW BASIS', poolY - poolR - 60, 'ink');
-  if (mode === 'step-up') label('HOLD TO DEATH → STEPPED-UP BASIS — THE GAIN VANISHES', poolY - poolR - 60, 'gold');
+  if (mode === 's721') label('§721 — A CONTRIBUTION IS NOT A SALE', poolY - poolR - 34, 'gold');
+  if (mode === 'swapped') label('SINGLE-STOCK RISK → BROAD-MARKET RISK, ONE TRANSACTION', poolY - poolR - 34, 'ink', 300);
+  if (mode === 'redeem') label('REDEEM → A DIVERSIFIED BASKET, YOUR ORIGINAL LOW BASIS', poolY - poolR - 34, 'ink');
+  if (mode === 'step-up') label('HOLD TO DEATH → STEPPED-UP BASIS — THE GAIN VANISHES', poolY - poolR - 34, 'gold');
   if (mode === 'illiquid' || mode === 'not-chosen') {
-    label('20% OF THE POOL IS ILLIQUID — BY RULE', poolY - poolR - 60, 'down');
+    label('20% OF THE POOL IS ILLIQUID — BY RULE', poolY - poolR - 34, 'down');
     const ip = clamp01((t - 700) / 600);
     if (ip > 0) {
       ctx.save();
@@ -1320,7 +1355,7 @@ export function poolFundScene(g: SceneCtx): void {
     }
     if (mode === 'not-chosen') label('assets you did not choose, to satisfy a tax definition', poolY + poolR + 80, 'down', 900);
   }
-  if (mode === 'contribute') label('100 investors · 100 single stocks · one pool', poolY - poolR - 60, 'ink');
+  if (mode === 'contribute') label('100 investors · 100 single stocks · one pool', poolY - poolR - 34, 'ink');
 
   // E3 MARKET-STANDARD FIX (review report E3 [P1] — THE MASCOT IS ABSENT
   // FROM THE BEATS THAT CARRY THE FACTS): the exit chapters were
@@ -1328,7 +1363,19 @@ export function poolFundScene(g: SceneCtx): void {
   // character carries the argument, and here he was a recurring guest.
   // The certified side-host register (the B2 staging: the free left band,
   // gesture cycle aimed INTO the scene's content) joins this drawer.
-  hostSmall(g, 92, 'pointR', 33, g.H * 0.66, 1.3, 0, 'aha', 1.4, 1, true, 0.4);
+  // B1 RE-SPEC (Frame Quality Review §B1) — two patterns on one drawer:
+  // contribute mode = BALANCES-THE-NUMBER: the host balances the pool's
+  // coin count on his palm (the ledger-resolved coinStack, §B8); every
+  // other mode = ON-THE-DATA: he stands at the pool's left edge, palm
+  // planted ON the gilded ring (the contact solve).
+  if ((s.mode as string) === 'contribute') {
+    hostSmall(g, 360, 'present', 33, g.H * 0.66, 1.55, 0, 'aha', 1.4, 1, true, 0.4,
+      undefined, undefined, undefined, undefined, undefined,
+      resolveProp('poolFund', 'coinStack', true) ? 'coinStack' : undefined);
+  } else {
+    hostSmall(g, 360, 'pointR', 33, g.H * 0.66, 1.55, 0, 'aha', 1.4, 1, true, 0.4,
+      undefined, undefined, { x: 505, y: 615, hand: 'palm', easeAt: 700 });
+  }
 }
 
 // ── driftChart — tracking error drift ────────────────────────────────────────
@@ -1403,7 +1450,10 @@ export function driftChartScene(g: SceneCtx): void {
   // character carries the argument, and here he was a recurring guest.
   // The certified side-host register (the B2 staging: the free left band,
   // gesture cycle aimed INTO the scene's content) joins this drawer.
-  hostSmall(g, 92, 'pointR', 33, g.H * 0.66, 1.3, 0, 'aha', 1.4, 1, true, 0.4);
+  // the driftChart host stands INSIDE the plot (declared depth — §B2's law:
+  // designed occlusion is declared, accidental plating is not).
+  declareHostContact('lineChart:plot@190');
+  hostSmall(g, 400, 'pointR', 33, g.H * 0.66, 1.4, 0, 'aha', 1.4, 1, true, 0.4);
 }
 
 // ── explodeGrid — direct indexing ────────────────────────────────────────────
@@ -1479,7 +1529,7 @@ export function explodeGridScene(g: SceneCtx): void {
   // FROM THE BEATS THAT CARRY THE FACTS): the certified side-host register
   // (the B2 staging: the free left band, gesture cycle aimed INTO the
   // scene's content) joins this exit-chapter drawer.
-  hostSmall(g, 92, 'pointR', 33, g.H * 0.66, 1.3, 0, 'aha', 1.4, 1, true, 0.4);
+  hostSmall(g, 60, 'present', 36, g.H * 0.66, 1.45, 0, 'aha', 1.4, 1, true, 0.4);
 }
 
 // ── payoffDiagram — the Cuban collar ─────────────────────────────────────────
@@ -1582,7 +1632,12 @@ export function taxMineScene(g: SceneCtx): void {
       ctx.fillText(head, 240, H * 0.30 + 84);
       setFont(ctx, 34, 400);
       ctx.fillStyle = PALETTE.inkSoft;
-      ctx.fillText(sub, 240, H * 0.30 + 146);
+      // B4 RE-SPEC (Frame Quality Review §B4 — EVERY STRING PASSES THE
+      // FIT CHECK): the sub-line wraps into the card's own width (the
+      // house wrapText path) — the 'Facts-and-circum' frame-edge clip
+      // is dead; two lines fit the 190px card head room.
+      const subLines = wrapText(ctx, sub, W - 660 - 100, 34, 400);
+      subLines.slice(0, 2).forEach((sl, i) => ctx.fillText(sl, 240, H * 0.30 + 146 + i * 44));
       ctx.restore();
     }
   };
@@ -1646,7 +1701,7 @@ export function taxMineScene(g: SceneCtx): void {
   // character carries the argument, and here he was a recurring guest.
   // The certified side-host register (the B2 staging: the free left band,
   // gesture cycle aimed INTO the scene's content) joins this drawer.
-  hostSmall(g, 92, 'pointR', 33, g.H * 0.66, 1.3, 0, 'aha', 1.4, 1, true, 0.4);
+  hostSmall(g, 70, 'pointR', 33, g.H * 0.66, 1.3, 0, 'aha', 1.4, 1, true, 0.4);
 }
 
 // ── flowCharity — DAF / CRT flow ─────────────────────────────────────────────
@@ -1739,7 +1794,8 @@ export function flowCharityScene(g: SceneCtx): void {
   // character carries the argument, and here he was a recurring guest.
   // The certified side-host register (the B2 staging: the free left band,
   // gesture cycle aimed INTO the scene's content) joins this drawer.
-  hostSmall(g, 92, 'pointR', 33, g.H * 0.66, 1.3, 0, 'aha', 1.4, 1, true, 0.4);
+  hostSmall(g, 1640, 'pointL', 33, g.H * 0.66, 1.3, 0, 'aha', 1.4, 1, true, 0.4,
+    undefined, undefined, undefined, 'left');
 }
 
 // ── ruleChange — the 2026 OBBBA / QSBS rule cards ────────────────────────────
@@ -1838,7 +1894,7 @@ export function ruleChangeScene(g: SceneCtx): void {
   // character carries the argument, and here he was a recurring guest.
   // The certified side-host register (the B2 staging: the free left band,
   // gesture cycle aimed INTO the scene's content) joins this drawer.
-  hostSmall(g, 92, 'pointR', 33, g.H * 0.66, 1.3, 0, 'aha', 1.4, 1, true, 0.4);
+  hostSmall(g, 60, 'present', 37, g.H * 0.66, 1.35, 0, 'aha', 1.4, 1, true, 0.4);
 }
 
 // ── lsLeverage — the 130/30 structure ────────────────────────────────────────
@@ -1881,10 +1937,14 @@ export function lsLeverageScene(g: SceneCtx): void {
     if (rp > 0) {
       ctx.save();
       ctx.globalAlpha = rp;
-      setFont(ctx, 56, 700, FONT_DISPLAY);
-      ctx.fillStyle = PALETTE.ink;
+      // B3 RE-SPEC (Frame Quality Review §B3 — THE DUPLICATE HEADLINE):
+      // the scene title already prints this exact sentence in the top
+      // band — the ratios mode now owns the frame's mid band with its
+      // own kicker instead of printing the title a second time.
+      setFont(ctx, 44, 700, FONT_DISPLAY);
+      ctx.fillStyle = PALETTE.goldDeep;
       ctx.textAlign = 'left';
-      ctx.fillText('130/30 — and the aggressive 200/100', 190, H * 0.66);
+      ctx.fillText('THE FAMILY-OFFICE TOOL', 190, H * 0.66);
       setFont(ctx, 36, 600);
       ctx.fillStyle = PALETTE.inkSoft;
       ctx.fillText('tax-neutral diversification, fast', 190, H * 0.66 + 62);
@@ -1906,7 +1966,7 @@ export function lsLeverageScene(g: SceneCtx): void {
   // character carries the argument, and here he was a recurring guest.
   // The certified side-host register (the B2 staging: the free left band,
   // gesture cycle aimed INTO the scene's content) joins this drawer.
-  hostSmall(g, 92, 'pointR', 33, g.H * 0.66, 1.3, 0, 'aha', 1.4, 1, true, 0.4);
+  hostSmall(g, 60, 'pointR', 38, g.H * 0.66, 1.3, 0, 'aha', 1.4, 1, true, 0.4);
 }
 
 // ── appleCase — the JAM case study ───────────────────────────────────────────
@@ -1988,7 +2048,8 @@ export function appleCaseScene(g: SceneCtx): void {
   // FROM THE BEATS THAT CARRY THE FACTS): the certified side-host register
   // (the B2 staging: the free left band, gesture cycle aimed INTO the
   // scene's content) joins this exit-chapter drawer.
-  hostSmall(g, 92, 'pointR', 33, g.H * 0.66, 1.3, 0, 'aha', 1.4, 1, true, 0.4);
+  declareHostContact('lineChart:plot@190');
+  hostSmall(g, 380, 'pointR', 39, g.H * 0.66, 1.45, 0, 'aha', 1.4, 1, true, 0.4);
 }
 
 // ── decisionTable — THE SAVE ARTIFACT ────────────────────────────────────────
@@ -2193,7 +2254,7 @@ export function sequenceStackScene(g: SceneCtx): void {
   // character carries the argument, and here he was a recurring guest.
   // The certified side-host register (the B2 staging: the free left band,
   // gesture cycle aimed INTO the scene's content) joins this drawer.
-  hostSmall(g, 92, 'pointR', 33, g.H * 0.66, 1.3, 0, 'aha', 1.4, 1, true, 0.4);
+  hostSmall(g, 60, 'pointR', 33, g.H * 0.66, 1.3, 0, 'aha', 1.4, 1, true, 0.4);
 }
 
 // [[MORE]]

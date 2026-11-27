@@ -263,10 +263,16 @@ export const INK = {
   /** Far arm taper (B1: 17.7/14.2/10.6 → 8/6.5/5). */
   armFar: [8, 6.5, 5] as [number, number, number],
   /** Near leg taper (B1: 29.5/22.4/16.5 → 13/10/7;
-   *  A3 fix: 13/10/7 → 14/11/8 — one step off the pipe read, per the review). */
-  legNear: [14, 11, 8] as [number, number, number],
-  /** Far leg taper (B1: 23.6/17.7/13 → 10.6/8.5/6.5). */
-  legFar: [10.6, 8.5, 6.5] as [number, number, number],
+   *  A3 fix: 13/10/7 → 14/11/8 — one step off the pipe read, per the review).
+   *  A5 RE-SPEC (Frame Quality Review §A5 — NOODLE LEGS): 14/11/8 → 16/12.5/9
+   *  (+15%) — the near leg is the figure's anchor mass and must carry at or
+   *  above the forearm's width at every rig (forearm root 11), ending the
+   *  thread-like shins under heavy shoes. */
+  legNear: [16, 12.5, 9] as [number, number, number],
+  /** Far leg taper (B1: 23.6/17.7/13 → 10.6/8.5/6.5).
+   *  A5 RE-SPEC: 10.6/8.5/6.5 → 12.5/10/7.5 — same +15% as the near leg so
+   *  the far limb keeps its depth step without the coat-hanger read. */
+  legFar: [12.5, 10, 7.5] as [number, number, number],
   /** Torso taper: hips → shoulders (B1: 19/30 → 21/32 — the torso, not the
    *  limbs, carries the figure's dark mass once the limbs are drawn ink). */
   torso: [21, 32] as [number, number],

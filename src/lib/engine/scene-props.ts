@@ -241,7 +241,10 @@ export const PROP_LEDGER: Record<string, string[]> = {
   // decisionTable presenter holds the framework card. The props the film
   // owns fire in the beats whose objects they are.
   holdCard: ['statCards', 'taxStack', 'decisionTable'],
-  coinStack: ['dotGrid', 'taxStack'],
+  // B8 RE-SPEC (Frame Quality Review §B8): poolFund's contribute beat joins
+  // the ledger — the host balances the pool's coin count on his palm, the
+  // film's third coinStack site.
+  coinStack: ['dotGrid', 'taxStack', 'poolFund'],
 };
 
 export interface PropUsage {

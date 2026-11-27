@@ -310,14 +310,23 @@ export function hostSmall(
   let drawX = x;
   let walkPhase: number | undefined;
   let walkSquash = 0;
-  if (walkEnter !== undefined && g.sceneT < walkEnter + 420) {
+  if (walkEnter !== undefined) {
     const startX = dir === 'right' ? x - 240 : x + 240;
-    const wk = walkIn(g.sceneT, startX, x, walkEnter, pose, scale, seed);
+    // B9 RE-SPEC (Frame Quality Review §B9 — THE WINDOW SCALES TO THE
+    // DISTANCE): the walk window is now derived from the route — one
+    // stride pair (280px) per second of screen-time, floored by the
+    // caller's window. The certified 240px entrances keep their cadence;
+    // any future call site with a longer route can never sprint again.
+    const walkDist = Math.abs(x - startX);
+    const enterDur = Math.max(walkEnter, Math.round((walkDist / 280) * 1000));
+    if (g.sceneT < enterDur + 420) {
+      const wk = walkIn(g.sceneT, startX, x, enterDur, pose, scale, seed);
     drawX = wk.x;
     if (wk.walking) {
       pose = wk.pose;
       walkPhase = wk.phase;
       walkSquash = walkStrike(wk.phase);
+    }
     }
   }
   drawStickmanV2(
