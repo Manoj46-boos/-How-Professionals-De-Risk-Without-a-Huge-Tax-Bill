@@ -129,6 +129,9 @@ const SHOTS = [
   ['e5-obbba', 0, 2600, 'ruleChange'],          // B1 evidence
   ['e6-apple', 0, 2600, 'appleCase'],           // B1 evidence
   ['e2-lock', 0, 2600, 'lockup'],
+  ['e2-lock', 0, 750, 'lockup-early'],       // C4 evidence: the band before the steps
+  ['e1-plan', 1, 650, 'planConveyor-early'], // C4 evidence
+  ['e4-collar', 0, 750, 'payoff-floor-early'], // C4 evidence
   ['e3-explode', 2, 2600, 'explodeGrid-harvest'],
   ['e3-napkin', 0, 2600, 'napkin'],
   ['fw-end', 0, 2600, 'endScreen'],
@@ -161,6 +164,24 @@ for (const [key, beatOff, offset, name] of SHOTS) {
   if (resetGuard) resetGuard(name);
   drawFrame(ctx, tl, t, OPTS);
   fs.writeFileSync(path.join(OUT, `${PREFIX}_${TAG}_${name}.png`), canvas.toBuffer('image/png'));
+  // D3/D4/C7 evidence: the 320px feed twin of every frame (--twin)
+  if (process.argv.includes('--twin')) {
+    const twin = createCanvas(320, 180);
+    const tx = twin.getContext('2d');
+    tx.imageSmoothingQuality = 'high';
+    tx.drawImage(canvas, 0, 0, 1920, 1080, 0, 0, 320, 180);
+    fs.writeFileSync(path.join(OUT, `${PREFIX}_${TAG}_twin_${name}.png`), twin.toBuffer('image/png'));
+  }
   console.log(`rendered ${PREFIX}_${TAG}_${name} @ ${(t / 1000).toFixed(1)}s`);
+}
+// C3 evidence: the chapter card (chapter 2 — the drawdown chapter)
+if (!ONLY.length || ONLY.some((o) => 'chaptercard'.includes(o))) {
+  const cc = tl.chapterCards[1];
+  if (cc) {
+    if (resetGuard) resetGuard('chaptercard');
+    drawFrame(ctx, tl, cc.startMs + 450, OPTS);
+    fs.writeFileSync(path.join(OUT, `${PREFIX}_${TAG}_chaptercard.png`), canvas.toBuffer('image/png'));
+    console.log(`rendered ${PREFIX}_${TAG}_chaptercard`);
+  }
 }
 console.log('done ->', OUT);

@@ -574,12 +574,101 @@ export function chapterAccent(
   W: number,
   H: number,
   t: number,
-  tone: 'up' | 'down' | 'gold' | 'neutral'
+  tone: 'up' | 'down' | 'gold' | 'neutral',
+  // C3 RE-SPEC (Frame Quality Review §C3 — ONE BOLD SILHOUETTE PER
+  // CHAPTER CARD): the accent is keyed by the CHAPTER, not the tone —
+  // five of nine chapters shared a tone and therefore one accent. Each
+  // chapter now owns its object: the racks, the drawdown curve, the
+  // belt, the pool, the payoff bands, the flow, the long/short pair,
+  // the framework table. index 0 (in-scene walls) keeps the tone motif.
+  index = 0
 ): void {
   ctx.save();
   const x = Math.min(W - 300, W * 0.84 + Math.sin(t / 7000) * 8
     - camState.dx * (1 - BG_PARALLAX) * 0.6);
   const y = H * 0.72 + Math.cos(t / 6000) * 6;
+  if (index > 0) {
+    // the chapter's OWN silhouette — bolder than the tone motif (alpha
+    // 0.2), drawn at the accent corner, one object per chapter
+    ctx.globalAlpha = 0.2;
+    ctx.strokeStyle = PALETTE.ink;
+    ctx.fillStyle = PALETTE.ink;
+    ctx.lineWidth = 6;
+    switch (((index - 1) % 8)) {
+      case 0: // the market racks — five ascending bars, the leader gold
+        for (let i = 0; i < 5; i++) {
+          const bh = 36 + i * 24;
+          ctx.fillStyle = i === 4 ? PALETTE.gold : PALETTE.ink;
+          ctx.fillRect(x - 60 + i * 36, y + 60 - bh, 24, bh);
+        }
+        break;
+      case 1: // the drawdown curve — the catastrophic shape + trough dot
+        ctx.beginPath();
+        ctx.moveTo(x - 70, y - 20);
+        ctx.bezierCurveTo(x - 10, y - 34, x + 20, y + 50, x + 70, y + 62);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.arc(x + 70, y + 62, 9, 0, Math.PI * 2);
+        ctx.fillStyle = PALETTE.down;
+        ctx.fill();
+        break;
+      case 2: // the plan belt — a rail with three scheduled slots
+        ctx.beginPath();
+        ctx.moveTo(x - 80, y + 40);
+        ctx.lineTo(x + 80, y + 40);
+        ctx.stroke();
+        for (let i = 0; i < 3; i++) ctx.strokeRect(x - 56 + i * 48, y + 6, 34, 26);
+        break;
+      case 3: { // the pool — the ring of one hundred owners
+        for (let i = 0; i < 12; i++) {
+          const a = (i / 12) * Math.PI * 2;
+          ctx.beginPath();
+          ctx.arc(x + Math.cos(a) * 54, y + Math.sin(a) * 54, 10, 0, Math.PI * 2);
+          ctx.fillStyle = i === 0 ? PALETTE.gold : PALETTE.ink;
+          ctx.fill();
+        }
+        break;
+      }
+      case 4: // the payoff bands — the floor line + the capped V
+        ctx.beginPath();
+        ctx.moveTo(x - 76, y - 16);
+        ctx.lineTo(x + 76, y - 16);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(x - 76, y + 58);
+        ctx.lineTo(x - 6, y - 6);
+        ctx.lineTo(x + 18, y - 6);
+        ctx.lineTo(x + 76, y + 66);
+        ctx.stroke();
+        break;
+      case 5: // the charity flow — three nodes on one line
+        ctx.beginPath();
+        ctx.moveTo(x - 70, y + 20);
+        ctx.lineTo(x + 70, y + 20);
+        ctx.stroke();
+        for (let i = 0; i < 3; i++) {
+          ctx.beginPath();
+          ctx.arc(x - 56 + i * 56, y + 20, 15, 0, Math.PI * 2);
+          ctx.stroke();
+        }
+        break;
+      case 6: // the long/short pair — the levered bar row
+        ctx.strokeRect(x - 76, y - 14, 130, 30);
+        ctx.strokeRect(x - 76, y + 40, 62, 30);
+        break;
+      default: // the framework table — the six-exit card
+        ctx.strokeRect(x - 76, y - 24, 152, 96);
+        for (let i = 1; i < 4; i++) {
+          ctx.beginPath();
+          ctx.moveTo(x - 76, y - 24 + i * 24);
+          ctx.lineTo(x + 76, y - 24 + i * 24);
+          ctx.stroke();
+        }
+        break;
+    }
+    ctx.restore();
+    return;
+  }
   if (tone === 'down') {
     // the coral GAUGE — a small dial with a needle at the chapter's mood
     ctx.globalAlpha = 0.16;

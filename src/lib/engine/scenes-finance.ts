@@ -30,7 +30,112 @@ import { resolveProp } from './scene-props';
 /** The room: bg + chapter plate. Every finance scene sits in a room. */
 function room(g: SceneCtx, tone: 'up' | 'down' | 'gold' | 'neutral' | undefined = undefined): void {
   paintBg(g.ctx, g.W, g.H, g.t, g.chapterTone);
-  scenePlate(g.ctx, g.W, g.H, tone ?? g.chapterTone ?? 'up', 0.95, null, { furniture: false });
+  // C6 RE-SPEC (Frame Quality Review §C6 — ROOMS ARE PLACES, NOT WASHES):
+  // the plate joins the chapter-family rail system (the architecture band
+  // the audit added), and the room gains the two drawn depth cues every
+  // premium flat-animation stage carries: ONE wall/baseboard line at the
+  // stage line, and the chapter's OWN object as background wall art.
+  scenePlate(g.ctx, g.W, g.H, tone ?? g.chapterTone ?? 'up', 0.95, chapterFamily(g.chapterIdx ?? 0), { furniture: false });
+  const wy = g.H * 0.655;
+  const ctx = g.ctx;
+  ctx.save();
+  // the baseboard: a 10px deeper band seating the wall/floor junction
+  ctx.fillStyle = rgba(PALETTE.shadow, 0.05);
+  ctx.fillRect(0, wy - 10, g.W, 10);
+  ctx.strokeStyle = rgba(PALETTE.shadow, 0.13);
+  ctx.lineWidth = 2.5;
+  ctx.beginPath();
+  ctx.moveTo(0, wy - 10);
+  ctx.lineTo(g.W, wy - 10);
+  ctx.stroke();
+  ctx.restore();
+  // the chapter's owned object — wall art on the background plane
+  chapterRoomProp(g.ctx, g.W, g.H, g.chapterIdx ?? 0, g.t);
+}
+
+/** C6 RE-SPEC — the chapter's OWN silhouette as background wall art
+ *  (upper-left wall zone, alpha 0.08 — a depth cue the eye can sketch,
+ *  never competing with content). One object per chapter: the racks, the
+ *  drawdown curve, the belt, the pool, the payoff bands, the flow, the
+ *  long/short pair, the framework table. */
+function chapterRoomProp(ctx: CanvasRenderingContext2D, W: number, H: number, idx: number, t: number): void {
+  if (idx <= 0) return;
+  const x = W - 340, y = 120;
+  ctx.save();
+  ctx.globalAlpha = 0.09;
+  ctx.strokeStyle = PALETTE.ink;
+  ctx.lineWidth = 5;
+  switch (((idx - 1) % 8)) {
+    case 0: // the market racks — ascending bars
+      for (let i = 0; i < 5; i++) {
+        const bh = 30 + i * 18;
+        ctx.fillStyle = PALETTE.ink;
+        ctx.fillRect(x + i * 34, y + 110 - bh, 22, bh);
+      }
+      break;
+    case 1: // the drawdown curve
+      ctx.beginPath();
+      ctx.moveTo(x - 20, y + 60);
+      ctx.bezierCurveTo(x + 30, y + 40, x + 60, y + 120, x + 130, y + 130);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.arc(x + 130, y + 130, 7, 0, Math.PI * 2);
+      ctx.fillStyle = PALETTE.ink;
+      ctx.fill();
+      break;
+    case 2: // the conveyor — a rail with three slots
+      ctx.beginPath();
+      ctx.moveTo(x - 30, y + 90);
+      ctx.lineTo(x + 150, y + 90);
+      ctx.stroke();
+      for (let i = 0; i < 3; i++) ctx.strokeRect(x - 10 + i * 52, y + 62, 36, 24);
+      break;
+    case 3: // the pool — a ring of dots
+      for (let i = 0; i < 10; i++) {
+        const a = (i / 10) * Math.PI * 2;
+        ctx.beginPath();
+        ctx.arc(x + 60 + Math.cos(a) * 52, y + 70 + Math.sin(a) * 52, 9, 0, Math.PI * 2);
+        ctx.fillStyle = PALETTE.ink;
+        ctx.fill();
+      }
+      break;
+    case 4: // the payoff bands — floor line + capped V
+      ctx.beginPath();
+      ctx.moveTo(x - 20, y + 40);
+      ctx.lineTo(x + 150, y + 40);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(x - 20, y + 130);
+      ctx.lineTo(x + 60, y + 60);
+      ctx.lineTo(x + 90, y + 60);
+      ctx.stroke();
+      break;
+    case 5: // the charity flow — line + three nodes
+      ctx.beginPath();
+      ctx.moveTo(x - 20, y + 70);
+      ctx.lineTo(x + 150, y + 70);
+      ctx.stroke();
+      for (let i = 0; i < 3; i++) {
+        ctx.beginPath();
+        ctx.arc(x + i * 70, y + 70, 13, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+      break;
+    case 6: // the long/short pair
+      ctx.strokeRect(x - 20, y + 40, 120, 26);
+      ctx.strokeRect(x - 20, y + 96, 60, 26);
+      break;
+    default: // the framework table — a card with row rules
+      ctx.strokeRect(x - 20, y + 30, 170, 104);
+      for (let i = 1; i < 4; i++) {
+        ctx.beginPath();
+        ctx.moveTo(x - 20, y + 30 + i * 26);
+        ctx.lineTo(x + 150, y + 30 + i * 26);
+        ctx.stroke();
+      }
+      break;
+  }
+  ctx.restore();
 }
 
 // ── E1/E2/E4 — THE ANNOTATION COLUMN (review report E1 [P0], E2 [P1], E4 [P2]) ──
@@ -79,7 +184,10 @@ function ledgerCard(
     ctx.fillStyle = PALETTE.inkSoft;
     ctx.textAlign = 'left';
     ctx.fillText(r.label, x + 30, ry + 20);
-    setFont(ctx, 28, 700, FONT_DISPLAY);
+    // D2 RE-SPEC (Frame Quality Review §D2 — THE NUMBERS ARE THE CARD):
+    // the dollar values ride 40px display type — the signature furniture's
+    // largest element, readable at the 320 twin (13px at feed scale).
+    setFont(ctx, 40, 700, FONT_DISPLAY);
     ctx.fillStyle = r.tone === 'down' ? PALETTE.down : r.tone === 'up' ? PALETTE.up : r.tone === 'gold' ? PALETTE.goldDeep : PALETTE.ink;
     ctx.textAlign = 'right';
     ctx.fillText(r.value, x + w - 30, ry + 20);
@@ -105,9 +213,14 @@ function ledgerCard(
       // "the fund route defers every line of it" can no longer print past
       // the plate. A two-line foot lifts its first line so both sit
       // INSIDE the card (the reserved footH makes the rows make room).
+      // C8 RE-SPEC (Frame Quality Review §C8 — NOTHING BELOW FLOOR, EVER):
+      // the foot wraps at the 24px floor through the measured wrap path
+      // and draws INSIDE the reserved foot band — the shrink-below-floor
+      // regime (the live TYPE_FLOOR warning) is dead on this path.
       setFont(ctx, 24, 600);
-      const footLines = ctx.measureText(foot).width > w - 60 ? 2 : 1;
-      fitText(ctx, foot, x + 30, y + h - (footLines === 2 ? 52 : 24), w - 60, 24, 600, FONT_UI, PALETTE.goldDeep);
+      const footLines = wrapText(ctx, foot, w - 60, 24, 600).slice(0, 2);
+      ctx.fillStyle = PALETTE.goldDeep;
+      footLines.forEach((ln, i) => ctx.fillText(ln, x + 30, y + h - (footLines.length === 2 ? 58 : 24) + i * 32));
       ctx.restore();
     }
   }
@@ -189,8 +302,12 @@ export function crossChartScene(g: SceneCtx): void {
   const bPts = isXclr ? XCLR_FUND : CROSS_B;
   const aName = isXclr ? 'S&P 500' : 'Gates — sold for 30 years';
   const bName = isXclr ? 'XCLR (collar 95-110)' : 'Ballmer — held';
-  const aTone = isXclr ? 'muted' : 'muted';
-  const bTone = isXclr ? 'up' : 'up';
+  // C7 RE-SPEC (Frame Quality Review §C7 — THE TWO LINES ARE THE COLD
+  // OPEN): the comparison series rides the vivid data-ink ramp (gold vs
+  // teal — the palette's own two accents), never inkSoft; both lines
+  // carry 9px so the 320 twin reads two real lines, not hairlines.
+  const aTone = 'gold';
+  const bTone = 'up';
 
   // progressive build — the line grows as the VO reads
   let pa = mode === 'build-a' || mode === 'hold-chip' ? clamp01(t / 2400) : 1;
@@ -204,7 +321,7 @@ export function crossChartScene(g: SceneCtx): void {
   if (pb > 0) series.push({ name: bName, tone: bTone, points: partialPoints(bPts, pb) });
   lineChart(ctx, {
     x: cx, y: cy, w: cw, h: ch, series, p: 1, t,
-    gridLines: 4, showYAxis: true, lineWidth: isXclr ? 6 : 7,
+    gridLines: 4, showYAxis: true, lineWidth: isXclr ? 8 : 9,
     annotations: [],
   });
   // E2 MARKET-STANDARD FIX (review report E2 [P1] — "crossChart one line"
@@ -217,7 +334,7 @@ export function crossChartScene(g: SceneCtx): void {
     ctx.globalAlpha = lp2;
     let lgx = cx + 24;
     series.forEach((sr) => {
-      ctx.fillStyle = sr.tone === 'up' ? PALETTE.up : sr.tone === 'down' ? PALETTE.down : PALETTE.inkSoft;
+      ctx.fillStyle = sr.tone === 'up' ? PALETTE.up : sr.tone === 'down' ? PALETTE.down : sr.tone === 'gold' ? PALETTE.goldDisplay : PALETTE.inkSoft;
       roundRect(ctx, lgx, cy - 30, 22, 22, 5);
       ctx.fill();
       setFont(ctx, 24, 600);
@@ -560,14 +677,16 @@ export function srcCiteScene(g: SceneCtx): void {
   const by = H * 0.36;
   // C8: the card grows to hold the wrapped source line (C3's wrap path
   // can carry it to a second line) + the detail and kicker rows.
-  gildedCard(ctx, bx, by, bw, 344, rgba(PALETTE.gold, 0.28));
+  // C1 RE-SPEC: the big citation card compresses (344 -> 260) so the
+  // three source cards seat below it — one dense trust frame.
+  gildedCard(ctx, bx, by, bw, 290, rgba(PALETTE.gold, 0.28));
   // the ingot seal
-  drawK(ctx, bx + 110, by + 150, 44, 4, PALETTE.gold);
+  drawK(ctx, bx + 110, by + 92, 44, 4, PALETTE.gold);
   setFont(ctx, 52, 700, FONT_DISPLAY);
   ctx.fillStyle = PALETTE.ink;
   ctx.textAlign = 'left';
   const srcLines = ctx.measureText(source).width > bw - 320 ? 2 : 1;
-  fitText(ctx, source, bx + 220, by + 128, bw - 320, 52, 700);
+  fitText(ctx, source, bx + 220, by + 110, bw - 320, 52, 700);
   // F5 (review report F5 [P1] — SRC CITE REPEATS ITS OWN SENTENCE): the
   // co-deal beat's detail prop says "every claim carries its source on
   // screen" and the hardcoded gold kicker says "EVERY NUMBER CARRIES ITS
@@ -585,28 +704,61 @@ export function srcCiteScene(g: SceneCtx): void {
   const sameSentence = detail.length > 0 && overlap / Math.max(1, dt.size) >= 0.7;
   // C8: the rows below the source step DOWN when the source wrapped —
   // no row of the ledger ever prints through another.
-  const detailY = by + (srcLines === 2 ? 248 : 200);
-  setFont(ctx, 36, 400);
+  const detailY = by + (srcLines === 2 ? 208 : 170);
+  setFont(ctx, 34, 400);
   ctx.fillStyle = PALETTE.inkSoft;
   if (!sameSentence) ctx.fillText(detail, bx + 220, detailY);
-  setFont(ctx, 30, 600);
+  setFont(ctx, 28, 600);
   ctx.fillStyle = PALETTE.goldDeep;
-  ctx.fillText(goldLine, bx + 220, detailY + (sameSentence ? 0 : 56));
+  ctx.fillText(goldLine, bx + 220, detailY + (sameSentence ? 0 : 46));
   // C8 MARKET-STANDARD FIX (review report C8 [P1] — THE SOURCE BEAT IS
   // ~75% EMPTY CANVAS): the citation card stops floating in beige — the
   // beat becomes the source ledger: a kicker above the card and the
   // three source pillars below it. The vertical bands all carry a job.
+  // C1 RE-SPEC (Frame Quality Review §C1 — THE TRUST BEAT IS THE DENSEST):
+  // the pillar chips become THREE REAL SOURCE CARDS, each printing its
+  // first citation line — the researched channel's trust beat earns its
+  // density with the sources themselves on screen. The big card lifts and
+  // compresses; the cards seat in the band above the caption pill.
   setFont(ctx, 30, 700);
   ctx.fillStyle = PALETTE.goldDeep;
   ctx.textAlign = 'center';
   ctx.fillText('THE DATA DESK — SOURCE LEDGER', W / 2, by - 52);
   ctx.textAlign = 'left';
-  const pillars = ['IRC §1(h) · §1411', 'CA FTB / NY DTF TOP RATES', 'J.P. MORGAN GUIDE TO THE MARKETS'];
-  let px8 = W / 2 - 1290 / 2;
-  for (const p of pillars) {
-    chip(ctx, p, px8, H * 0.745, { size: 26, bg: PALETTE.white, fg: PALETTE.inkSoft, border: rgba(PALETTE.gold, 0.45) });
-    px8 += 440;
-  }
+  const srcCards: Array<[string, string, string]> = [
+    ['IRC §1(h) · §1411', 'long-term gains 0 · 15 · 20% by bracket', '+ the 3.8% net-investment-income tax'],
+    ['CA FTB · NY DTF', 'California tops out at 13.3%', 'New York adds 10.9% on top of federal'],
+    ['J.P. MORGAN GUIDE TO THE MARKETS', 'the 2-in-3 underperformance base rate', 'Guide to the Markets — July 2025 edition'],
+  ];
+  const scW = 480, scH = 145, scY = 700;
+  srcCards.forEach((cd, i) => {
+    const cp8 = clamp01((t - 400 - i * 180) / 500);
+    if (cp8 <= 0) return;
+    ctx.save();
+    ctx.globalAlpha = cp8;
+    ctx.translate(0, (1 - easeOutCubic(cp8)) * 14);
+    const scx = 280 + i * (scW + 30);
+    gildedCard(ctx, scx, scY, scW, scH, rgba(PALETTE.gold, 0.22));
+    registerRect('srcCite:card' + i, scx, scY, scW, scH);
+    setFont(ctx, 24, 700, FONT_DISPLAY);
+    ctx.fillStyle = PALETTE.goldDeep;
+    ctx.fillText(cd[0], scx + 28, scY + 40);
+    ctx.strokeStyle = rgba(PALETTE.gold, 0.5);
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(scx + 28, scY + 54);
+    ctx.lineTo(scx + scW - 28, scY + 54);
+    ctx.stroke();
+    setFont(ctx, 24, 600);
+    ctx.fillStyle = PALETTE.ink;
+    ctx.fillText(cd[1], scx + 28, scY + 86);
+    setFont(ctx, 20, 400);
+    ctx.fillStyle = PALETTE.inkSoft;
+    ctx.fillText(cd[2], scx + 28, scY + 118);
+    // the ingot seal — bottom-right, the film's mark on its sources
+    drawK(ctx, scx + scW - 44, scY + scH - 30, 15, 2.5, PALETTE.gold);
+    ctx.restore();
+  });
   // B7 RE-SPEC (Frame Quality Review §B7): the trust beat carries its
   // narrator — he grips the source ledger's left edge (the contact
   // solve), the figure the retention contract promises.
@@ -959,9 +1111,26 @@ export function lockupScene(g: SceneCtx): void {
   //     bare sentence floating in the empty bottom half.
   const stepY = by + bh + 66;
   const stepW = (bw - 6 * 12) / 7;
+  // C4 RE-SPEC (Frame Quality Review §C4 — THE BOTTOM BAND NEVER IDLES):
+  // the seven step seats ghost in from the first frame (the film's own
+  // ghost-map idiom) — the band is committed before the vesting truth
+  // fills them.
   for (let yr2 = 1; yr2 <= 7; yr2++) {
     const sp2 = clamp01((t - 800 - yr2 * 90) / 400);
-    if (sp2 <= 0) continue;
+    if (sp2 <= 0) {
+      const sx2 = bx + (yr2 - 1) * (stepW + 12);
+      ctx.save();
+      ctx.globalAlpha = 0.38;
+      ctx.fillStyle = rgba(PALETTE.card, 0.55);
+      roundRect(ctx, sx2, stepY, stepW, 108, 14);
+      ctx.fill();
+      ctx.strokeStyle = rgba(PALETTE.shadow, 0.18);
+      ctx.lineWidth = 1.5;
+      roundRect(ctx, sx2, stepY, stepW, 108, 14);
+      ctx.stroke();
+      ctx.restore();
+      continue;
+    }
     ctx.save();
     ctx.globalAlpha = sp2;
     const sx2 = bx + (yr2 - 1) * (stepW + 12);
@@ -1069,6 +1238,24 @@ export function planConveyorScene(g: SceneCtx): void {
     }
   };
 
+  // C4 RE-SPEC (Frame Quality Review §C4): the bottom band carries the
+  // plan's three standing properties from the beat's first third — the
+  // amendment content lands into a committed band, not a bare wash.
+  {
+    const ruleP = clamp01((t - 250) / 500);
+    if (ruleP > 0) {
+      ctx.save();
+      ctx.globalAlpha = ruleP;
+      const ruleChips: Array<[string, string]> = [
+        ['WRITTEN ONCE', PALETTE.up], ['AUTO-EXECUTES ON SCHEDULE', PALETTE.inkSoft], ['NO DISCRETION', PALETTE.up],
+      ];
+      const ruleX = [190, 470, 830];
+      ruleChips.forEach(([rl, rc], i) => {
+        chip(ctx, rl, ruleX[i], chipY + 104, { size: 26, bg: PALETTE.white, fg: rc, border: rgba(PALETTE.gold, 0.4) });
+      });
+      ctx.restore();
+    }
+  }
   if (mode === 'no-discretion') chipLine('DISCRETION REMOVED — that is the point', 190, 'up');
   if (mode === 'full-tax') {
     const fp = clamp01((t - 300) / 500);
@@ -1157,7 +1344,15 @@ export function killCardScene(g: SceneCtx): void {
   // the card's height is CONTENT-DRIVEN — head zone + the item stack that
   // will actually play + tail pad — instead of a fixed 60% slab the
   // item-1 beat filled to barely a third ("the render stopped early").
-  const cardH = 336 + (n - 1) * 86;
+  // C2 RE-SPEC (Frame Quality Review §C2 — THE SLAB OWNS THE FRAME): the
+  // panel never stops above the frame's vertical center — a minimum 620px
+  // slab seats the dramatic register on the frame's center of gravity and
+  // the item pitch spreads so the red stakes sit on a fuller field.
+  const baseH = 336 + (n - 1) * 86;
+  const cardH = Math.max(baseH, 620);
+  const tall = cardH > baseH + 4;
+  const itemPitch = tall ? 118 : 86;
+  const itemY0 = tall ? 548 : 470;
   // the obsidian-emerald panel — the film's one dramatic register
   ctx.save();
   ctx.globalAlpha = ap;
@@ -1205,23 +1400,38 @@ export function killCardScene(g: SceneCtx): void {
     ctx.strokeStyle = '#D26A77';
     ctx.lineWidth = 4;
     ctx.beginPath();
-    ctx.moveTo(302, 470 + i * 86 - 30);
-    ctx.lineTo(302, 470 + i * 86 + 12);
+    ctx.moveTo(302, itemY0 + i * itemPitch - 30);
+    ctx.lineTo(302, itemY0 + i * itemPitch + 12);
     ctx.stroke();
     setFont(ctx, 42, 700);
     ctx.fillStyle = '#D26A77';
-    ctx.fillText('WRONG ANSWER IF —', 340, 470 + i * 86);
+    ctx.fillText('WRONG ANSWER IF —', 340, itemY0 + i * itemPitch);
     setFont(ctx, 42, 600);
     ctx.fillStyle = i % 2 === 0 ? '#E8D9B0' : 'rgba(241,231,207,0.75)';
-    ctx.fillText(items[i].slice(17), 340 + ctx.measureText('WRONG ANSWER IF — ').width, 470 + i * 86);
+    ctx.fillText(items[i].slice(17), 340 + ctx.measureText('WRONG ANSWER IF — ').width, itemY0 + i * itemPitch);
     // the gold tick
     ctx.strokeStyle = PALETTE.gold;
     ctx.lineWidth = 3.5;
     ctx.beginPath();
-    ctx.moveTo(300, 458 + i * 86);
-    ctx.lineTo(322, 470 + i * 86);
+    ctx.moveTo(300, itemY0 + i * itemPitch - 12);
+    ctx.lineTo(322, itemY0 + i * itemPitch);
     ctx.stroke();
     ctx.restore();
+  }
+  // C2 RE-SPEC: the tall slab's lower band carries the register — a gold
+  // hairline + the running rule the kill card enforces, so the panel's
+  // bottom third is composed, not empty.
+  if (tall) {
+    ctx.strokeStyle = rgba(PALETTE.gold, 0.4);
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(340, 190 + cardH - 118);
+    ctx.lineTo(W - 340, 190 + cardH - 118);
+    ctx.stroke();
+    setFont(ctx, 28, 600);
+    ctx.fillStyle = rgba('#F1E7CF', 0.72);
+    ctx.textAlign = 'left';
+    ctx.fillText('THE KILL CONDITIONS — ASKED BEFORE EVERY EXIT', 340, 190 + cardH - 66);
   }
   ctx.restore();
 
@@ -1571,6 +1781,31 @@ export function payoffDiagramScene(g: SceneCtx): void {
   series.push({ name: 'floor $85', tone: 'up', points: partialPoints(FLOOR, draw) });
   if (mode === 'ceiling' || mode === 'path' || mode === 'cost') series.push({ name: 'ceiling $205', tone: 'gold', points: partialPoints(CEIL, draw) });
   lineChart(ctx, { x: cx, y: cy, w: cw, h: ch, series, p: 1, t, gridLines: 4, showYAxis: true, lineWidth: 6 });
+  // C4 RE-SPEC (Frame Quality Review §C4): the payoff diagram names its
+  // own x-axis — the band under the plot carries the axis annotation from
+  // the beat's first third (the chips land INTO a committed band).
+  {
+    const axP = clamp01((t - 300) / 500);
+    if (axP > 0) {
+      ctx.save();
+      ctx.globalAlpha = axP;
+      ctx.strokeStyle = rgba(PALETTE.shadow, 0.22);
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(cx, cy + ch + 36);
+      ctx.lineTo(cx + cw, cy + ch + 36);
+      ctx.stroke();
+      setFont(ctx, 22, 600);
+      ctx.fillStyle = PALETTE.inkFaint;
+      ctx.textAlign = 'left';
+      ctx.fillText('NOW', cx, cy + ch + 68);
+      ctx.textAlign = 'center';
+      ctx.fillText('TIME TO EXPIRY', cx + cw / 2, cy + ch + 68);
+      ctx.textAlign = 'right';
+      ctx.fillText('AT EXPIRY', cx + cw, cy + ch + 68);
+      ctx.restore();
+    }
+  }
   const markChip = (txt: string, x: number, y: number, tone: string, delay: number) => {
     const cp = clamp01((t - delay) / 500);
     if (cp > 0) {
@@ -2094,7 +2329,7 @@ export function decisionTableScene(g: SceneCtx): void {
     ctx.globalAlpha = hp;
     const heads = ['EXIT', 'THE ONE JOB', 'CHOOSE IT WHEN', 'KILL CONDITION'];
     for (let c = 0; c < 4; c++) {
-      setFont(ctx, 30, 700);
+      setFont(ctx, 33, 700);
       ctx.fillStyle = PALETTE.goldDeep;
       ctx.textAlign = 'left';
       ctx.fillText(heads[c], colX[c], rowY0 - 24);
@@ -2133,7 +2368,10 @@ export function decisionTableScene(g: SceneCtx): void {
       roundRect(ctx, colX[0] - 24, y - 2, 6, (ghost ? 82 : rowH) - 22, 3);
       ctx.fill();
     }
-    setFont(ctx, Math.round((hot ? 36 : 32) * (1 + 0.08 * landPulse(t - (350 + r * 320 + 550)))), 700, FONT_DISPLAY);
+    // D1 RE-SPEC (Frame Quality Review §D1 — DESIGNED FOR THE SCROLL TOO):
+    // the table's type register rises one band — the exit numerals 40/48,
+    // the cells 31 — so the screenshot moment survives the feed twin.
+    setFont(ctx, Math.round((hot ? 48 : 40) * (1 + 0.08 * landPulse(t - (350 + r * 320 + 550)))), 700, FONT_DISPLAY);
     ctx.fillStyle = PALETTE.goldDeep;
     ctx.fillText(ROWS[r][0], colX[0], y + 40);
     if (ghost) {
@@ -2152,9 +2390,9 @@ export function decisionTableScene(g: SceneCtx): void {
       // cell now wraps WITHIN its column width (two measured lines max,
       // 34px pitch — inside the 100px row band).
       const cell = (txt: string, cx: number, cw: number, col: string): void => {
-        const lines = wrapText(ctx, txt, cw - 24, 29, 600).slice(0, 2);
+        const lines = wrapText(ctx, txt, cw - 24, 31, 600).slice(0, 2);
         ctx.fillStyle = col;
-        lines.forEach((ln, i) => ctx.fillText(ln, cx, y + 36 + i * 34));
+        lines.forEach((ln, i) => ctx.fillText(ln, cx, y + 38 + i * 36));
       };
       cell(ROWS[r][1], colX[1], colW[1], PALETTE.ink);
       cell(ROWS[r][2], colX[2], colW[2], PALETTE.inkSoft);
@@ -2190,7 +2428,7 @@ export function decisionTableScene(g: SceneCtx): void {
     if (fp > 0) {
       ctx.save();
       ctx.globalAlpha = fp;
-      chip(ctx, 'SCREENSHOT THIS — OR FIND IT IN THE DESCRIPTION', W / 2 - 420, H * 0.885, { size: 32, bg: PALETTE.goldWash, fg: PALETTE.goldDeep, border: rgba(PALETTE.gold, 0.6) });
+      chip(ctx, 'SCREENSHOT THIS — OR FIND IT IN THE DESCRIPTION', W / 2 - 430, H * 0.885, { size: 36, bg: PALETTE.goldWash, fg: PALETTE.goldDeep, border: rgba(PALETTE.gold, 0.6) });
       ctx.restore();
     }
   }

@@ -352,7 +352,12 @@ export function hostSmall(
       // paused): the audit's restored smear rides the film's real strikes.
       armSmear: smear,
       // PHASE-5: the chart-satchel — the data chapters' signature silhouette
-      scarf: false, hostBody: true,
+      // D3 RE-SPEC (Frame Quality Review §D3 — IDENTITY WHERE THE HOST
+      // LIVES): the scarf draws at EVERY side-host rig. The compact knot
+      // (A3: 8x5.5 + the screen-floored ink seam) killed the stain read
+      // the old 10x6.5 knot carried at 1.09x — the signature gold knot
+      // returns to the eighty-percent-of-runtime figure.
+      scarf: true, hostBody: true,
       // PHASE 1 round 5 (the panel's four-round diagnosis, confirmed): the
       // diagonal chart-satchel strap crosses the chest exactly where the
       // folded forearms read — on the crossed-refusal hosts the strap

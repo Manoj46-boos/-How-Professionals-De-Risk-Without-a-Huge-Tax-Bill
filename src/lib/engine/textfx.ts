@@ -289,20 +289,30 @@ export function drawCaptions(
   ctx.fillStyle = rgba(PALETTE.shadow, 0.06);
   roundRect(ctx, px - 4, py, widest + 68, totalH, 18);
   ctx.fill();
-  ctx.fillStyle = '#FFFFFF';
+  // C5/D4 RE-SPEC (Frame Quality Review §C5 + §D4 — THE PILL JOINS THE
+  // DESIGN SYSTEM): the stock white YouTube plate becomes the film's own
+  // champagne chip — bgSoft (the soft-plate family), a gold hairline,
+  // ink text, the gold active word, and the INGOT bullet as the voice
+  // mark. The film's most persistent element finally belongs to it.
+  ctx.fillStyle = PALETTE.bgSoft;
   roundRect(ctx, px, py, widest + 68, totalH, 18);
   ctx.fill();
   ctx.lineWidth = 2;
-  ctx.strokeStyle = rgba('#9FB4AE', 0.55);
+  ctx.strokeStyle = rgba(PALETTE.gold, 0.5);
   roundRect(ctx, px, py, widest + 68, totalH, 18);
   ctx.stroke();
-  // the voice mark — gold base bar + teal active tip
+  // the voice mark — the INGOT bullet (the film's own object)
   ctx.fillStyle = PALETTE.gold;
-  roundRect(ctx, px + 3, py + 24, 7, Math.max(10, totalH - 48), 3.5);
+  ctx.beginPath();
+  ctx.moveTo(px + 10, py + totalH / 2 - 9);
+  ctx.lineTo(px + 28, py + totalH / 2 - 9);
+  ctx.lineTo(px + 24, py + totalH / 2 + 5);
+  ctx.lineTo(px + 14, py + totalH / 2 + 5);
+  ctx.closePath();
   ctx.fill();
-  ctx.fillStyle = PALETTE.up;
-  roundRect(ctx, px + 3, py + 24, 7, Math.max(10, (totalH - 48) * 0.42), 3.5);
-  ctx.fill();
+  ctx.strokeStyle = rgba(PALETTE.goldDeep, 0.8);
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
   ctx.restore();
 
   // words — spoken = ink, upcoming = 85% ink (PANEL-9 R1), active = sweep;
@@ -445,7 +455,7 @@ export function drawChapterCard(
   // own complement accent (the designed per-chapter object — gold K,
   // coral gauge, teal bars) lands in that band at its declared register:
   // brand ink, not atmosphere, breaking the loading-screen read.
-  chapterAccent(ctx, W, H, t, tone);
+  chapterAccent(ctx, W, H, t, tone, index); // C3: the chapter's OWN silhouette
   // PHONE-GATE (the 27% empty band, frame 20): the card's bottom zone
   // carried no full-width committed ink after the B19 atmosphere cut.
   // The fix is data-true, not decoration: the CHAPTER MAP — the film's
