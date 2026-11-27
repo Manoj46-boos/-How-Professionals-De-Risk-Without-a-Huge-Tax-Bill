@@ -1436,6 +1436,87 @@ export function accentFire(word: string | undefined): boolean {
  * PHASE 1.5: the gate is now the shared content-word rule (accentFire) so
  * smears ride exactly the words that carry full strikes — 1-in-2 content
  * words, not the old 1-in-4. Scrub-safe. */
+/**
+ * E1 RE-SPEC (Frame Quality Review §E1 — THE POSE LAYER JOINS THE ACCENT
+ * SYSTEM): the pose layer's advance events, derived from the SAME
+ * content-word onsets the strike layer fires on. The slot clock no longer
+ * runs on a 3,000ms metronome — it advances when the sentence lands a
+ * content word (min hold 1,150ms keeps a slot readable; a forced advance
+ * every 3,000ms keeps silent stretches alive). The body answers the
+ * sentence, never the clock. Pure f(t) — scrub-safe.
+ *
+ * Returns:
+ *   slot  — absolute advance count (+ the cast seed offset, so different
+ *           hosts start on different slots of the same cycle)
+ *   since — ms since the last advance (the release window, 0..640)
+ *   until — ms until the next advance (the anticipation window, 0..80)
+ */
+export function accentSlotClock(
+  t: number,
+  wordTimes: number[],
+  words: string[] | undefined,
+  seed = 0,
+  minHold = 1150,
+  maxSlot = 3000
+): { slot: number; since: number; until: number } {
+  const adv: number[] = [];
+  let last = -Infinity;
+  for (let i = 0; i < wordTimes.length; i++) {
+    const wt = wordTimes[i];
+    if (wt > t + maxSlot) break;
+    const gated = words && words[i] ? accentFire(words[i]) : false;
+    if (gated && wt - last >= minHold) { adv.push(wt); last = wt; }
+  }
+  // the full advance timeline: silent gaps filled by the clock fallback
+  // (one forced advance every maxSlot), extended past t so the clock
+  // never stops
+  const times: number[] = [];
+  let prev = 0;
+  for (const a of adv) {
+    while (a - prev > maxSlot) { prev += maxSlot; times.push(prev); }
+    times.push(a);
+    prev = a;
+  }
+  while (prev <= t) { prev += maxSlot; times.push(prev); }
+  let slot = 0;
+  let next = prev;
+  for (const a of times) {
+    if (a <= t) slot++;
+    else { next = a; break; }
+  }
+  const since = slot > 0 ? t - times[slot - 1] : t + maxSlot;
+  return { slot: slot + (Math.floor(Math.abs(seed)) % 4), since, until: next - t };
+}
+
+/**
+ * E2 RE-SPEC (Frame Quality Review §E2 — EVERY LANDING NUMBER GETS A
+ * BODY): the number take — the lean-in/recoil grammar fires on the
+ * number word's onset, the body's twin of the U20 camera micro-push.
+ * Matches digits, currency, percents and the spelled numbers a VO
+ * actually says; accepted onsets are spaced >= minGap so dense-number
+ * sentences never strobe. Returns the ACCEPTED onset whose 380ms take
+ * window contains t, else -1. Pure f(t) — scrub-safe.
+ */
+export function numberTakeStart(
+  t: number,
+  wordTimes: number[],
+  words: string[] | undefined,
+  minGap = 1600
+): number {
+  const NUMBER_RE = /[\d$%]|million|billion|percent|two|three|four|five|six|seven|eight|nine|ten|half|twice|double|triple/i;
+  let lastAccepted = -Infinity;
+  let hit = -1;
+  for (let i = 0; i < wordTimes.length; i++) {
+    const wt = wordTimes[i];
+    if (wt > t + 380) break;
+    const w = words && words[i] ? words[i] : '';
+    if (!NUMBER_RE.test(w)) continue;
+    if (wt - lastAccepted >= minGap) lastAccepted = wt;
+    if (lastAccepted === wt && t >= wt && t <= wt + 380) hit = wt;
+  }
+  return hit;
+}
+
 export function accentPulse(t: number, wordTimes: number[], words?: string[]): number {
   let p = 0;
   for (let i = 0; i < wordTimes.length; i++) {

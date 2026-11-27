@@ -19,7 +19,11 @@
  *  - The rocket chart is GONE (it fused with the K and read as a diagram).
  *
  * Six variants for YouTube Test & Compare (report: "ship 4-6 variants and
- * let the measured race decide"): two control wordings from v2, four new.
+ * let the measured race decide").
+ *
+ * F1 RE-SPEC (Frame Quality Review §F1): the poster now packages THIS
+ * film — the emerald/gold split, the INGOT brand tag, the $3.7M-bill /
+ * six-exits hook family — not the previous film's "FEELING BROKE?" art.
  */
 
 import { PALETTE, FONT_UI, rgba, roundRect, setFont } from './theme';
@@ -91,15 +95,20 @@ export function fitCheck(
  *  AUDIT-2 / §10.5 (report Phase 4): variant 0 becomes the CONTRADICTION
  *  PAIR the panel asked to bake in — "MARKET +20%. FEELING BROKE?" — the
  *  hook that survives 320px because each line is 3 words. */
+// F1 RE-SPEC (Frame Quality Review §F1 — THE THUMBNAIL SHIPS THIS FILM):
+// the six variants carry THIS film's hook — the $3.7M bill on the
+// concentrated sale and the six exits — with the film's own verified
+// numbers ($10M sale, ~37% to the tax, the $100B Ballmer decision gap).
+// The old film's wordings ("FEELING BROKE?", the +20% market badge) are
+// gone: the click is the first retention decision and it is now made on
+// the right film's art.
 export const THUMB_VARIANTS: ThumbVariant[] = [
-  // AUDIT-ROUND-2 (fix 5, panel round 2): the question IS the punch; the
-  // number lives in the badge, ONCE, with its alarming completion.
-  { punch: ['FEELING', 'BROKE?'],             badge: { big: '+20%', label: '...for who?' } },
-  { punch: ['STILL', 'BROKE?'],              badge: { big: '+20%', label: 'S&P · 12 MO' } },
-  { punch: ['WHY AM I', 'BROKE?'],           badge: { big: '+22%', label: 'NASDAQ · 12 MO' } },
-  { punch: ['MARKET UP.', 'YOU?'],           badge: { big: '+20%', label: 'S&P · 12 MO' } },
-  { punch: ['RICH MARKET.', 'BROKE YOU.'],   badge: { big: '38%',  label: '10 STOCKS' } },
-  { punch: ['UP 20%.', 'BROKE ANYWAY?'],     badge: { big: '46%',  label: '7 STOCKS' } },
+  { punch: ['THE $3.7M', 'TAX BILL'],        badge: { big: '6',     label: 'WAYS OUT' } },
+  { punch: ['SIX EXITS.', 'PICK ONE'],       badge: { big: '$3.7M', label: 'the bill' } },
+  { punch: ['CONCENTRATED', 'STOCK?'],       badge: { big: '6',     label: 'EXITS' } },
+  { punch: ['SELL $10M.', 'PAY $3.7M?'],     badge: { big: '37%',   label: 'TO THE TAX' } },
+  { punch: ['THE DECISION,', 'NOT THE MARKET'], badge: { big: '$100B', label: 'LEFT BEHIND' } },
+  { punch: ['ONE SALE.', 'ONE BILL.'],       badge: { big: '37%',   label: 'OF $10M' } },
 ];
 
 /**
@@ -134,9 +143,12 @@ export function drawThumbnail(
   // PALETTE.up (#0B6E63 → #0A5F55) so white type carries ~6:1; coral kept
   // at PALETTE.down. Both stay in the light brand's hue families — no
   // black, no brown.
+  // F1 RE-SPEC: the poster splits on THIS film's two registers — the
+  // dramatic emerald (the kill-card family) and the deep gold (the
+  // winner-data family). The previous film's teal/coral split is gone.
   const gl = ctx.createLinearGradient(0, 0, W * 0.6, H);
-  gl.addColorStop(0, '#0C6B5F');
-  gl.addColorStop(1, '#09544A');
+  gl.addColorStop(0, '#14352C');
+  gl.addColorStop(1, '#0E1F19');
   ctx.fillStyle = gl;
   ctx.beginPath();
   ctx.moveTo(0, 0);
@@ -146,8 +158,8 @@ export function drawThumbnail(
   ctx.closePath();
   ctx.fill();
   const gr = ctx.createLinearGradient(W * 0.45, 0, W, H);
-  gr.addColorStop(0, '#D2603A');
-  gr.addColorStop(1, '#C2542E');
+  gr.addColorStop(0, '#A67F1E');
+  gr.addColorStop(1, '#8F6E12');
   ctx.fillStyle = gr;
   ctx.beginPath();
   ctx.moveTo(W * 0.62, 0);
@@ -253,8 +265,8 @@ export function drawThumbnail(
     const bigSize = fitCheck(ctx, [v.badge.big], 117, 84, 640, FONT_UI);
     setFont(ctx, bigSize, 700, FONT_UI);
     const bigW = ctx.measureText(v.badge.big).width;
-    // fix 5: the alarming completion replaces the S&P source line
-    const sub = '...for who?';
+    // F1 RE-SPEC: the completion line is per-variant (this film's hooks)
+    const sub = v.badge.label;
     const subSize = fitCheck(ctx, [sub], 44, 30, 640, FONT_UI);
     setFont(ctx, subSize, 600, FONT_UI);
     const subW = ctx.measureText(sub).width;
@@ -281,7 +293,7 @@ export function drawThumbnail(
     roundRect(ctx, bx, by, plateW, plateH, 38);
     ctx.stroke();
     setFont(ctx, bigSize, 700, FONT_UI);
-    ctx.fillStyle = UP;
+    ctx.fillStyle = PALETTE.goldNumeral; // F1: this film's number register
     ctx.textAlign = 'left';
     ctx.fillText(v.badge.big, bx + 52, by + 128);
     setFont(ctx, subSize, 600, FONT_UI);
@@ -290,34 +302,33 @@ export function drawThumbnail(
     ctx.restore();
   }
 
-  // ── THE K — a small branded tag (fix 5): "K shrinks to a small branded
-  // tag". One crisp gold K mark, top-left corner, beside nothing — a
-  // signature, not a watermark.
+  // ── THE INGOT — this film's owned mark, top-left corner (F1 RE-SPEC):
+  // the previous film's gold K retires; the tag is the two-tier ingot the
+  // watermark, seals and caption bullets all carry — one brand object.
   {
     ctx.save();
-    ctx.strokeStyle = GOLD;
-    ctx.lineWidth = 10;
-    ctx.lineCap = 'round';
-    const kx = 84, ky = 116, ks = 54;
+    const ix = 96, iy = 112, iw = 66, ih = 26;
+    ctx.fillStyle = GOLD;
     ctx.beginPath();
-    ctx.moveTo(kx, ky - ks);
-    ctx.lineTo(kx, ky + ks);
-    ctx.moveTo(kx, ky + ks * 0.08);
-    ctx.lineTo(kx + ks * 1.12, ky - ks * 0.92);
-    ctx.moveTo(kx, ky + ks * 0.08);
-    ctx.lineTo(kx + ks * 1.12, ky + ks * 0.92);
+    ctx.moveTo(ix - iw, iy - ih);
+    ctx.lineTo(ix + iw, iy - ih);
+    ctx.lineTo(ix + iw * 0.72, iy + ih);
+    ctx.lineTo(ix - iw * 0.72, iy + ih);
+    ctx.closePath();
+    ctx.fill();
+    ctx.strokeStyle = rgba(GOLDD, 0.85);
+    ctx.lineWidth = 7;
+    ctx.lineJoin = 'round';
     ctx.stroke();
-    // the one-light offset shadow — the mark declares, in the film's light
-    ctx.strokeStyle = rgba(GOLDD, 0.6);
-    ctx.lineWidth = 6;
+    // the one-light top face — the film's key light from upper right
+    ctx.fillStyle = rgba('#F7EFD8', 0.5);
     ctx.beginPath();
-    ctx.moveTo(kx - 4, ky - ks);
-    ctx.lineTo(kx - 4, ky + ks);
-    ctx.moveTo(kx - 4, ky + ks * 0.08);
-    ctx.lineTo(kx - 4 + ks * 1.12, ky - ks * 0.92);
-    ctx.moveTo(kx - 4, ky + ks * 0.08);
-    ctx.lineTo(kx - 4 + ks * 1.12, ky + ks * 0.92);
-    ctx.stroke();
+    ctx.moveTo(ix - iw, iy - ih);
+    ctx.lineTo(ix + iw, iy - ih);
+    ctx.lineTo(ix + iw * 0.82, iy - ih * 0.28);
+    ctx.lineTo(ix - iw * 0.82, iy - ih * 0.28);
+    ctx.closePath();
+    ctx.fill();
     ctx.restore();
   }
   void DOWN;

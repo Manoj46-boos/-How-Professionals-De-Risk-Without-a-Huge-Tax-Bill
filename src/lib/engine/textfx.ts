@@ -672,9 +672,31 @@ export function drawWatermark(
 ): void {
   ctx.save();
   ctx.globalAlpha = alpha;
-  // the gold INGOT mark
+  // F2 RE-SPEC (Frame Quality Review §F2 — THE OWNED MARK): the watermark
+  // carries the film's INGOT glyph — the brand object the film owns — in
+  // the corner where feed viewers' eyes rest, two-tier with the key light
+  // on its top face. The previous film's K glyph is retired. The wordmark
+  // rides the enforced type floor beside it.
   ctx.translate(58, 52);
-  drawK(ctx, 0, 0, 15, 4, PALETTE.gold);
+  ctx.fillStyle = PALETTE.gold;
+  ctx.beginPath();
+  ctx.moveTo(-17, -10);
+  ctx.lineTo(19, -10);
+  ctx.lineTo(13, 10);
+  ctx.lineTo(-11, 10);
+  ctx.closePath();
+  ctx.fill();
+  ctx.fillStyle = rgba(PALETTE.goldDeep, 0.75);
+  ctx.beginPath();
+  ctx.moveTo(-17, -10);
+  ctx.lineTo(19, -10);
+  ctx.lineTo(16, -3);
+  ctx.lineTo(-14, -3);
+  ctx.closePath();
+  ctx.fill();
+  ctx.strokeStyle = rgba(PALETTE.goldDeep, 0.8);
+  ctx.lineWidth = 2;
+  ctx.stroke();
   setFont(ctx, TYPE_FLOOR, 600); // v9 (D-07): TYPE_FLOOR 24→28, now enforced
   ctx.fillStyle = rgba(PALETTE.inkSoft, 0.9); // v9 (D-08): was hand-hexed #55555F — the v8 "no hand-hexed neutrals" rule applies here too
   ctx.textAlign = 'left';

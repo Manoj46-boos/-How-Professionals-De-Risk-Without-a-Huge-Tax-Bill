@@ -60,16 +60,26 @@ function room(g: SceneCtx, tone: 'up' | 'down' | 'gold' | 'neutral' | undefined 
  *  long/short pair, the framework table. */
 function chapterRoomProp(ctx: CanvasRenderingContext2D, W: number, H: number, idx: number, t: number): void {
   if (idx <= 0) return;
-  const x = W - 340, y = 120;
+  const x = W - 400, y = 96;
   ctx.save();
-  ctx.globalAlpha = 0.09;
-  ctx.strokeStyle = PALETTE.ink;
+  // F4 RE-SPEC (Frame Quality Review §F4 — THE ROOM OWNS ITS OBJECT): the
+  // wall art rides the chapter's OWN accent ink (teal racks, coral
+  // drawdown, gold pool — one object + one hue per chapter) at
+  // functional-but-background alpha, scaled up 1.3x: the data block's
+  // chapter changes register as events, not re-tints.
+  ctx.globalAlpha = 0.13;
+  const propInk = [PALETTE.up, PALETTE.down, PALETTE.up, PALETTE.gold,
+    PALETTE.gold, PALETTE.up, PALETTE.gold, PALETTE.gold][((idx - 1) % 8)];
+  ctx.translate(x, y);
+  ctx.scale(1.3, 1.3);
+  ctx.translate(-x, -y);
+  ctx.strokeStyle = propInk;
+  ctx.fillStyle = propInk;
   ctx.lineWidth = 5;
   switch (((idx - 1) % 8)) {
     case 0: // the market racks — ascending bars
       for (let i = 0; i < 5; i++) {
         const bh = 30 + i * 18;
-        ctx.fillStyle = PALETTE.ink;
         ctx.fillRect(x + i * 34, y + 110 - bh, 22, bh);
       }
       break;
@@ -80,7 +90,6 @@ function chapterRoomProp(ctx: CanvasRenderingContext2D, W: number, H: number, id
       ctx.stroke();
       ctx.beginPath();
       ctx.arc(x + 130, y + 130, 7, 0, Math.PI * 2);
-      ctx.fillStyle = PALETTE.ink;
       ctx.fill();
       break;
     case 2: // the conveyor — a rail with three slots
@@ -95,7 +104,6 @@ function chapterRoomProp(ctx: CanvasRenderingContext2D, W: number, H: number, id
         const a = (i / 10) * Math.PI * 2;
         ctx.beginPath();
         ctx.arc(x + 60 + Math.cos(a) * 52, y + 70 + Math.sin(a) * 52, 9, 0, Math.PI * 2);
-        ctx.fillStyle = PALETTE.ink;
         ctx.fill();
       }
       break;
@@ -844,7 +852,13 @@ export function distBarsScene(g: SceneCtx): void {
     hostSmall(g, bx + 330 + (bw - 330) * 0.4 - 130, 'pointR', 32, g.H * 0.66, 1.3, 0, 'aha', 1.4, 1, true, 0.4,
       undefined, undefined, { x: bx + 330 + (bw - 330) * 0.4, y: H * 0.28 + 160 + 65, hand: 'palm', easeAt: 1450 });
   } else {
-    hostSmall(g, 110, 'pointR', 32, g.H * 0.66, 1.3, 0, 'aha', 1.4, 1, true, 0.4);
+    hostSmall(g, 110, 'pointR', 32, g.H * 0.66, 1.3, 0, 'aha', 1.4, 1, true, 0.4,
+      undefined, undefined, undefined, undefined, undefined, undefined, undefined,
+      // E5 RE-SPEC (Frame Quality Review §E5 — MID-CHAPTER WALKS): the
+      // presenter WALKS INTO the base-rate frame on the intro beat — the
+      // film's best character-motion asset spends more than its
+      // chapter-door fifteen seconds.
+      mode === 'intro' ? 850 : undefined);
   }
 }
 
@@ -1321,7 +1335,17 @@ export function planConveyorScene(g: SceneCtx): void {
   // FROM THE BEATS THAT CARRY THE FACTS): the certified side-host register
   // (the B2 staging: the free left band, gesture cycle aimed INTO the
   // scene's content) joins this exit-chapter drawer.
-  hostSmall(g, 60, 'pointR', 33, g.H * 0.66, 1.4, 0, 'aha', 1.4, 1, true, 0.4);
+  // E3 RE-SPEC (Frame Quality Review §E3 — THE FREE VERBS STAGE): on the
+  // no-discretion beat he PERCHES on the belt's near edge (sitBack/sitRise,
+  // the seat = the belt's bottom line, the same pelvis-anchored contact
+  // math) — the presenter waiting on his own conveyor. E5 rides along: he
+  // WALKS IN on the intro beat.
+  const beltBottom = H * 0.44 + 96;
+  hostSmall(g, 170, 'pointR', 33, g.H * 0.66, 1.4, 0, 'aha', 1.4, 1, true, 0.4,
+    mode === 'no-discretion' ? 900 : undefined,
+    mode === 'no-discretion' ? beltBottom : undefined,
+    undefined, undefined, undefined, undefined, undefined,
+    mode === 'intro' ? 900 : undefined);
 }
 
 // ── killCard — the wrong-answer card, in the film's dark emerald glass ───────
@@ -1836,8 +1860,13 @@ export function payoffDiagramScene(g: SceneCtx): void {
   // DATA CHAPTERS): the collar's payoff diagram gets its narrator — he
   // stands in the free right column (the chart spans x 190-1410), his
   // gesture cycle pointing back INTO the payoff bands.
-  hostSmall(g, 1550, 'pointL', 34, g.H * 0.66, 1.35, 0, 'aha', 1.4, 1, true, 0.4,
-    undefined, undefined, { x: cx + cw - 10, y: cy + ch - (205 / 260) * ch, hand: 'palm', easeAt: 1300 });
+  hostSmall(g, 1550, mode === 'cost' ? 'leanOnK' : 'pointL', 34, g.H * 0.66, 1.35, 0, 'aha', 1.4, 1, true, 0.4,
+    undefined, undefined, { x: cx + cw - 10, y: cy + ch - (205 / 260) * ch, hand: 'palm', easeAt: 1300 },
+    undefined, undefined, undefined, undefined,
+    // E3: on the cost beat the free weight-shift verb stages the surrender
+    // — he LEANS, worn, on the frame's K stem (the grip pose key).
+    // E5: on the floor beat he WALKS to the collar's free column.
+    mode === 'floor' ? 950 : undefined);
 
   // E3 MARKET-STANDARD FIX (review report E3 [P1] — THE MASCOT IS ABSENT
   // FROM THE BEATS THAT CARRY THE FACTS): the exit chapters were
@@ -2442,7 +2471,11 @@ export function decisionTableScene(g: SceneCtx): void {
   // not a plate that floats.
   hostSmall(g, 92, 'pointR', 36, g.H * 0.66, 1.3, 0, 'aha', 1.4, 1, true, 0.4,
     undefined, undefined, undefined, undefined, undefined,
-    resolveProp('decisionTable', 'holdCard', true) ? 'holdCard' : undefined);
+    resolveProp('decisionTable', 'holdCard', true) ? 'holdCard' : undefined,
+    undefined,
+    // E5 RE-SPEC: he WALKS IN holding the framework card on the full-table
+    // beat — the save artifact arrives with its presenter.
+    mode === 'full' ? 900 : undefined);
 
 }
 
@@ -2492,7 +2525,11 @@ export function sequenceStackScene(g: SceneCtx): void {
   // character carries the argument, and here he was a recurring guest.
   // The certified side-host register (the B2 staging: the free left band,
   // gesture cycle aimed INTO the scene's content) joins this drawer.
-  hostSmall(g, 60, 'pointR', 33, g.H * 0.66, 1.3, 0, 'aha', 1.4, 1, true, 0.4);
+  hostSmall(g, 60, 'pointR', 33, g.H * 0.66, 1.3, 0, 'aha', 1.4, 1, true, 0.4,
+    undefined, undefined, undefined, undefined, undefined, undefined, undefined,
+    // E5 RE-SPEC (Frame Quality Review §E5 — MID-CHAPTER WALKS): the
+    // layered answer's narrator walks into the sequence's opening beat.
+    ((s.mode as string) || 'intro') === 'intro' ? 850 : undefined);
 }
 
 // [[MORE]]

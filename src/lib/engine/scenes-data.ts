@@ -12,7 +12,7 @@ import { SceneCtx } from './scene-context';
 import { REACTIONS, reactionAt, reactionStart } from './scene-context';
 import { pivotTakeStart } from './pivots';
 import { lineChart, lineChartYBounds, pieChart, barRow, dotGrid, gauge, statCard, sourceTag, sceneTitle, wrapText } from './charts';
-import { Stickman, POSES, blendPose, accentPulse, take, walkIn } from './stickman';
+import { Stickman, POSES, blendPose, accentPulse, accentSlotClock, numberTakeStart, take, walkIn } from './stickman';
 import { drawStickmanV2, talkAt } from './stickman-v2';
 import { walkStrike, walkPush } from './scenes-host';
 import { registerRect, registerText, declareHostContact } from './collision';
@@ -196,12 +196,14 @@ export function hostSmall(
   // turns toward his content on the same term the arms use — the
   // eyeline connects (C5) at every side-host scale in the film.
   const bias = (dir === 'right' ? 'right' : 'left') as 'right' | 'left';
-  const ph = (g.t / 3000 + seed) % 4;
-  const idx = Math.floor(ph);
-  // PANEL-12 / P1-2: the side-host gesture crossfade re-blends through the
-  // analytic spring — same motion grammar as the main host's talk cycle.
-  const tInto = Math.min(ph - idx, 1 - (ph - idx)) * 3000;
-  const k = clamp01(tInto / 620);
+  // E1 RE-SPEC (Frame Quality Review §E1 — THE POSE LAYER JOINS THE
+  // ACCENT SYSTEM): the four-slot cycle no longer advances on the
+  // 3,000ms metronome — it advances on the CONTENT-WORD ONSETS the
+  // strike layer already fires on. The same word events now drive the
+  // strikes, the smears and the pose changes: the body answers the
+  // sentence, never the clock. Pure f(t), scrub-safe.
+  const clk = accentSlotClock(g.beatT, g.wordTimes, g.wordTexts, seed);
+  const idx = ((clk.slot % 4) + 4) % 4;
   // P1-6 (report §12.6): the owner/worker pair keys off the sentence
   // grammar too — same ids, same word onsets, their own gesture cycle.
   const sentOpts = {
@@ -211,10 +213,22 @@ export function hostSmall(
     wordTimes: g.gWordTimes,
     pointBias: bias,
   };
-  const poseA = Stickman.poseAt(g.t, { gesture: cycle[idx % 4], speaking: g.speaking, ...sentOpts });
+  const poseA = Stickman.poseAt(g.t, { gesture: cycle[idx], speaking: g.speaking, ...sentOpts });
   const poseB = Stickman.poseAt(g.t, { gesture: cycle[(idx + 1) % 4], speaking: g.speaking, ...sentOpts });
-  const w = k > 0 ? clamp01(springTo(0, 1, k * 620, 150, 19)) : 0;
-  let pose = w > 0 ? blendPose(poseA, poseB, w) : poseA;
+  // E4 RE-SPEC (Frame Quality Review §E4 — CROSSFADES WITH ANTICIPATION):
+  // every slot change opens with the strike grammar's 80ms wind-up — the
+  // blend pulls PAST pose A, away from B (-0.14 extrapolation — blendPose
+  // lerps numerically; string keys ride A through the dip) — then
+  // releases to B on the analytic spring. The body's transitions share
+  // the accent layer's accepted grammar: anticipate, strike, settle.
+  const ANT = 80;
+  let w = 0;
+  if (clk.since >= 0 && clk.since < 640) {
+    w = Math.min(1, -0.14 + 1.14 * clamp01(springTo(0, 1, clk.since, 150, 19)));
+  } else if (clk.until > 0 && clk.until <= ANT) {
+    w = -0.14 * (1 - clk.until / ANT);
+  }
+  let pose = w !== 0 ? blendPose(poseA, poseB, w) : poseA;
   // PHASE 1 item 1 (panel round 2: "gaze frontal, gold band unacknowledged"):
   // the crossed refusal COMMITS its gaze to the disputed data — the head
   // turns toward the content side even though the pose carries no point.
@@ -249,6 +263,17 @@ export function hostSmall(
       ? -1
       : pivotTakeStart(g.s.sceneKey, g.sentenceId, g.sentenceT, g.t, g.sceneT, 260, g.s.chapterIdx, g.s.sentenceDurMs);
     if (pt0 >= 0) pose = take(pose, g.t, pt0);
+  }
+  // E2 RE-SPEC (Frame Quality Review §E2 — EVERY LANDING NUMBER GETS A
+  // BODY): the take fires on the number word's onset — the lean-in/
+  // recoil grammar, the body's twin of the U20 camera micro-push.
+  // Spaced >=1,600ms so dense-number sentences never strobe; the
+  // REACTIONS-window take owns the pose when both would fire.
+  {
+    const n0 = reactionStart(g.s.sceneKey, g.t, g.d) >= 0
+      ? -1
+      : numberTakeStart(g.beatT, g.wordTimes, g.wordTexts);
+    if (n0 >= 0) pose = take(pose, g.beatT, n0);
   }
   // BLUEPRINT Phase 2 (judge round-2 calibration): the reaction beat holds
   // the mouth OPEN in a gasp (talk 0.88 drives the round-O shape, and the

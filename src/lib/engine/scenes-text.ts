@@ -1306,9 +1306,15 @@ export function endScreenScene(g: SceneCtx): void {
   // into YouTube's reserved (rendered-empty) end-screen zone — while the
   // WATCH NEXT chip sits BELOW-LEFT of him under the card. The pose flips
   // to pointL so the gesture sells the actual click target.
+  // F3 RE-SPEC (Frame Quality Review §F3 — THE LAST FRAME IS SCREENSHOTTED):
+  // the pointL pose's free arm reached ACROSS the next-video card's face —
+  // the arm/border intersect the audit flagged. The pose swaps to present
+  // (both arms clear of the card); the fist grip keeps the designed contact
+  // on the card's right edge, the present's open hand sells the WATCH NEXT
+  // chip below without crossing anything.
   const pose = {
-    ...POSES.pointL,
-    lAU: POSES.pointL.lAU + Math.sin(t / 900) * 4,
+    ...POSES.present,
+    lAU: POSES.present.lAU + Math.sin(t / 900) * 4,
   };
   // v9 (report D-02): H*0.70 → H*0.675 — the guard caught this centered
   // figure's shadow grazing the 2-row pill envelope by 16px at the widest
