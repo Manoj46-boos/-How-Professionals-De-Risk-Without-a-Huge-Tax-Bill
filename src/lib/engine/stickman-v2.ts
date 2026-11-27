@@ -2235,6 +2235,23 @@ export function drawStickmanV2(
     // the audit draws ONLY THE KNOT below the hero band. The gate rises
     // 1.2 → 1.7: the flick exists at the hero/presenting registers where
     // its 3.2px tip survives; below, the knot + collar break carry the
+  // PHASE 4 (§3.5 Table 6 — THE POSE BUDGET): at most one lean term, one
+  // reach term and one head term active — enforced at the ASSEMBLY point
+  // so every call site inherits it. The contact verb owns the near arm
+  // (the cycle's reach angles yield to the contact solve); the torso lean
+  // clamps at 12 degrees in every blended state (the reprise/payoff-path
+  // stacks can never exceed the budget); the head owns one yaw term.
+  {
+    // One reach term: when a contact verb is declared, the CONTACT SOLVE
+    // is that term — the cycle's arm angles are left untouched (clamping
+    // them here deformed the Ik chain start; the sweep caught it at
+    // payoff-floor-early ratio 1.166). The deferral is inherent: the
+    // contact owns the drawn near arm every frame.
+    if (Math.abs(pose.lean) > 12) pose.lean = Math.sign(pose.lean) * 12;
+    if (pose.headYaw !== undefined && Math.abs(pose.headYaw) > 14) {
+      pose.headYaw = Math.sign(pose.headYaw) * 14;
+    }
+  }
     // brand (the knot draws at all scales — see the gold knot block).
     // A8 MARKET-STANDARD FIX (review report A8 [P2] — THE INVISIBLE BRAND):
     // the 1.7 gate hid the scarf at exactly the rigs where the host

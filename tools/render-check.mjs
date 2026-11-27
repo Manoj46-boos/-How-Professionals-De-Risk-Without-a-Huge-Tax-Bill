@@ -147,6 +147,10 @@ const feedCtx = feedCanvas.getContext('2d');
 // margin; the previously-diagnosed sparse set (c1 rest 40.4, bigText 34.8,
 // chartJourney 37.2 pre-stage) now clears them AFTER the stage system.
 const FEED_FLOORS = { host: 45, data: 45, statement: 32 };
+// PHASE 5 (§3.6 Table 7 — THE SAVE ARTIFACT GATE): the framework table's
+// 320-wide feed twin must stay readable on every future run.
+const DT_READABILITY = [];
+let dtViolations = 0;
 function feedContentPct() {
   feedCtx.drawImage(canvas, 0, 0, FEED_W, FEED_H);
   const img = feedCtx.getImageData(0, 0, FEED_W, FEED_H).data;
@@ -273,6 +277,27 @@ function render(name, tMs) {
   if (feedPct < floor) {
     feedViolations++;
     console.error(`  !! FEED-DENSITY GATE — ${name} (${ocx.family}): the 320px feed reads ${feedPct}% designed content (floor ${floor}%) — a mascot-and-letter frame, not a story`);
+  }
+  // PHASE 5 GATE — the decision table's feed twin: the table band's ink
+  // at 320 (the framework is the saved artifact; it must read in the feed).
+  if (name.includes('decisionTable')) {
+    const dimg = feedCtx.getImageData(0, 0, FEED_W, FEED_H).data;
+    let ink = 0, band = 0;
+    for (let py = 46; py < 150; py += 2) {
+      for (let px2 = 17; px2 < 303; px2 += 2) {
+        const o = (py * FEED_W + px2) * 4;
+        const luma = 0.2126 * dimg[o] + 0.7152 * dimg[o + 1] + 0.0722 * dimg[o + 2];
+        const goldish = dimg[o] > 150 && dimg[o + 1] > 110 && dimg[o + 2] < 140;
+        if (luma < 95 || goldish) ink++;
+        band++;
+      }
+    }
+    const inkPct = (ink / band) * 100;
+    DT_READABILITY.push({ name, inkPct });
+    if (inkPct < 9) {
+      dtViolations++;
+      console.error(`  !! DT-FEED GATE — ${name}: the framework table reads ${inkPct.toFixed(1)}% ink at 320 (floor 9%) — the save artifact is not readable in the feed twin`);
+    }
   }
   SCALE_EVIDENCE.push({
     name,

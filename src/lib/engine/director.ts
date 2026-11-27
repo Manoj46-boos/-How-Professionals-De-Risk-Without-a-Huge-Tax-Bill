@@ -1212,7 +1212,7 @@ export function drawFrame(
   // order collected first, so the watermark could never be checked). The
   // watermark sits top-left; nothing else paints over it, so the reorder
   // has no visual effect.
-  if (opts.watermark) drawWatermark(ctx, W, opts.channelName);
+  if (opts.watermark) drawWatermark(ctx, W, opts.channelName, 0.85, H);
 
   // progress bar + chapter ticks
   if (opts.progressBar) {

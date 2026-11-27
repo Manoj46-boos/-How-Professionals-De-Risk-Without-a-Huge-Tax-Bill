@@ -198,6 +198,18 @@ export function buildTimeline(manifest: AudioManifest, fps: number): Timeline {
   // sceneKey are one continuous scene — no cut inside them)
   const cutTimes: number[] = [];
   for (let i = 0; i < beats.length; i++) {
+  // PHASE 4 (§3.5 Table 6 — REACTION VERBS ON NUMBERS): the director's
+  // numberNamed computation routes into EVERY beat's SceneCtx — not just
+  // the host scenes the script pre-flags. The VO-number regex (digits and
+  // the spelled-out numbers the voice actually speaks) marks the beat, so
+  // the reaction pose layer and the U20 camera micro-push consume the SAME
+  // clock on every landing number in the film.
+  const NUMBER_VO_RE = /[$\d]|\b(one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety|hundred|thousand|million|billion|dozen|couple|half|quarter|percent|percentage|basis points?)\b/i;
+  for (const b of beats) {
+    if (b.beat.scene.numberNamed === undefined && b.beat.vo) {
+      b.beat.scene.numberNamed = NUMBER_VO_RE.test(b.beat.vo);
+    }
+  }
     const prevKey = i > 0 ? beats[i - 1].beat.scene.sceneKey : null;
     if (beats[i].beat.scene.sceneKey !== prevKey && beats[i].startMs > 0) {
       cutTimes.push(beats[i].startMs);

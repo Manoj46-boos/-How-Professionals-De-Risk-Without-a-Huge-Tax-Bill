@@ -684,7 +684,8 @@ export function drawWatermark(
   ctx: CanvasRenderingContext2D,
   W: number,
   channelName: string,
-  alpha = 0.85
+  alpha = 0.85,
+  H = 1080
 ): void {
   ctx.save();
   ctx.globalAlpha = alpha;
@@ -693,7 +694,11 @@ export function drawWatermark(
   // the corner where feed viewers' eyes rest, two-tier with the key light
   // on its top face. The previous film's K glyph is retired. The wordmark
   // rides the enforced type floor beside it.
-  ctx.translate(58, 52);
+  // PHASE 5 (§3.6 Table 7 — PERSISTENT BRAND MARK): the ingot + wordmark
+  // LOCKUP moves to the bottom-right corner (above the source tag's line,
+  // clear of the caption pill's 62% band) in EVERY frame; the top-left
+  // text watermark retires. Registered as fixed furniture at its new band.
+  ctx.translate(W - 250, H - 62);
   ctx.fillStyle = PALETTE.gold;
   ctx.beginPath();
   ctx.moveTo(-17, -10);
@@ -714,10 +719,10 @@ export function drawWatermark(
   ctx.lineWidth = 2;
   ctx.stroke();
   setFont(ctx, TYPE_FLOOR, 600); // v9 (D-07): TYPE_FLOOR 24→28, now enforced
-  ctx.fillStyle = rgba(PALETTE.inkSoft, 0.9); // v9 (D-08): was hand-hexed #55555F — the v8 "no hand-hexed neutrals" rule applies here too
+  ctx.fillStyle = rgba(PALETTE.inkSoft, 0.9);
   ctx.textAlign = 'left';
   const wn = channelName.toUpperCase();
-  ctx.fillText(wn, 24, 8);
+  ctx.fillText(wn, 30, 8);
   // measure while the watermark face is still active (after restore the
   // font is whatever the caller last set — PANEL-10 caught this)
   const tw = ctx.measureText(wn).width;
@@ -732,7 +737,7 @@ export function drawWatermark(
   // plated the 2.65 figure's dome apex on two walk beats (11 sweep
   // violations while the drawn head cleared the glyphs). The band now ends
   // at the drawn ink: 42 + tw.
-  registerFixed('watermark', 40, 30, Math.max(240, 42 + tw), 46);
+  registerFixed('watermark', W - 254, H - 76, Math.max(250, 48 + tw), 60);
   void W;
 }
 

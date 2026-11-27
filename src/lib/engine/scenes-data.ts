@@ -193,9 +193,23 @@ export function hostSmall(
   // read (the panel: "no forearm-over-sternum fold"). The crossed host
   // holds the fold for the whole cycle; the breath, blink and gaze-wander
   // clocks keep the figure alive inside it.
+  // PHASE 4 (§3.5 Table 6 — THE 12-SECOND METRONOME IS DEAD): the slot
+  // VARIANTS are drawn from the SENTENCE STREAM — a hash of sentenceId +
+  // the beat's content words through the existing accent gate — so a
+  // 40-second strip of any data scene never repeats a 12-second pattern;
+  // the accent clock (below) keeps every pose change ON a sentence onset.
+  const SLOT_VARIANTS = ['talkB', 'talkA', 'talkC', 'present', 'openPalms', 'shrug', 'offer', 'count'];
+  const slotSeed = ((): number => {
+    const content = (g.wordTexts || []).filter((w) => w.length > 5).slice(0, 4).join('-');
+    let h = 2166136261;
+    const str = `${g.sentenceId}|${content}`;
+    for (let i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 16777619); }
+    return h >>> 0;
+  })();
   const cycle: string[] = gesture === 'crossed'
     ? ['crossed', 'crossed', 'crossed', 'crossed']
-    : [gesture, 'talkB', gesture, pointIn];
+    : [gesture, SLOT_VARIANTS[slotSeed % SLOT_VARIANTS.length],
+       SLOT_VARIANTS[(slotSeed >> 7) % SLOT_VARIANTS.length], pointIn];
   // AUDIT-ROUND-2 (fix 11 — HEAD YAW AT CONTENT): the side host's head
   // turns toward his content on the same term the arms use — the
   // eyeline connects (C5) at every side-host scale in the film.
@@ -353,7 +367,11 @@ export function hostSmall(
     // caller's window. The certified 240px entrances keep their cadence;
     // any future call site with a longer route can never sprint again.
     const walkDist = Math.abs(x - startX);
-    const enterDur = Math.max(walkEnter, Math.round((walkDist / 280) * 1000));
+    // PHASE 4 (§3.5 Table 6 — THE WINDOW SCALES TO THE DISTANCE): the
+    // report's law is exact — walkEnter = max(1200, distance / 280 px per
+    // second). The 1200ms floor kills the scurry on short hops; the
+    // distance term guarantees a stride-cadence walk at any length.
+    const enterDur = Math.max(1200, Math.round((walkDist / 280) * 1000));
     if (g.sceneT < enterDur + 420) {
       const wk = walkIn(g.sceneT, startX, x, enterDur, pose, scale, seed);
     drawX = wk.x;

@@ -188,14 +188,14 @@ function ledgerCard(
     ctx.save();
     ctx.globalAlpha = rp;
     const ry = bodyTop + i * rowH;
-    setFont(ctx, 26, 600);
+    // PHASE 5 (§3.6 Table 7 — LEDGER VALUES OWN THE CARD): the value
+    // column renders at 34px display serif — the card's largest element —
+    // and the labels step down to 24. Values readable in the 320 twin.
+    setFont(ctx, 24, 600);
     ctx.fillStyle = PALETTE.inkSoft;
     ctx.textAlign = 'left';
     ctx.fillText(r.label, x + 30, ry + 20);
-    // D2 RE-SPEC (Frame Quality Review §D2 — THE NUMBERS ARE THE CARD):
-    // the dollar values ride 40px display type — the signature furniture's
-    // largest element, readable at the 320 twin (13px at feed scale).
-    setFont(ctx, 40, 700, FONT_DISPLAY);
+    setFont(ctx, 34, 700, FONT_DISPLAY);
     ctx.fillStyle = r.tone === 'down' ? PALETTE.down : r.tone === 'up' ? PALETTE.up : r.tone === 'gold' ? PALETTE.goldDeep : PALETTE.ink;
     ctx.textAlign = 'right';
     ctx.fillText(r.value, x + w - 30, ry + 20);
@@ -1956,7 +1956,12 @@ export function payoffDiagramScene(g: SceneCtx): void {
   // gesture cycle pointing back INTO the payoff bands.
   // REACH LAW: the mark moves 14px toward the chart edge so the floor
   // palm lands inside 1.15x span.
-  hostSmall(g, 1536, mode === 'cost' ? 'leanOnK' : 'pointL', 34, g.H * 0.66, 1.55, 0, 'aha', 1.4, 1, true, 0.4,
+  // REACH LAW (the D4 pattern): with numberNamed routed to every beat
+  // (§3.5), the collar-cost landing now fires the take in the same window
+  // — the take's torso bounce moved the root 204px from the chip (span
+  // 175, limit 201). The mark moves 16px closer so the drawn chain stays
+  // inside 1.15x span in the reaction window (the sweep arbitrates).
+  hostSmall(g, 1520, mode === 'cost' ? 'leanOnK' : 'pointL', 34, g.H * 0.66, 1.55, 0, 'aha', 1.4, 1, true, 0.4,
     undefined, undefined, { x: cx + cw - 10, y: cy + ch - (205 / 260) * ch, hand: 'palm', easeAt: 1300 },
     undefined, undefined, undefined, undefined,
     // E3: on the cost beat the free weight-shift verb stages the surrender
@@ -2509,9 +2514,31 @@ export function decisionTableScene(g: SceneCtx): void {
     // D1 RE-SPEC (Frame Quality Review §D1 — DESIGNED FOR THE SCROLL TOO):
     // the table's type register rises one band — the exit numerals 40/48,
     // the cells 31 — so the screenshot moment survives the feed twin.
-    setFont(ctx, Math.round((hot ? 48 : 40) * (1 + 0.08 * landPulse(t - (350 + r * 320 + 550)))), 700, FONT_DISPLAY);
+    // PHASE 5 (§3.6 Table 7 — DESIGN THE SAVE ARTIFACT TWICE): each row
+    // gains a GOLD NUMERAL DISC — the row's own number in the film's gold
+    // register, the save-artifact's scannable spine — and the row type
+    // steps to the 34/30 two-tier register (the artifact reads at 320).
+    const discP = clamp01((t - 300 - r * 320) / 380);
+    if (discP > 0) {
+      ctx.save();
+      ctx.globalAlpha = discP;
+      ctx.fillStyle = PALETTE.gold;
+      ctx.beginPath();
+      ctx.arc(colX[0] + 8, y + 36, 22, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = rgba(PALETTE.goldDeep, 0.8);
+      ctx.lineWidth = 2;
+      ctx.stroke();
+      setFont(ctx, 30, 700, FONT_DISPLAY);
+      ctx.fillStyle = PALETTE.ink;
+      ctx.textAlign = 'center';
+      ctx.fillText(String(r + 1), colX[0] + 8, y + 47);
+      ctx.textAlign = 'left';
+      ctx.restore();
+    }
+    setFont(ctx, 34, 700, FONT_DISPLAY);
     ctx.fillStyle = PALETTE.goldDeep;
-    ctx.fillText(ROWS[r][0], colX[0], y + 40);
+    ctx.fillText(ROWS[r][0], colX[0] + 44, y + 42);
     if (ghost) {
       // the placeholder bars: the row's detail columns await their beats
       ctx.fillStyle = rgba(PALETTE.ink, 0.14);
@@ -2528,9 +2555,14 @@ export function decisionTableScene(g: SceneCtx): void {
       // cell now wraps WITHIN its column width (two measured lines max,
       // 34px pitch — inside the 100px row band).
       const cell = (txt: string, cx: number, cw: number, col: string): void => {
-        const lines = wrapText(ctx, txt, cw - 24, 31, 600).slice(0, 2);
+        // PHASE 5 (§3.6 Table 7): the row type steps to the 34/30 two-tier
+        // register — the primary line 34, the wrapped continuation 30.
+        const lines = wrapText(ctx, txt, cw - 24, 34, 600).slice(0, 2);
         ctx.fillStyle = col;
-        lines.forEach((ln, i) => ctx.fillText(ln, cx, y + 38 + i * 36));
+        lines.forEach((ln, i) => {
+          setFont(ctx, i === 0 ? 34 : 30, 600);
+          ctx.fillText(ln, cx, y + 38 + i * 36);
+        });
       };
       cell(ROWS[r][1], colX[1], colW[1], PALETTE.ink);
       cell(ROWS[r][2], colX[2], colW[2], PALETTE.inkSoft);
