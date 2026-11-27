@@ -173,7 +173,11 @@ export function hostSmall(
   // window the caller's presenting cycle owns the figure. Chapter-opener
   // chart call sites pass this; mid-chapter staging keeps the standing
   // entry. Pure f(t), scrub-safe.
-  walkEnter?: number
+  walkEnter?: number,
+  // OWN-THE-FRAME (Frame Quality Review §3.4 — killCard): the scarf tone
+  // override — a scene whose register owns the host's scarf echo (the red
+  // stakes keyline) passes its tone; default keeps the gold signature.
+  scarfTone?: string
 ): void {
   // v10 (panel CHAR-1/CHAR-3): the side host CYCLES through a gesture set
   // instead of holding one pose for the whole scene — "two poses: shrug,
@@ -233,6 +237,12 @@ export function hostSmall(
   // the crossed refusal COMMITS its gaze to the disputed data — the head
   // turns toward the content side even though the pose carries no point.
   if (gesture === 'crossed') pose = { ...pose, headYaw: dir === 'left' ? -8 : 8 };
+  // PHASE 2 SUPPORTING RULE (Frame Quality Review §3.3): every beat that
+  // lands a number passes the numberNamed flag — the reaction pose layer
+  // (shock/wry/warm, already built) fires on the LANDING instead of the
+  // camera push firing alone. The drawer's reactionPose keys the emotion.
+  const autoReaction = g.s.numberNamed ? reactionAt(g.s.sceneKey, g.t, g.d) : 0;
+  reaction = Math.max(reaction, autoReaction);
   // BLUEPRINT Phase 2: the dedicated reaction pose key, BLENDED by the
   // envelope (the old >0.5 hard swap read as a glitch mid-cycle).
   if (reaction > 0.02 && POSES[reactionPose]) {
@@ -383,6 +393,7 @@ export function hostSmall(
       // the old 10x6.5 knot carried at 1.09x — the signature gold knot
       // returns to the eighty-percent-of-runtime figure.
       scarf: true, hostBody: true,
+      scarfTone,
       // PHASE 1 round 5 (the panel's four-round diagnosis, confirmed): the
       // diagonal chart-satchel strap crosses the chest exactly where the
       // folded forearms read — on the crossed-refusal hosts the strap

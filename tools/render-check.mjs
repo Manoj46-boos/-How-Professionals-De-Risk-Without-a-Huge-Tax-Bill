@@ -907,7 +907,7 @@ for (const ev of SCALE_EVIDENCE) {
 // figure height per frame at the feed for ≥60% of frames). Plus the P2
 // anchor-rotation lint.
 console.log('\n── P4 PERCEPTION GATES ──');
-const { anchorRotationViolations } = require(path.join(BUILD, 'director.js'));
+const { anchorRotationViolations, stagingPatternViolations } = require(path.join(BUILD, 'director.js'));
 const { guardRects } = require(path.join(BUILD, 'collision.js'));
 // (P2) anchor-rotation lint
 {
@@ -923,6 +923,18 @@ const { guardRects } = require(path.join(BUILD, 'collision.js'));
     }
   } else {
     console.log('  [anchor-rotation] clean — no anchor/pattern run exceeds 2');
+  }
+}
+
+// (P2b) staging-pattern lint — no run of three beats on the same pattern
+{
+  const svl = stagingPatternViolations(tl);
+  if (svl.length) {
+    for (const v of svl) {
+      console.error(`  ~ STAGING-PATTERN TRIAGE — ${v.pattern} run of ${v.runLen} at ${v.sceneKey} (${v.sceneType}) — re-stage one beat`);
+    }
+  } else {
+    console.log('  [staging-pattern] clean — no staging pattern runs 3 beats');
   }
 }
 

@@ -1312,6 +1312,58 @@ export interface AnchorViolation {
   runLen: number;
 }
 
+// ── PHASE 2 SUPPORTING RULE (Frame Quality Review §3.3 — THE STAGING-
+// PATTERN LINT): the five staging patterns (on-the-data / holds / balances
+// / walks / lean-on-frame) may never run three beats in a row — the same
+// discipline the anchor lint applies to scene classes. The registry maps
+// each data drawer (and its per-mode overrides) to its pattern.
+export const STAGING_PATTERNS: Record<string, string> = {
+  distBars: 'on-the-data',
+  exitTiles: 'on-the-data',
+  explodeGrid: 'on-the-data',
+  taxStack: 'holds',
+  poolFund: 'holds',
+  driftChart: 'holds',
+  appleCase: 'holds',
+  ruleChange: 'holds',
+  lockup: 'balances',
+  sequenceStack: 'walks',
+  srcCite: 'lean',
+  killCard: 'lean',
+  decisionTable: 'lean',
+  payoffDiagram: 'lean',
+  'crossChart:build-a': 'walks',
+  'crossChart:build-b': 'walks',
+  'crossChart:hold-chip': 'walks',
+  'crossChart:xclr-2022': 'walks',
+  'crossChart:xclr-cycle': 'balances',
+  'drawdown:unh-path': 'walks',
+  'drawdown:enron': 'walks',
+  'taxStack:total': 'balances',
+};
+
+export interface StagingPatternViolation { sceneKey: string; sceneType: string; pattern: string; runLen: number; }
+
+export function stagingPatternViolations(tl: Timeline): StagingPatternViolation[] {
+  const out: StagingPatternViolation[] = [];
+  type Run = { key: string; type: string; mode: string; pattern: string; len: number };
+  const runs: Run[] = [];
+  for (const b of tl.beats) {
+    const sc = b.beat.scene as { sceneKey?: string; type: string; mode?: string };
+    const key = sc.sceneKey ?? sc.type;
+    const pattern = STAGING_PATTERNS[`${sc.type}:${sc.mode ?? ''}`] ?? STAGING_PATTERNS[sc.type] ?? 'none';
+    const last = runs[runs.length - 1];
+    if (last && last.key === key) { last.len += 1; continue; }
+    runs.push({ key, type: sc.type, mode: sc.mode ?? '', pattern, len: 1 });
+  }
+  for (const r of runs) {
+    if (r.pattern !== 'none' && r.len >= 3) {
+      out.push({ sceneKey: r.key, sceneType: r.type, pattern: r.pattern, runLen: r.len });
+    }
+  }
+  return out;
+}
+
 export function anchorRotationViolations(tl: Timeline): AnchorViolation[] {
   const out: AnchorViolation[] = [];
   // collapse consecutive beats that share a sceneKey (one staging)

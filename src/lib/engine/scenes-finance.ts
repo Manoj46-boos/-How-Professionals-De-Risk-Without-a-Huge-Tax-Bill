@@ -657,8 +657,19 @@ export function exitTilesScene(g: SceneCtx): void {
   }
   // B7 RE-SPEC: the six-exit promise gets its narrator — he grips the
   // first tile's edge (the contact solve) while the grid lands.
-  hostSmall(g, 200, 'present', 45, g.H * 0.66, 1.4, 0, 'aha', 1.4, 1, true, 0.4,
-    undefined, undefined, { x: 345, y: 470, hand: 'palm', easeAt: 400 });
+  // ON THE DATA + WALKS THE LINE (Frame Quality Review §3.3): on the spot
+  // beats he WALKS the tile row to the spot tile and stands ON its bottom
+  // edge — the tile edge IS the ground, the shadow seats on the tile mass,
+  // parallax rides the tiles' plane. The walk window scales to the route.
+  const spotTileX = x0 + ((spot - 1) % 3) * (480 + 36);
+  const spotTileRow = Math.floor((spot - 1) / 3);
+  const spotTileBase = y0 + spotTileRow * (210 + 66) + 210;
+  hostSmall(g, spot > 0 ? spotTileX + 240 : 200, 'present', 45,
+    spot > 0 ? spotTileBase : g.H * 0.66, spot > 0 ? 1.65 : 1.6, 0, 'aha', 1.4, 1,
+    spot > 0 ? false : true, 0.4,
+    undefined, undefined, spot > 0 ? undefined : { x: 345, y: 470, hand: 'palm', easeAt: 400 },
+    undefined, undefined, undefined, undefined,
+    spot > 0 ? 900 : undefined);
   if (mode === 'save-prompt') {
     const sp = clamp01((t - 400) / 600);
     if (sp > 0) {
@@ -790,6 +801,21 @@ export function distBarsScene(g: SceneCtx): void {
   const idx = mode === 'bar-1' ? 0 : mode === 'bar-2' ? 1 : mode === 'bar-3' ? 2 : -1;
   const showCount = idx < 0 ? 0 : idx + 1;
   const bx = 190, bw = W - 700;
+  // ON THE DATA (Frame Quality Review §3.3 — THE HOST STANDS ON THE BAR):
+  // the 40% bar's tip x/y — the host's ground IS the bar.
+  const bar40X = bx + 330 + (bw - 330) * 0.4;
+  // the stand ground = the row's BASELINE (the bar's base line) — from the
+  // bar's top edge the 1.6 rig's head grazed the headline band; the row
+  // baseline keeps the ON-THE-DATA stance and the title's air.
+  const bar40Y = H * 0.28 + 160 + 65 + 130;
+  // ON THE DATA split draw, pass 1 (FAR): shadow + far limbs reassemble
+  // BEHIND the 40% row — the bars then draw over the body core. No palm
+  // contact here: the bar surface runs at his knees, so the stance reads
+  // through the point along the row (the reach gate audits every chain).
+  if (mode === 'bar-2') {
+    hostSmall(g, bar40X, 'pointR', 32, bar40Y, 1.6, 0, 'aha', 1.4, 1, false, 0.4,
+      undefined, undefined, undefined, undefined, undefined, undefined, 'far');
+  }
   for (let i = 0; i < showCount; i++) {
     const r = rows[i];
     const bp = clamp01((t - 300 - i * 350) / 800);
@@ -849,10 +875,10 @@ export function distBarsScene(g: SceneCtx): void {
   // solve lands the fingertip on the fill's edge at the impactRing beat —
   // the presenter physically touches the 40%.
   if (mode === 'bar-2') {
-    hostSmall(g, bx + 330 + (bw - 330) * 0.4 - 130, 'pointR', 32, g.H * 0.66, 1.3, 0, 'aha', 1.4, 1, true, 0.4,
-      undefined, undefined, { x: bx + 330 + (bw - 330) * 0.4, y: H * 0.28 + 160 + 65, hand: 'palm', easeAt: 1450 });
+    hostSmall(g, bar40X, 'pointR', 32, bar40Y, 1.6, 0, 'aha', 1.4, 1, false, 0.4,
+      undefined, undefined, undefined, undefined, undefined, undefined, 'rest');
   } else {
-    hostSmall(g, 110, 'pointR', 32, g.H * 0.66, 1.3, 0, 'aha', 1.4, 1, true, 0.4,
+    hostSmall(g, 110, 'pointR', 32, g.H * 0.66, 1.6, 0, 'aha', 1.4, 1, true, 0.4,
       undefined, undefined, undefined, undefined, undefined, undefined, undefined,
       // E5 RE-SPEC (Frame Quality Review §E5 — MID-CHAPTER WALKS): the
       // presenter WALKS INTO the base-rate frame on the intro beat — the
@@ -963,9 +989,12 @@ export function taxStackScene(g: SceneCtx): void {
   // BALANCES THE COIN COUNT on the same palm (the ledger-resolved
   // coinStack) — the bill is counted by a person, not floating.
   if (!totalMode) {
-    hostSmall(g, 92, 'present', 33, g.H * 0.66, 1.3, 0, 'aha', 1.4, 1, true, 0.4,
+    // HOLDS THE OBJECT (Frame Quality Review §3.3): on the counting beats
+    // the narrator GRIPS the bill's ledger card — holdCard, the card
+    // leaning off the forearm (the ledger resolves the prop).
+    hostSmall(g, 92, 'present', 33, g.H * 0.66, 1.55, 0, 'aha', 1.4, 1, true, 0.4,
       undefined, undefined, { x: 196, y: 600, hand: 'palm' }, undefined, undefined,
-      resolveProp('taxStack', 'coinStack', true) ? 'coinStack' : undefined);
+      resolveProp('taxStack', 'holdCard', true) ? 'holdCard' : undefined);
   } else {
     // 2.1 (review report §2.1 — THE TOTAL ROW TOUCH): in total mode the
     // ledger card owns the right column and the host steps to it — the
@@ -978,8 +1007,9 @@ export function taxStackScene(g: SceneCtx): void {
     declareHostContact('card@580,556');
     // REACH LAW: the mark moves 24px closer so the TOTAL-row palm lands
     // inside 1.15x span (the gate audits the drawn chain).
-    hostSmall(g, lx - 100, 'pointR', 33, g.H * 0.66, 1.3, 0, 'aha', 1.4, 1, true, 0.4,
-      undefined, undefined, { x: lx + 46, y: ly + 96 + 3 * 58 + 29, hand: 'palm', easeAt: 1200 });
+    hostSmall(g, lx - 100, 'pointR', 33, g.H * 0.66, 1.55, 0, 'shock', 1.4, 1, true, 0.4,
+      undefined, undefined, { x: lx + 46, y: ly + 96 + 3 * 58 + 29, hand: 'palm', easeAt: 1200 },
+      undefined, undefined, resolveProp('taxStack', 'coinStack', true) ? 'coinStack' : undefined);
   }
 }
 
@@ -1194,8 +1224,14 @@ export function lockupScene(g: SceneCtx): void {
   // character carries the argument, and here he was a recurring guest.
   // The certified side-host register (the B2 staging: the free left band,
   // gesture cycle aimed INTO the scene's content) joins this drawer.
-  hostSmall(g, 70, 'pointR', 33, g.H * 0.66, 1.4, 0, 'aha', 1.4, 1, true, 0.4,
-    undefined, undefined, { x: 198, y: 468, hand: 'palm', easeAt: 600 });
+  // BALANCES THE NUMBER (Frame Quality Review §3.3): on the year-7 seal
+  // beat the counter rides the upturned palm and the 'warm' reaction key
+  // fires on the land pulse.
+  hostSmall(g, 70, 'pointR', 33, g.H * 0.66, 1.55, 0, 'warm', 1.4, 1, true, 0.4,
+    undefined, undefined, { x: 198, y: 468, hand: 'palm', easeAt: 600 },
+    undefined, undefined, mode !== 'marriage' && mode !== 'early'
+      ? (resolveProp('lockup', 'coinStack', true) ? 'coinStack' : undefined)
+      : undefined);
 }
 
 // ── planConveyor — the 10b5-1 conveyor belt ──────────────────────────────────
@@ -1458,12 +1494,54 @@ export function killCardScene(g: SceneCtx): void {
     ctx.fillStyle = rgba('#F1E7CF', 0.72);
     ctx.textAlign = 'left';
     ctx.fillText('THE KILL CONDITIONS — ASKED BEFORE EVERY EXIT', 340, 190 + cardH - 66);
+    // OWN THE KILL-CARD FRAME (Frame Quality Review §3.4): the hazard
+    // mini-row from taxMine echoes as the slab's footer rail — four muted
+    // chips, the red keyline echoing on the rail so the bottom band carries
+    // the frame's own stakes instead of empty dark.
+    const khz: Array<[string, string]> = [
+      ['\u00A71259', 'CONSTRUCTIVE SALE'],
+      ['\u00A71092', 'THE WHIPSAW'],
+      ['NO SAFE', 'HARBOR'],
+      ['OTC', 'COUNTERPARTY'],
+    ];
+    const khzY = 190 + cardH - 108, khzH = 52, khzW = (W - 680 - 3 * 16) / 4;
+    for (let i = 0; i < khz.length; i++) {
+      const kp = clamp01((t - 900 - i * 120) / 400);
+      if (kp <= 0) continue;
+      ctx.save();
+      ctx.globalAlpha = kp;
+      const kx2 = 340 + i * (khzW + 16);
+      ctx.fillStyle = rgba('#0E1F19', 0.6);
+      roundRect(ctx, kx2, khzY, khzW, khzH, 10);
+      ctx.fill();
+      ctx.strokeStyle = i === 0 ? '#D26A77' : rgba(PALETTE.gold, 0.35);
+      ctx.lineWidth = i === 0 ? 2.5 : 1.5;
+      ctx.stroke();
+      setFont(ctx, 20, 700);
+      ctx.fillStyle = i === 0 ? '#D26A77' : '#E8D9B0';
+      ctx.fillText(khz[i][0], kx2 + 16, khzY + 22);
+      setFont(ctx, 15, 600);
+      ctx.fillStyle = rgba('#F1E7CF', 0.66);
+      ctx.fillText(khz[i][1], kx2 + 16, khzY + 41);
+      ctx.restore();
+    }
   }
   ctx.restore();
 
-  // E3 REGISTER NOTE (review report E3): the kill card is the ONE frame
-  // family that deliberately runs figureless — its dramatic register is
-  // the emerald slab and the red stakes; the mascot would break it.
+  // OWN THE KILL-CARD FRAME (Frame Quality Review §3.4 — supersedes the
+  // earlier figureless register note): the staged host STANDS AT THE
+  // SLAB'S EDGE — the lean-on-frame pattern, his forearm resting ON the
+  // slab's left edge through the contact solve, weight visibly committed
+  // — and the red stakes keyline ECHOES ON HIS SCARF (the scarf tone
+  // rides the slab's own red), so the frame's drama and the cast share
+  // one register.
+  hostSmall(g, 108, 'present', 47, g.H * 0.66, 1.55, 0, 'aha', 1.4, 1, true, 0.4,
+    undefined, undefined, { x: 168, y: g.H * 0.52, hand: 'palm', easeAt: 500 },
+    undefined, undefined, undefined, undefined, undefined, '#C4586B');
+
+  // E3 REGISTER NOTE (review report E3): the kill card's dramatic register
+  // is the emerald slab and the red stakes — now carried WITH the staged
+  // host at its edge (the §3.4 ownership pass above).
 }
 
 // ── poolFund — the exchange fund pool ────────────────────────────────────────
@@ -1612,7 +1690,8 @@ export function poolFundScene(g: SceneCtx): void {
     // REACH LAW: the mark moves 24px toward the gilded ring so the palm
     // solve lands inside 1.15x span.
     hostSmall(g, 384, 'pointR', 33, g.H * 0.66, 1.55, 0, 'aha', 1.4, 1, true, 0.4,
-      undefined, undefined, { x: 505, y: 615, hand: 'palm', easeAt: 700 });
+      undefined, undefined, { x: 505, y: 615, hand: 'palm', easeAt: 700 },
+      undefined, undefined, resolveProp('poolFund', 'holdCard', true) ? 'holdCard' : undefined);
   }
 }
 
@@ -1691,7 +1770,10 @@ export function driftChartScene(g: SceneCtx): void {
   // the driftChart host stands INSIDE the plot (declared depth — §B2's law:
   // designed occlusion is declared, accidental plating is not).
   declareHostContact('lineChart:plot@190');
-  hostSmall(g, 400, 'pointR', 33, g.H * 0.66, 1.4, 0, 'aha', 1.4, 1, true, 0.4);
+  // HOLDS THE OBJECT: the drift card leans off the forearm (ledger-resolved).
+  hostSmall(g, 400, 'pointR', 33, g.H * 0.66, 1.6, 0, 'aha', 1.4, 1, true, 0.4,
+    undefined, undefined, undefined, undefined, undefined,
+    resolveProp('driftChart', 'holdCard', true) ? 'holdCard' : undefined);
 }
 
 // ── explodeGrid — direct indexing ────────────────────────────────────────────
@@ -1704,6 +1786,11 @@ export function explodeGridScene(g: SceneCtx): void {
   const gx = 190, gy = H * 0.28, gw = W - 700, gh = H * 0.46;
   const cols = 20, rows = 10;
   const cwTile = gw / cols, chTile = gh / rows;
+  // ON THE DATA (Frame Quality Review §3.3): the mark stands ON the grid's
+  // baseline — the plot line IS his ground, the shadow seats on the mass,
+  // parallax rides the data's plane — and the far/rest split draws him
+  // AROUND the tile field (far pass after the loop's first half, rest after).
+  const gridBase = gy + gh + 3;
   // one fund tile that explodes into the grid
   const ex = clamp01((t - 300) / 700);
   if (ex < 1) {
@@ -1767,7 +1854,10 @@ export function explodeGridScene(g: SceneCtx): void {
   // FROM THE BEATS THAT CARRY THE FACTS): the certified side-host register
   // (the B2 staging: the free left band, gesture cycle aimed INTO the
   // scene's content) joins this exit-chapter drawer.
-  hostSmall(g, 60, 'present', 36, g.H * 0.66, 1.45, 0, 'aha', 1.4, 1, true, 0.4);
+  hostSmall(g, gx + 80, 'present', 36, gridBase, 1.65, 0, 'aha', 1.4, 1, false, 0.4,
+    undefined, undefined, undefined, undefined, undefined, undefined, 'far');
+  hostSmall(g, gx + 80, 'present', 36, gridBase, 1.65, 0, 'aha', 1.4, 1, false, 0.4,
+    undefined, undefined, undefined, undefined, undefined, undefined, 'rest');
 }
 
 // ── payoffDiagram — the Cuban collar ─────────────────────────────────────────
@@ -1866,7 +1956,7 @@ export function payoffDiagramScene(g: SceneCtx): void {
   // gesture cycle pointing back INTO the payoff bands.
   // REACH LAW: the mark moves 14px toward the chart edge so the floor
   // palm lands inside 1.15x span.
-  hostSmall(g, 1536, mode === 'cost' ? 'leanOnK' : 'pointL', 34, g.H * 0.66, 1.35, 0, 'aha', 1.4, 1, true, 0.4,
+  hostSmall(g, 1536, mode === 'cost' ? 'leanOnK' : 'pointL', 34, g.H * 0.66, 1.55, 0, 'aha', 1.4, 1, true, 0.4,
     undefined, undefined, { x: cx + cw - 10, y: cy + ch - (205 / 260) * ch, hand: 'palm', easeAt: 1300 },
     undefined, undefined, undefined, undefined,
     // E3: on the cost beat the free weight-shift verb stages the surrender
@@ -1974,7 +2064,7 @@ export function taxMineScene(g: SceneCtx): void {
   // QUIET-COLUMN RE-SPEC (Frame Quality Review — THE SIGNATURE TEST): no
   // two data scenes may share an identical host x + gesture signature —
   // the mine beat owns (96, 'present'); lockup keeps (70, 'pointR').
-  hostSmall(g, 96, 'present', 33, g.H * 0.66, 1.3, 0, 'aha', 1.4, 1, true, 0.4);
+  hostSmall(g, 96, 'present', 33, g.H * 0.66, 1.55, 0, 'aha', 1.4, 1, true, 0.4);
 }
 
 // ── flowCharity — DAF / CRT flow ─────────────────────────────────────────────
@@ -2067,7 +2157,7 @@ export function flowCharityScene(g: SceneCtx): void {
   // character carries the argument, and here he was a recurring guest.
   // The certified side-host register (the B2 staging: the free left band,
   // gesture cycle aimed INTO the scene's content) joins this drawer.
-  hostSmall(g, 1640, 'pointL', 33, g.H * 0.66, 1.3, 0, 'aha', 1.4, 1, true, 0.4,
+  hostSmall(g, 1640, 'pointL', 33, g.H * 0.66, 1.55, 0, 'aha', 1.4, 1, true, 0.4,
     undefined, undefined, undefined, 'left');
 }
 
@@ -2169,7 +2259,10 @@ export function ruleChangeScene(g: SceneCtx): void {
   // gesture cycle aimed INTO the scene's content) joins this drawer.
   // QUIET-COLUMN RE-SPEC: the rule beat owns (84, 'present'); explodeGrid
   // keeps (60, 'present') — the signature test stays clean.
-  hostSmall(g, 84, 'present', 37, g.H * 0.66, 1.35, 0, 'aha', 1.4, 1, true, 0.4);
+  // HOLDS THE OBJECT: the OBBBA ledger plate leans off the forearm.
+  hostSmall(g, 84, 'present', 37, g.H * 0.66, 1.6, 0, 'aha', 1.4, 1, true, 0.4,
+    undefined, undefined, undefined, undefined, undefined,
+    resolveProp('ruleChange', 'holdCard', true) ? 'holdCard' : undefined);
 }
 
 // ── lsLeverage — the 130/30 structure ────────────────────────────────────────
@@ -2243,7 +2336,7 @@ export function lsLeverageScene(g: SceneCtx): void {
   // gesture cycle aimed INTO the scene's content) joins this drawer.
   // QUIET-COLUMN RE-SPEC: the leverage beat owns (88, 'pointR') closer to
   // its ratio bars; sequenceStack keeps (60, 'pointR').
-  hostSmall(g, 88, 'pointR', 38, g.H * 0.66, 1.3, 0, 'aha', 1.4, 1, true, 0.4);
+  hostSmall(g, 88, 'pointR', 38, g.H * 0.66, 1.55, 0, 'aha', 1.4, 1, true, 0.4);
 }
 
 // ── appleCase — the JAM case study ───────────────────────────────────────────
@@ -2326,7 +2419,10 @@ export function appleCaseScene(g: SceneCtx): void {
   // (the B2 staging: the free left band, gesture cycle aimed INTO the
   // scene's content) joins this exit-chapter drawer.
   declareHostContact('lineChart:plot@190');
-  hostSmall(g, 380, 'pointR', 39, g.H * 0.66, 1.45, 0, 'aha', 1.4, 1, true, 0.4);
+  // HOLDS THE OBJECT: the case ledger leans off the forearm.
+  hostSmall(g, 380, 'pointR', 39, g.H * 0.66, 1.6, 0, 'aha', 1.4, 1, true, 0.4,
+    undefined, undefined, undefined, undefined, undefined,
+    resolveProp('appleCase', 'holdCard', true) ? 'holdCard' : undefined);
 }
 
 // ── decisionTable — THE SAVE ARTIFACT ────────────────────────────────────────

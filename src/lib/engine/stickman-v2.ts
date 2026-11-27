@@ -1304,7 +1304,11 @@ function scarfTail(
   t = 0,
   seed = 0,
   walkMul = 1,
-  talkMul = 1
+  talkMul = 1,
+  // PHASE 2 SUPPORTING RULE (Frame Quality Review §3.3): the tail's tip
+  // width in UNITS — the caller floors it so the drawn tip never drops
+  // below a 3px SCREEN read at the rig it serves (3/scale).
+  tipUnits = 2.6
 ): void {
   // P1 scarf v3 (100-judge dossier): the old 42/33/21-unit chest-length
   // ribbon hung DOWN the front of the gold torso and merged with it — the
@@ -1355,9 +1359,9 @@ function scarfTail(
   // ONE continuous tapered ribbon — root segment then fold segment,
   // round caps at the fold so the crease reads as cloth bending.
   taper(ctx, x0, y0, fxp, fyp, 6.8, 4.8, colUnder);
-  taper(ctx, fxp, fyp, ex, ey, 4.8, 3.0, colUnder);
+  taper(ctx, fxp, fyp, ex, ey, 4.8, tipUnits + 0.4, colUnder);
   taper(ctx, x0, y0, fxp, fyp, 5.8, 4.2, colTop);
-  taper(ctx, fxp, fyp, ex, ey, 4.2, 2.6, colTop);
+  taper(ctx, fxp, fyp, ex, ey, 4.2, tipUnits, colTop);
   // the fold crease — the one seam a real scarf HAS (the two-tone hint
   // at the bend, in the under colour)
   ctx.strokeStyle = rgba(colUnder, 0.85);
@@ -1438,6 +1442,8 @@ export function drawStickmanV2(
     look?: number;
     shadow?: number;
     scarf?: boolean;
+  // PHASE 2 (§3.4): a scene's register may echo on the scarf tail (killCard red).
+  scarfTone?: string;
     nod?: number;
     /** 0..1 mouth openness envelope, driven by word timings (v3, P0-4). */
     talk?: number;
@@ -2237,9 +2243,14 @@ export function drawStickmanV2(
     // 18/15-unit bones, so the gold flick escapes the shoulder line at
     // every editorial staging while the rest direction stays back-
     // horizontal (no strap read returns).
-    if (scale >= 1.2) {
-      scarfTail(ctx, neckX - 3, neckY + 12, wave0 * 0.5, PALETTE.gold, '#A8851B',
-        t, seed, r.walkPhase !== undefined ? 3.2 : 1, 1 + talkEnv0 * 1.4);
+    // PHASE 2 SUPPORTING RULE (Frame Quality Review §3.3): the scarf tail
+    // enables at rig >= 1.4 (the certified data-host band) with a 3px
+    // SCREEN tip floor — identity at data scale stops depending on the
+    // vest alone. r.scarfTone lets a scene's register echo on the tail
+    // (killCard's red stakes keyline).
+    if (scale >= 1.4) {
+      scarfTail(ctx, neckX - 3, neckY + 12, wave0 * 0.5, r.scarfTone ?? PALETTE.gold, '#A8851B',
+        t, seed, r.walkPhase !== undefined ? 3.2 : 1, 1 + talkEnv0 * 1.4, Math.max(2.6, 3 / scale));
     }
     // (knot-only below 1.2, per the audit)
   }

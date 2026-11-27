@@ -89,7 +89,8 @@ export function drawCaptions(
   // YouTube's own caption register; the extra weight survives the platform
   // transcode at 480p.
   const fontSize = 46;
-  const maxW = Math.min(W - 460, W * 0.66); // hard cap: 66% of frame
+  // PHASE 3 (§3.4 Table 5): the pill caps at 62% of frame (was 66%).
+  const maxW = Math.min(W - 460, W * 0.62); // hard cap: 62% of frame
   setFont(ctx, fontSize, 700, FONT_UI);
   const spaceW = ctx.measureText(' ').width;
 
@@ -244,7 +245,8 @@ export function drawCaptions(
 
   const rowH = fontSize + 22;
   const totalH = rows.length * rowH + 24;
-  const baseY = style.baseY ?? H - 128; // clear of the 8px progress bar + safe margin
+  // PHASE 3 (§3.4 Table 5): the pill drops to the 0.90H baseline (was H-128).
+  const baseY = style.baseY ?? Math.round(H * 0.90); // the 0.90H baseline
   // PANEL-10: first row carries the leading mark, last row the trailing one
   // (a single row can carry both).
   const widest = Math.max(
@@ -294,20 +296,27 @@ export function drawCaptions(
   // champagne chip — bgSoft (the soft-plate family), a gold hairline,
   // ink text, the gold active word, and the INGOT bullet as the voice
   // mark. The film's most persistent element finally belongs to it.
+  // PHASE 3 (§3.4 Table 5): the champagne chip sits at 0.92 alpha — the
+  // scene breathes through it without ghosting the text.
+  ctx.globalAlpha = fade * 0.92;
   ctx.fillStyle = PALETTE.bgSoft;
   roundRect(ctx, px, py, widest + 68, totalH, 18);
   ctx.fill();
+  ctx.globalAlpha = fade;
   ctx.lineWidth = 2;
   ctx.strokeStyle = rgba(PALETTE.gold, 0.5);
   roundRect(ctx, px, py, widest + 68, totalH, 18);
   ctx.stroke();
   // the voice mark — the INGOT bullet (the film's own object)
+  // PHASE 3 (§3.4 Table 5): the bullet compacts to the spec's 6px height —
+  // the ingot geometry scales about its own center (10x6 footprint).
+  const iy = py + totalH / 2 - 3;
   ctx.fillStyle = PALETTE.gold;
   ctx.beginPath();
-  ctx.moveTo(px + 10, py + totalH / 2 - 9);
-  ctx.lineTo(px + 28, py + totalH / 2 - 9);
-  ctx.lineTo(px + 24, py + totalH / 2 + 5);
-  ctx.lineTo(px + 14, py + totalH / 2 + 5);
+  ctx.moveTo(px + 14, iy);
+  ctx.lineTo(px + 24, iy);
+  ctx.lineTo(px + 21.5, iy + 6);
+  ctx.lineTo(px + 16.5, iy + 6);
   ctx.closePath();
   ctx.fill();
   ctx.strokeStyle = rgba(PALETTE.goldDeep, 0.8);
@@ -358,6 +367,13 @@ export function drawCaptions(
       // underlaps the right growth.
       const k = punch ? 1 + 0.06 * Math.sin(clamp01(since / 260) * Math.PI) : 1;
       const sw = ww * k;
+      // PHASE 3 (§3.4 Table 5 — THE GOLD ACTIVE-WORD UNDERLINE): the
+      // spoken word carries a 3px gold bar under its own width for the
+  // word's active span — the karaoke read rides the underline, not a fill.
+      if (activeW) {
+        ctx.fillStyle = PALETTE.gold;
+        ctx.fillRect(x, y + fontSize * 0.58, ww, 3);
+      }
       if (punch) {
         ctx.save();
         ctx.translate(x + sw / 2, y);
