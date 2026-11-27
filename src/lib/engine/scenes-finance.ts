@@ -976,7 +976,9 @@ export function taxStackScene(g: SceneCtx): void {
     // the host stands before the gilded verdict card (a designed depth
     // beat — the guard is told the card he may overlap)
     declareHostContact('card@580,556');
-    hostSmall(g, lx - 130, 'pointR', 33, g.H * 0.66, 1.3, 0, 'aha', 1.4, 1, true, 0.4,
+    // REACH LAW: the mark moves 24px closer so the TOTAL-row palm lands
+    // inside 1.15x span (the gate audits the drawn chain).
+    hostSmall(g, lx - 100, 'pointR', 33, g.H * 0.66, 1.3, 0, 'aha', 1.4, 1, true, 0.4,
       undefined, undefined, { x: lx + 46, y: ly + 96 + 3 * 58 + 29, hand: 'palm', easeAt: 1200 });
   }
 }
@@ -1607,7 +1609,9 @@ export function poolFundScene(g: SceneCtx): void {
       undefined, undefined, undefined, undefined, undefined,
       resolveProp('poolFund', 'coinStack', true) ? 'coinStack' : undefined);
   } else {
-    hostSmall(g, 360, 'pointR', 33, g.H * 0.66, 1.55, 0, 'aha', 1.4, 1, true, 0.4,
+    // REACH LAW: the mark moves 24px toward the gilded ring so the palm
+    // solve lands inside 1.15x span.
+    hostSmall(g, 384, 'pointR', 33, g.H * 0.66, 1.55, 0, 'aha', 1.4, 1, true, 0.4,
       undefined, undefined, { x: 505, y: 615, hand: 'palm', easeAt: 700 });
   }
 }
@@ -1860,7 +1864,9 @@ export function payoffDiagramScene(g: SceneCtx): void {
   // DATA CHAPTERS): the collar's payoff diagram gets its narrator — he
   // stands in the free right column (the chart spans x 190-1410), his
   // gesture cycle pointing back INTO the payoff bands.
-  hostSmall(g, 1550, mode === 'cost' ? 'leanOnK' : 'pointL', 34, g.H * 0.66, 1.35, 0, 'aha', 1.4, 1, true, 0.4,
+  // REACH LAW: the mark moves 14px toward the chart edge so the floor
+  // palm lands inside 1.15x span.
+  hostSmall(g, 1536, mode === 'cost' ? 'leanOnK' : 'pointL', 34, g.H * 0.66, 1.35, 0, 'aha', 1.4, 1, true, 0.4,
     undefined, undefined, { x: cx + cw - 10, y: cy + ch - (205 / 260) * ch, hand: 'palm', easeAt: 1300 },
     undefined, undefined, undefined, undefined,
     // E3: on the cost beat the free weight-shift verb stages the surrender
@@ -1965,7 +1971,10 @@ export function taxMineScene(g: SceneCtx): void {
   // character carries the argument, and here he was a recurring guest.
   // The certified side-host register (the B2 staging: the free left band,
   // gesture cycle aimed INTO the scene's content) joins this drawer.
-  hostSmall(g, 70, 'pointR', 33, g.H * 0.66, 1.3, 0, 'aha', 1.4, 1, true, 0.4);
+  // QUIET-COLUMN RE-SPEC (Frame Quality Review — THE SIGNATURE TEST): no
+  // two data scenes may share an identical host x + gesture signature —
+  // the mine beat owns (96, 'present'); lockup keeps (70, 'pointR').
+  hostSmall(g, 96, 'present', 33, g.H * 0.66, 1.3, 0, 'aha', 1.4, 1, true, 0.4);
 }
 
 // ── flowCharity — DAF / CRT flow ─────────────────────────────────────────────
@@ -2158,7 +2167,9 @@ export function ruleChangeScene(g: SceneCtx): void {
   // character carries the argument, and here he was a recurring guest.
   // The certified side-host register (the B2 staging: the free left band,
   // gesture cycle aimed INTO the scene's content) joins this drawer.
-  hostSmall(g, 60, 'present', 37, g.H * 0.66, 1.35, 0, 'aha', 1.4, 1, true, 0.4);
+  // QUIET-COLUMN RE-SPEC: the rule beat owns (84, 'present'); explodeGrid
+  // keeps (60, 'present') — the signature test stays clean.
+  hostSmall(g, 84, 'present', 37, g.H * 0.66, 1.35, 0, 'aha', 1.4, 1, true, 0.4);
 }
 
 // ── lsLeverage — the 130/30 structure ────────────────────────────────────────
@@ -2230,7 +2241,9 @@ export function lsLeverageScene(g: SceneCtx): void {
   // character carries the argument, and here he was a recurring guest.
   // The certified side-host register (the B2 staging: the free left band,
   // gesture cycle aimed INTO the scene's content) joins this drawer.
-  hostSmall(g, 60, 'pointR', 38, g.H * 0.66, 1.3, 0, 'aha', 1.4, 1, true, 0.4);
+  // QUIET-COLUMN RE-SPEC: the leverage beat owns (88, 'pointR') closer to
+  // its ratio bars; sequenceStack keeps (60, 'pointR').
+  hostSmall(g, 88, 'pointR', 38, g.H * 0.66, 1.3, 0, 'aha', 1.4, 1, true, 0.4);
 }
 
 // ── appleCase — the JAM case study ───────────────────────────────────────────

@@ -26,7 +26,7 @@
 
 import { PALETTE, rgba, roundRect, hexLerp } from './theme';
 import { clamp, clamp01, hash01, easeOutCubic } from './easing';
-import { registerRect } from './collision';
+import { registerRect, auditArmLength } from './collision';
 import { camState } from './effects';
 import { AMP, INK } from './perception';
 // PHASE 3 COMPOSITION (Visual Audit — Composition & value): subject
@@ -935,9 +935,13 @@ export function handGlyph(
     // ("pre-inked glyphs drawn with finger breaks"), reading at close-up;
     // below rig 1.25 the plain mass silhouette holds (feed).
     roundRect(ctx, -s * 0.36, -s * 0.29, s * 0.48, s * 0.6, s * 0.22);
-    if (rigScale >= 1.25) {
-      // P1 U2: the knuckle breaks floor into the audit's readable band —
-      // the old s*0.13 bars were 2.3px at rig 1.5 (invisible: the mitt).
+    // HANDS RE-SPEC (Frame Quality Review rig table — THE GATE MOVES TO
+    // 1.4): between 1.25 and 1.4 the knuckle bars are sub-readable mush
+    // (2.3px at 1.5 was already the audit's evidence) — the capped mitten
+    // holds that band, and the finger breaks engage only where they can
+    // actually read (hero rigs 1.4+). The mass cap (<= 1.25x wrist) is
+    // unchanged; the floor drop below keeps the cap binding at hero rigs.
+    if (rigScale >= 1.4) {
       for (const fy of [-0.32, -0.115, 0.09, 0.295]) {
         rrSub(ctx, s * 0.05, fy * s, s * 0.46, Math.max(s * 0.13, 5), s * 0.055);
       }
@@ -986,12 +990,14 @@ export function handGlyph(
     // B2 RE-SPEC (Visual Quality Audit §3.1): the fingertip floor rises to
     // 14px — the finger must terminate as a readable tip on every contact
     // rig, not as the last visible pixel.
-    // P1 U2 (HANDS THAT CAN ACT): the finger floored at 14 SCREEN px flat
-    // — the audit's number, not 14/rigScale (which gave 9.3px at rig 1.5:
-    // an invisible finger on every working rig). The taper widens WITH the
-    // floor so the finger reads as a taper, not a trumpet: the whole
-    // distal/proximal chain lifts to keep root ≥ tip.
-    const tipW = Math.max(s * 0.16, 14);
+    // P1 U2 (HANDS THAT CAN ACT): the finger floored in SCREEN px flat —
+    // not floor/rigScale (which gave 9.3px at rig 1.5: an invisible finger
+    // on every working rig). HANDS RE-SPEC (Frame Quality Review rig
+    // table): the floor drops 14 -> 12 so the mitten mass cap (1.25x the
+    // wrist disc) BINDS at hero rigs — at 14 the floored tip out-massed
+    // the capped palm at 1.5x+; at 12 the taper hierarchy restores (wrist
+    // > palm > finger) with the tip still readable at the 320 twin.
+    const tipW = Math.max(s * 0.16, 12);
     const distW = Math.max(s * 0.27, 15.5);
     const proxW = Math.max(s * 0.36, 17);
     const knX = x + Math.sin(a) * s * 0.80, knY = y + Math.cos(a) * s * 0.80;
@@ -1716,6 +1722,14 @@ export function drawStickmanV2(
       const shift = (pdx / pdist) * (pdist - REACH) * 0.55;
       const maxShift = REACH * 0.15;
       cx += Math.max(-maxShift, Math.min(maxShift, shift));
+    }
+    // REACH LAW: the referee gate — the drawn chain (root-to-target after
+    // the honest 0.55/0.15 step) may never exceed 1.15x the rig's span.
+    {
+      const rootX = cx + (r.flip ? -1 : 1) * 4 * scale;
+      const rootY = groundY - 182 * scale;
+      auditArmLength('contact', Math.hypot(r.contact.x - rootX, r.contact.y - rootY), REACH,
+        rootX, rootY, r.contact.x, r.contact.y);
     }
     void pdy;
   }
@@ -3621,7 +3635,11 @@ export function drawStickmanV2(
     // band whose whole stroke clears the rim top (−6 − lensR) by ≥ 2 units
     // — visible ivory between brow and wire at every rig; the expression
     // authority moves to browEmo CURVATURE, not stroke mass.
-    const lift = ivory ? 6.0 : 0; // A2: ivory (the host) rises so the brow band clears the rims; cast heads keep their original line
+    // FACE RE-SPEC (Frame Quality Review rig table — 2.5 UNITS OF AIR): the
+    // rest band clears the rim top by 2.5 units (was 2.0) — visible ivory
+    // between brow and wire at every rig, and the expression travel keeps
+    // the full-surprise arch inside the forehead's own band.
+    const lift = ivory ? 6.5 : 0; // ivory (the host) rises so the brow band clears the rims; cast heads keep their original line
     const y0 = -13.5 - lift - bRaise - dir * Math.tan(bAng) * 7;
     const y1 = -11.5 - lift - bRaise + dir * Math.tan(bAng) * 7;
     ctx.strokeStyle = becker ? faceInk : ink;

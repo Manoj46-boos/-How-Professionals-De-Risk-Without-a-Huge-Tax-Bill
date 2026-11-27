@@ -988,9 +988,17 @@ export function hostSceneV2(g: SceneCtx): void {
   const chipContact = numberNamed
     ? { x: hx2 + 10, y: 194, hand: 'point' as const }
     : undefined;
+  // REACH LAW (Frame Quality Review rig table — THE CONTACT MUST BE A
+  // TOUCH): the tile edge at y 648 sits ~420px BELOW the 2.65 rig's
+  // shoulder (y ~226) — beyond any 2-segment chain (span 299). The exits
+  // touch re-aims to the card column's kicker chip at y 194 — the same
+  // designed touch surface the number beats use — and the hero WALKS his
+  // mark 64px toward the card so the drawn chain lands inside 1.15x span
+  // (the gate audits every contact at <= 1.15x).
   const tileContact = exitsContact
-    ? { x: hx2 + 12, y: 648, hand: 'palm' as const }
+    ? { x: hx2 + 12, y: 194, hand: 'palm' as const }
     : undefined;
+  if (chipContact || tileContact) hx += 64;
   const rEnv = reactionAt(g.s.sceneKey, t, g.d);
   const regExpr = (g.s.expression === 'focus' || g.s.expression === 'shock')
     ? (g.s.expression as 'focus' | 'shock')

@@ -118,7 +118,37 @@ export const collisionGuard: State = {
 };
 
 /** Reset per-frame state. Call at the top of drawFrame when enabled. */
+/**
+ * REACH LAW (Frame Quality Review rig table — THE LIMB-LENGTH GATE): any
+ * drawn upper+lower arm chain that exceeds 1.15x the rig's skeletal span
+ * is the rubber-arm defect the panel convicted on the payoff/drawdown
+ * reaches. The contact solve caps the root shift at 15% of reach and
+ * clamps the residual target below skeletal span; this gate is the
+ * referee — scenes that stage a contact beyond the law are flagged here
+ * so the render-check sweep reports them by frame.
+ */
+const armViolations: { frame: string; id: string; ratio: number; geo: string }[] = [];
+let armFrame = '';
+
+/** Record the drawn arm length of one contact solve against the rig span. */
+export function auditArmLength(
+  id: string, drawnLen: number, rigSpan: number,
+  rx = 0, ry = 0, tx = 0, ty = 0
+): void {
+  const ratio = drawnLen / Math.max(rigSpan, 1);
+  if (ratio > 1.15) {
+    const geo = `root(${Math.round(rx)},${Math.round(ry)}) target(${Math.round(tx)},${Math.round(ty)}) span ${Math.round(rigSpan)} drawn ${Math.round(drawnLen)}`;
+    armViolations.push({ frame: armFrame, id, ratio: Math.round(ratio * 1000) / 1000, geo });
+  }
+}
+
+/** The sweep's report: every limb-length violation on the sampled set. */
+export function armAuditReport(): { frame: string; id: string; ratio: number; geo: string }[] {
+  return armViolations.slice();
+}
+
 export function resetGuard(frame: string): void {
+  armFrame = frame;
   if (!collisionGuard.enabled) return;
   collisionGuard.frame = frame;
   collisionGuard.content = [];

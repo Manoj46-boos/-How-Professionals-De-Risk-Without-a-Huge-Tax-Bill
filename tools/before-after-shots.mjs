@@ -104,7 +104,7 @@ const OPTS = {
   progressBar: true,
 };
 
-const { resetGuard } = require(path.join(BUILD, 'collision.js'));
+const { resetGuard, armAuditReport } = require(path.join(BUILD, 'collision.js'));
 
 // (sceneKey prefix, beat index offset within matches, ms into the beat, shot name)
 const SHOTS = [
@@ -184,4 +184,7 @@ if (!ONLY.length || ONLY.some((o) => 'chaptercard'.includes(o))) {
     console.log(`rendered ${PREFIX}_${TAG}_chaptercard`);
   }
 }
+const av = armAuditReport ? armAuditReport() : [];
+console.log(`ARM-AUDIT: ${av.length} violation(s) on the 36-frame set`);
+av.forEach((v) => console.log(`  ${v.frame} ${v.id} ratio ${v.ratio} ${v.geo || ''}`));
 console.log('done ->', OUT);
