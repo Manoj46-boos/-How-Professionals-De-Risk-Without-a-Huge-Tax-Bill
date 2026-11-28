@@ -652,8 +652,13 @@ export function drawChapterCard(
     ctx.restore();
     // the host — walks in, settles into the point at the sign/title
     // P3 (Verdict report): a real walking entrance at 0.55 rig.
+    // C9 RE-SPEC (100-Judge Frame Audit): the walk-in started 90 units
+    // off-frame, so the entrance's middle frames showed a HALF-CLIPPED
+    // figure at the left edge (committed evidence, chaptercard.jpg).
+    // The route tightens to -50: the figure is fully framed by ~600ms and
+    // the walk still reads as an arrival, never as a crop.
     const arrivePose = Stickman.poseAt(t, { gesture: 'pointR', speaking: false, seed: 3 });
-    const w = walkIn(t, -90, 150, 1250, arrivePose, 0.55, 3);
+    const w = walkIn(t, -50, 150, 1250, arrivePose, 0.55, 3);
     drawStickmanV2(ctx, w.x, sy + 58, 0.55, t, { pose: w.pose, alpha: a, look: 0.9, scarf: true }, 3);
     ctx.restore();
   }

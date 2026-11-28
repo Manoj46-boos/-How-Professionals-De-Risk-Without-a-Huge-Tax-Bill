@@ -502,7 +502,14 @@ function boilOff(): { dx: number; dy: number } {
   // feed — no legal amplitude reaches 1.5px there), so the table takes the
   // report's alternative: rigs under 1.5 draw CLEAN vectors (half a texture
   // reads worse than none), rigs at 1.5+ keep the capped alive-ink wobble.
-  if (boilRigScale < 1.5) return { dx: 0, dy: 0 };
+  // C6 RE-SPEC (100-Judge Frame Audit — NO HAND-DRAWN IDENTITY): the hard
+  // cutoff at rig 1.5 made most of the film's stagings CLEAN VECTOR PUPPETS
+  // — the boil existed only at hero close-ups. The gate drops to 0.9: the
+  // drawn-ink texture is now the figure's identity at every working rig,
+  // with the same screen caps (4px mid, 6px hero) so the calm register
+  // never turns into a shiver. Below 0.9 (feed-only markers) the vectors
+  // stay clean — half a texture reads worse than none.
+  if (boilRigScale < 0.9) return { dx: 0, dy: 0 };
   // P2-6: quiet = on-threes (3 phases, full amplitude); fast = on-twos
   // (2 phases), half amplitude.
   const mod = boilFast ? 2 : 3;
@@ -906,7 +913,14 @@ export function handGlyph(
       : mode === 'pinch' ? 0.7
       : mode === 'open' ? 0.82
       : 0.8; // the resting mitten
-    const capS = (1.3 * wristW) / massK;
+    // C3 RE-SPEC (100-Judge Frame Audit — HANDS SMALLER THAN PROPS): the
+    // 1.3x cap was tuned against the OLD thin wrists (7 units); with the C2
+    // limb re-spec (wrist 9) the same cap starved the hand against the shoes
+    // (21-unit wedges) and every held prop. The cap returns to the audit's
+    // 1.6x wrist — proportionate again now that the wrist itself carries
+    // real mass (effective palm ~2x wrist, the anatomical band), with the
+    // open glyph's separated fingers owning the silhouette at rig >= 1.4.
+    const capS = (1.6 * wristW) / massK;
     s = Math.min(s, Math.max(14 / Math.max(0.5, rigScale), capS));
   }
   if (mode === 'fist' || mode === 'count1' || mode === 'count2' || mode === 'count3') {
@@ -997,7 +1011,11 @@ export function handGlyph(
     // wrist disc) BINDS at hero rigs — at 14 the floored tip out-massed
     // the capped palm at 1.5x+; at 12 the taper hierarchy restores (wrist
     // > palm > finger) with the tip still readable at the 320 twin.
-    const tipW = Math.max(s * 0.16, 12);
+    // C3 RE-SPEC (100-Judge Frame Audit): the fingertip floor returns to
+    // 14px — with the C2/C3 mass raises the taper hierarchy holds (wrist >
+    // palm > finger) AND the finger terminates as a readable tip on every
+    // contact rig instead of the last visible pixel.
+    const tipW = Math.max(s * 0.16, 14);
     const distW = Math.max(s * 0.27, 15.5);
     const proxW = Math.max(s * 0.36, 17);
     const knX = x + Math.sin(a) * s * 0.80, knY = y + Math.cos(a) * s * 0.80;
@@ -1411,6 +1429,22 @@ export function groundShadowV2(
   // contact, not a plank. The paired shoe-seat change (the wedge
   // translate lifts the foot 2 units less) drops the soles into the
   // ellipse's core band; the float read is geometrically impossible.
+  // C5 RE-SPEC (100-Judge Frame Audit — THE FIGURE FLOATS): one soft
+  // ellipse gave contact but no LIGHT. The K's floor-shadow grammar
+  // (effects.ts fix 5) ports here: (a) a directional CAST shadow —
+  // elongated, offset to the lower-LEFT along the film's one-light vector
+  // (the same direction theme.card() offsets its shadows), so the figure
+  // sits in a lit world, not on a decal; (b) the tight contact core
+  // directly under the soles, unchanged; (c) a crisp contact LINE at the
+  // sole plane — the figure now SEATS into its shadow at every rig.
+  const cast = ctx.createRadialGradient(-26 + skewX, 9, 2, -26 + skewX, 9, 92);
+  cast.addColorStop(0, rgba(PALETTE.shadow, 0.15));
+  cast.addColorStop(0.6, rgba(PALETTE.shadow, 0.06));
+  cast.addColorStop(1, rgba(PALETTE.shadow, 0));
+  ctx.fillStyle = cast;
+  ctx.beginPath();
+  ctx.ellipse(-22 + skewX, 9, 86, 15, -0.1, 0, Math.PI * 2);
+  ctx.fill();
   const g = ctx.createRadialGradient(-4 + skewX, 4, 2, -4 + skewX, 4, 62);
   g.addColorStop(0, rgba(PALETTE.shadow, 0.45));
   g.addColorStop(0.55, rgba(PALETTE.shadow, 0.14));
@@ -1419,6 +1453,14 @@ export function groundShadowV2(
   ctx.beginPath();
   ctx.ellipse(-4 + skewX, 4, 60, 12, 0, 0, Math.PI * 2);
   ctx.fill();
+  // the crisp contact line — a thin, darker ellipse arc at the sole plane
+  // (the K's contact-AO grammar: the shadow DARKENS where the object
+  // touches its plane)
+  ctx.strokeStyle = rgba(PALETTE.shadow, 0.30);
+  ctx.lineWidth = 1.8;
+  ctx.beginPath();
+  ctx.ellipse(-4 + skewX, 4.6, 27, 2.6, 0, 0, Math.PI * 2);
+  ctx.stroke();
   ctx.restore();
 }
 
@@ -1642,6 +1684,35 @@ export function drawStickmanV2(
   // shapes survive the 320px transcode; small ones do not. Hero rigs are
   // untouched (1.0x — the staging already reads).
   let pose0 = r.pose;
+  // C10 RE-SPEC (100-Judge Frame Audit — CAST DIFFERENTIATION IS GEAR-DEEP):
+  // prof = round glasses + bronze cuff, worker = flat cap — accessories on
+  // the SAME body, so the cast read as one person in three hats. Posture is
+  // now the differentiator, applied to the pose before any joint solves:
+  //   prof   — carries himself UPRIGHT and measured: no forward lean, chin
+  //            level, shoulders square (the academic's carriage);
+  //   worker — stands HEAVIER and forward: weight dropped, lean into the
+  //            work, stance widened, shoulders slung (the laborer's load).
+  // Deterministic pose arithmetic — scrub-safety survives exactly.
+  if (r.variant === 'prof') {
+    pose0 = {
+      ...pose0,
+      lean: pose0.lean - 3,
+      headTilt: (pose0.headTilt ?? 0) + 2,
+      shoulderTilt: (pose0.shoulderTilt ?? 0) - 2,
+      shoulderDrop: (pose0.shoulderDrop ?? 0) - 2,
+    };
+  }
+  if (r.variant === 'worker') {
+    pose0 = {
+      ...pose0,
+      rootY: pose0.rootY + 4,
+      lean: pose0.lean + 4,
+      headTilt: (pose0.headTilt ?? 0) - 1,
+      lLU: (pose0.lLU ?? 0) - 6,
+      rLU: (pose0.rLU ?? 0) + 6,
+      shoulderDrop: (pose0.shoulderDrop ?? 0) + 3,
+    };
+  }
   {
     const feedAmp = scale < 1.4 ? 1.4 : 1;
     const walkAmp = scale < 1.4 && r.walkPhase !== undefined ? 1.35 : 1;
@@ -2383,23 +2454,30 @@ export function drawStickmanV2(
       ctx.ellipse(rX(0.955, 0), rY(0.955, 0), wS * 0.30, wS * 0.20, 0, 0, Math.PI * 2);
       ctx.fill();
       // A8 MARKET-STANDARD FIX (review report A8 [P2] — COSTUME, NOT
-      // CLOTHING): the flat gold panel with a crew ellipse read as a
-      // painted-on costume. Two ink lapel strokes fall from the neckline
-      // toward mid-chest and one button dot closes the placket — the
-      // tailoring read at zero new mass (ink strokes only).
-      ctx.strokeStyle = ink;
-      ctx.lineWidth = 2.2;
-      ctx.lineCap = 'round';
-      ctx.beginPath();
-      ctx.moveTo(rX(0.945, -wS * 0.24), rY(0.945, -wS * 0.24));
-      ctx.quadraticCurveTo(rX(0.86, -wS * 0.38), rY(0.86, -wS * 0.38), rX(0.74, -wS * 0.30), rY(0.74, -wS * 0.30));
-      ctx.moveTo(rX(0.945, wS * 0.24), rY(0.945, wS * 0.24));
-      ctx.quadraticCurveTo(rX(0.86, wS * 0.38), rY(0.86, wS * 0.38), rX(0.74, wS * 0.30), rY(0.74, wS * 0.30));
-      ctx.stroke();
-      ctx.fillStyle = ink;
-      ctx.beginPath();
-      ctx.arc(rX(0.56, 0), rY(0.56, 0), 2.6, 0, Math.PI * 2);
-      ctx.fill();
+      // CLOTHING): two ink lapel strokes + one button dot close the placket
+      // at HERO scale.
+      // C4 RE-SPEC (100-Judge Frame Audit — CHEST CLUTTER): at mid rigs the
+      // chest zone carried vest + crew wedge + lapels + button + shoulder
+      // caps + hem + scarf knot — six garment elements in ~200 screen px,
+      // the "life-vest on a stick" read. ONE GARMENT PER ZONE is now
+      // enforced in code: the tailoring details (lapels, button) draw at
+      // rig >= 2 only, where they render at >= 5px; below, the vest panel
+      // + crew neckline is the whole chest language.
+      if (scale >= 2) {
+        ctx.strokeStyle = ink;
+        ctx.lineWidth = 2.2;
+        ctx.lineCap = 'round';
+        ctx.beginPath();
+        ctx.moveTo(rX(0.945, -wS * 0.24), rY(0.945, -wS * 0.24));
+        ctx.quadraticCurveTo(rX(0.86, -wS * 0.38), rY(0.86, -wS * 0.38), rX(0.74, -wS * 0.30), rY(0.74, -wS * 0.30));
+        ctx.moveTo(rX(0.945, wS * 0.24), rY(0.945, wS * 0.24));
+        ctx.quadraticCurveTo(rX(0.86, wS * 0.38), rY(0.86, wS * 0.38), rX(0.74, wS * 0.30), rY(0.74, wS * 0.30));
+        ctx.stroke();
+        ctx.fillStyle = ink;
+        ctx.beginPath();
+        ctx.arc(rX(0.56, 0), rY(0.56, 0), 2.6, 0, Math.PI * 2);
+        ctx.fill();
+      }
     }
     // U8: the prof's crew neckline — the same modest round opening (the tee
     // wedge at the collar), so the gold panel reads as WORN, not painted on.
@@ -3059,8 +3137,11 @@ export function drawStickmanV2(
   // on every hero close-up (the "bobblehead assembly" check the eye runs
   // on any character). The head drops 2 units onto the collar: chin,
   // collar wrap and knot read as assembled anatomy.
-  const headCX = neckX + Math.sin(tiltR) * (10 + 22);
-  const headCY = neckY - Math.cos(tiltR) * (10 + 22);
+  // C1 RE-SPEC (100-Judge Frame Audit): the head anchor drops 32 -> 29
+  // units above the neck — the lollipop-gap neck shortens with the smaller
+  // skull so the head sits ON the body, not above it.
+  const headCX = neckX + Math.sin(tiltR) * (10 + 19);
+  const headCY = neckY - Math.cos(tiltR) * (10 + 19);
   bbTouch(headCX, headCY, 31 * (r.faceScale ?? 1) + 6); // FP0: the shrunken egg + crest
   // AUDIT-ROUND-2 (fix 14): nod pulse 4 → 7px — the word-accent nod
   // survives the 320px gate.
@@ -3180,7 +3261,16 @@ export function drawStickmanV2(
   // floors auto-compensate, so the FACE the viewer meets is the same face
   // at 320px and at 1080p (the parity the audits kept re-fixing in both
   // directions).
-  const HEAD_SHRINK = 0.62;
+  // C1 RE-SPEC (100-Judge Frame Audit — BOBBLEHEAD PROPORTION, P0): 0.62
+  // still put the head at ~21% of the drawn height on an oval egg — the
+  // body read as scaffolding under it. The audit's prescription: a 4.5-5
+  // head caricature. The egg drops to 0.52 of its local units AND widens
+  // 35x42 -> 38x44 — a squarer SKULL instead of a taller OVAL — and the
+  // neck anchor shortens 22 -> 19 units so the crown-to-body gap closes.
+  // Net: the head owns ~18% of the drawn height, inside the premium band,
+  // while the screen-space feature floors keep the FACE the same size the
+  // viewer already recognizes (the parity rule every audit re-affirms).
+  const HEAD_SHRINK = 0.52;
   ctx.scale(faceS * HEAD_SHRINK * (1 - 0.12 * yawMag) * (1 + jawOpen * 0.04), faceS * HEAD_SHRINK * (1 - jawOpen * 0.04));
   // Panel round 2: the head outline yaws ±14° about the neck; the FACE
   // rotates an additional fraction of the same term about the head's own
@@ -3195,7 +3285,7 @@ export function drawStickmanV2(
   // (upper right) actually leaves dark.
   ctx.fillStyle = rgba(PALETTE.shadow, 0.10);
   ctx.beginPath();
-  ctx.ellipse(-4, 4, 35, 42, 0, 0, Math.PI * 2);
+  ctx.ellipse(-4, 4, 38, 44, 0, 0, Math.PI * 2);
   ctx.fill();
   // PREMIUM UPGRADE C1: EGG HEAD. The circle (34x34) is replaced with an
   // egg ellipse (32 wide × 39 tall) + a chin extension + a nose wedge.
@@ -3229,17 +3319,18 @@ export function drawStickmanV2(
   const hb = { dx: 0, dy: 0 };
   const headTex = 1;
   ctx.beginPath();
-  ctx.ellipse(hb.dx, -1 + hb.dy, 35, 42, 0, 0, Math.PI * 2);
+  ctx.ellipse(hb.dx, -1 + hb.dy, 38, 44, 0, 0, Math.PI * 2);
   ctx.fill();
-  // the chin — a subtle jaw extension below the ellipse
+  // the chin — a subtle jaw extension below the ellipse (C1: rescaled to
+  // the 38x44 skull)
   ctx.beginPath();
-  ctx.moveTo(-9 + hb.dx, 37 + hb.dy);
-  ctx.quadraticCurveTo(hb.dx, 46 + hb.dy, 9 + hb.dx, 37 + hb.dy);
+  ctx.moveTo(-10 + hb.dx, 39 + hb.dy);
+  ctx.quadraticCurveTo(hb.dx, 48 + hb.dy, 10 + hb.dx, 39 + hb.dy);
   ctx.fill();
   if (headStroke > 0) {
     ctx.lineWidth = 4.5 / (scale * faceS * HEAD_SHRINK) * headTex;
     ctx.beginPath();
-    ctx.ellipse(hb.dx, -1 + hb.dy, 35, 42, 0, 0, Math.PI * 2);
+    ctx.ellipse(hb.dx, -1 + hb.dy, 38, 44, 0, 0, Math.PI * 2);
     ctx.stroke();
   }
   // GILDED LEDGER — THE RIM LIGHT: one champagne arc along the egg's
@@ -3250,7 +3341,7 @@ export function drawStickmanV2(
     ctx.strokeStyle = 'rgba(217,178,76,0.55)';
     ctx.lineWidth = 5.5 / (scale * faceS * HEAD_SHRINK);
     ctx.beginPath();
-    ctx.ellipse(hb.dx, -1 + hb.dy, 35, 42, -0.5, Math.PI * 1.05, Math.PI * 1.62);
+    ctx.ellipse(hb.dx, -1 + hb.dy, 38, 44, -0.5, Math.PI * 1.05, Math.PI * 1.62);
     ctx.stroke();
     ctx.restore();
   }
@@ -3643,7 +3734,14 @@ export function drawStickmanV2(
   // the same geometry on every head type (ink, ivory, becker).
   const browEmo = surprise - concerned;
   const drawBrow = (dir: number): void => {
-    const bRaise = pose.browRaise * AMP.browTravelPx * (feedFace ? 0.7 : 1); // U29: one register lower at feed
+    // C8 RE-SPEC (100-Judge Frame Audit — EXPRESSION COLLAPSE AT SIDE RIGS):
+    // below rig 1.5 the brow travel measured ~10px screen — a static face
+    // across most of the runtime. The expression channels now ride an
+    // inverse-scale boost (clamped at 1.9x): the smaller the figure, the
+    // harder the brows/lids act, so the FACE performs at every staging.
+    // Hero rigs are untouched (boost 1.0 at scale*faceScale >= 1.4).
+    const exprBoost = clamp(1.4 / Math.max(scale * (r.faceScale ?? 1), 0.8), 1, 1.9);
+    const bRaise = pose.browRaise * AMP.browTravelPx * (feedFace ? 0.7 : 1) * exprBoost; // U29: one register lower at feed
     const bAng = pose.browAngle * D2R;
     const x0 = dir * (8 + eyeDX), x1 = dir * (24 + eyeDX);
     // B4 RE-SPEC (Visual Quality Audit §3.1 — BROWS RIDE THE GLASSES): the

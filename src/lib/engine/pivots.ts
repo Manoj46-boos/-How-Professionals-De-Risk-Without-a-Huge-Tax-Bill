@@ -41,8 +41,13 @@ function estSentenceMs(text: string): number {
 }
 
 const SENT_GAP_MS = 340; // flat estimate of the punctuation-aware sentence gap
-const STATIC_BUDGET_MS = 8200; // hard cap on any single static segment (< 10s acceptance)
-const STAY_TRIGGER_MS = 6500; // a stay whose projected window exceeds this gets split
+// C9 RE-SPEC (100-Judge Frame Audit — THE WALK IS WASTED): the walk cycle —
+// the film's best motion asset — ran once per entrance while the host
+// "slid" between stage blocks on pose springs only. The static budget and
+// the stay trigger both drop so mid-scene stage CROSSINGS fire on ~every
+// third beat of a long sentence instead of once per chapter.
+const STATIC_BUDGET_MS = 6000; // hard cap on any single static segment (was 8200)
+const STAY_TRIGGER_MS = 5000; // a stay whose projected window exceeds this gets split (was 6500)
 const MIN_SEG_MS = 2600; // no stage segment shorter than this (no frenetic hopping)
 
 export interface StageMove {

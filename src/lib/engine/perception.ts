@@ -257,22 +257,24 @@ export const HERO = {
  *  (19/30 → 21/32) so the silhouette keeps its dark-mass band with the
  *  limbs out of the way. */
 export const INK = {
-  /** Near arm taper: shoulder → elbow → wrist (B1: 23.6/17.7/13 → 10/8/6;
-   *  A3 fix: 10/8/6 → 11/9/7 — one step off the pipe read, per the review). */
-  armNear: [11, 9, 7] as [number, number, number],
-  /** Far arm taper (B1: 17.7/14.2/10.6 → 8/6.5/5). */
-  armFar: [8, 6.5, 5] as [number, number, number],
-  /** Near leg taper (B1: 29.5/22.4/16.5 → 13/10/7;
-   *  A3 fix: 13/10/7 → 14/11/8 — one step off the pipe read, per the review).
-   *  A5 RE-SPEC (Frame Quality Review §A5 — NOODLE LEGS): 14/11/8 → 16/12.5/9
-   *  (+15%) — the near leg is the figure's anchor mass and must carry at or
-   *  above the forearm's width at every rig (forearm root 11), ending the
-   *  thread-like shins under heavy shoes. */
-  legNear: [16, 12.5, 9] as [number, number, number],
-  /** Far leg taper (B1: 23.6/17.7/13 → 10.6/8.5/6.5).
-   *  A5 RE-SPEC: 10.6/8.5/6.5 → 12.5/10/7.5 — same +15% as the near leg so
-   *  the far limb keeps its depth step without the coat-hanger read. */
-  legFar: [12.5, 10, 7.5] as [number, number, number],
+  /** Near arm taper: shoulder → elbow → wrist.
+   *  C2 RE-SPEC (100-Judge Frame Audit — WIRE LIMBS, P0): 11/9/7 still drew
+   *  14-16px arms at the side-host rigs — cables, not limbs, on a figure
+   *  whose head owns a fifth of its height. The register rises to 15/12/9:
+   *  a real forearm taper that reads as a limb at every working rig while
+   *  staying under the torso mass (32 at the shoulder) and far from the
+   *  B1-era "gorilla wetsuit" register (23.6). */
+  armNear: [15, 12, 9] as [number, number, number],
+  /** Far arm taper — 80% of the near arm so the depth step survives. */
+  armFar: [12, 10, 7.5] as [number, number, number],
+  /** Near leg taper: hip → knee → ankle.
+   *  C2 RE-SPEC (100-Judge Frame Audit — WIRE LIMBS, P0): 16/12.5/9 drew
+   *  thread-like shins under the heavy shoes. 22/17/12 gives the leg its
+   *  calf mass — the anchor limb carries at or above the forearm's width
+   *  at every rig and reads as a leg, not a coat-hanger wire. */
+  legNear: [22, 17, 12] as [number, number, number],
+  /** Far leg taper — 80% of the near leg, same depth step. */
+  legFar: [18, 14, 10] as [number, number, number],
   /** Torso taper: hips → shoulders (B1: 19/30 → 21/32 — the torso, not the
    *  limbs, carries the figure's dark mass once the limbs are drawn ink). */
   torso: [21, 32] as [number, number],

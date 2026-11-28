@@ -5,7 +5,7 @@
  * breathing, blinking, brow expressions, and a signature gold scarf.
  */
 
-import { clamp01, drift, easeOutCubic, hash01, hashStr, lerp, mix, springTo } from './easing';
+import { clamp01, drift, easeInOutSine, easeOutCubic, hash01, hashStr, lerp, mix, springTo } from './easing';
 import { PALETTE, rgba } from './theme';
 import { AMP, HERO } from './perception';
 
@@ -276,6 +276,28 @@ export const POSES: Record<string, Pose> = {
   // GRIP glyph (closed contact).
   crossed: { ...base(), lean: 2, headTilt: 4, lAU: -55, lAL: 118, rAU: 55, rAL: -80, lLU: -6, rLU: 8, rLL: 4, browAngle: 12, smile: 0.06, browRaise: 0.14, pelvisTilt: -2, shoulderDrop: 4, lHand: 'grip', rHand: 'grip' },
 };
+
+/**
+ * C7 RE-SPEC (100-Judge Frame Audit — ONE IDLE FOR THE WHOLE FILM, P2):
+ * between sentences every host in the film held the SAME rest pose — 40
+ * minutes of one mannequin stance. The rest key is now a FOUR-POSE VARIANT
+ * SET, selected deterministically per sentence id and cross-blended on 9s
+ * windows (pure functions of t + ids — scrub-safety survives exactly):
+ *   0  idle        — the existing asymmetric weight-left rest;
+ *   1  idleMirror  — the mirrored weight-RIGHT rest (the counter-stance);
+ *   2  idleThink   — near hand folded across, head committing low (the
+ *                     listening read);
+ *   3  idlePresent — far hand easy at the hip, near hand resting low in a
+ *                     half-gesture (the presenter's between-sentences beat).
+ * All four keep the B6 rest grammar: bent arms, a committed weight leg,
+ * asymmetric shoulders — four WAYS to wait, not four mannequins.
+ */
+export const IDLE_VARIANTS: Pose[] = [
+  POSES.idle,
+  { ...base(), lean: -4, pelvisTilt: -9, shoulderTilt: 5, headTilt: 3, rLU: -6, rLL: -1, lLU: 15, lLL: 9, rAU: -14, rAL: -30, lAU: 11, lAL: 38 },
+  { ...base(), lean: 2, pelvisTilt: 6, shoulderTilt: -3, headTilt: -4, lLU: -4, lLL: 2, rLU: 10, rLL: 6, lAU: -34, lAL: -78, rAU: 8, rAL: 12, browRaise: 0.12 },
+  { ...base(), lean: 7, pelvisTilt: 13, shoulderTilt: -8, headTilt: 2, lLU: -8, lLL: -2, rLU: 14, rLL: 9, lAU: -10, lAL: -22, rAU: 26, rAL: 66, smile: 0.15 },
+];
 
 export function blendPose(a: Pose, b: Pose, t: number): Pose {
   const o = {} as Pose;
@@ -654,7 +676,18 @@ export class Stickman {
       // pose forever. The pose keys existed; the blend path above never
       // reached them. The blend block above smooths the transition, so
       // the settle reads as a pose change, not a snap.
-      pose = POSES.idle;
+      // C7 RE-SPEC (100-Judge Frame Audit): the rest key is no longer ONE
+      // pose. IDLE_VARIANTS are selected by sentence id + 9s window hash
+      // and cross-blend over 700ms at each window seam — the host waits
+      // DIFFERENTLY every few sentences (weight swaps sides, a hand folds,
+      // a half-gesture rests low), all as pure functions of (t, ids), so
+      // scrub-determinism survives exactly.
+      const idleSrc = `${opts.sentenceId ?? opts.gesture ?? 'idle'}`;
+      const wK = Math.floor(t / 9000);
+      const vA = IDLE_VARIANTS[Math.floor(hashStr(`${idleSrc}:${wK}`) * IDLE_VARIANTS.length) % IDLE_VARIANTS.length];
+      const vB = IDLE_VARIANTS[Math.floor(hashStr(`${idleSrc}:${wK + 1}`) * IDLE_VARIANTS.length) % IDLE_VARIANTS.length];
+      const mixK = easeInOutSine(clamp01((t - wK * 9000 - 8300) / 700));
+      pose = mixK <= 0 ? vA : mixK >= 1 ? vB : blendPose(vA, vB, mixK);
     } else {
       pose = POSES[gesture] ?? POSES.idle;
     }
